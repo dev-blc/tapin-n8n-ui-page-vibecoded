@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell, Search, Plus, MessageSquare, Settings, User, LogOut } from 'lucide-react';
+import { Bell, Search, Plus, MessageSquare, Settings, User, LogOut, Zap, Shuffle, Heart } from 'lucide-react';
 
 export const Header = ({ title, subtitle, actions }) => {
   const notifications = [

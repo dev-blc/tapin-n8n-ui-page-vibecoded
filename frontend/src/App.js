@@ -1,51 +1,62 @@
-import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import React from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Toaster } from '@/components/ui/sonner';
+import '@/App.css';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Pages
+import { Dashboard } from '@/pages/Dashboard';
+import { UserManagement } from '@/pages/UserManagement';
+import { QuickShifts } from '@/pages/QuickShifts';
+import { PlotTwists } from '@/pages/PlotTwists';
+import { AffirmationMeditation } from '@/pages/AffirmationMeditation';
+import { OnboardingManagement } from '@/pages/OnboardingManagement';
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
+// Analytics & Settings placeholder pages
+const Analytics = () => (
+  <div className="p-6">
+    <h1 className="text-2xl font-semibold mb-4">Analytics & Reports</h1>
+    <p className="text-muted-foreground">Comprehensive platform analytics and user insights coming soon.</p>
+  </div>
+);
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+const Settings = () => (
+  <div className="p-6">
+    <h1 className="text-2xl font-semibold mb-4">Platform Settings</h1>
+    <p className="text-muted-foreground">Global app configuration and admin management coming soon.</p>
+  </div>
+);
 
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
+const TeachingMoments = () => (
+  <div className="p-6">
+    <h1 className="text-2xl font-semibold mb-4">Teaching Moments</h1>
+    <p className="text-muted-foreground">Manage "Let's talk to Little You" content and personal growth insights.</p>
+  </div>
+);
 
 function App() {
   return (
     <div className="App">
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
+          {/* Dashboard */}
+          <Route path="/" element={<Dashboard />} />
+          
+          {/* Content Management */}
+          <Route path="/quick-shifts" element={<QuickShifts />} />
+          <Route path="/plot-twists" element={<PlotTwists />} />
+          <Route path="/affirmations" element={<AffirmationMeditation />} />
+          <Route path="/teaching-moments" element={<TeachingMoments />} />
+          
+          {/* Management & Insights */}
+          <Route path="/users" element={<UserManagement />} />
+          <Route path="/onboarding" element={<OnboardingManagement />} />
+          <Route path="/analytics" element={<Analytics />} />
+          <Route path="/settings" element={<Settings />} />
+          
+          {/* Fallback */}
+          <Route path="*" element={<Dashboard />} />
         </Routes>
+        <Toaster />
       </BrowserRouter>
     </div>
   );

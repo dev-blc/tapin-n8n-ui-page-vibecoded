@@ -1,0 +1,34 @@
+[
+  {
+    "affirmation": {
+      "tool_type": "affirmation",
+      "tool_text": "I am worthy even when things do not go my way. I trust myself to find grounding in every moment. I give myself permission to rest and regain strength.",
+      "metadata": {
+        "source": "quick_shift",
+        "tags": [
+          "worthiness",
+          "grounding",
+          "permission-for-rest"
+        ],
+        "start_phrase": "I am",
+        "duration_sec": null,
+        "escalation_flag": false
+      }
+    },
+    "meditation": {
+      "tool_type": "meditation",
+      "tool_text": "Begin by settling into a comfortable position. Close your eyes gently if that feels safe for you. Take a deep breath in through your nose, feeling the breath fill your belly [pause]. Slowly exhale through your mouth, letting go of any tension [pause]. Continue this deep, natural breathing as you bring your focus to the sensations at your feet. Feel the ground beneath you supporting your weight [pause]. Notice the connection between your body and the earth, solid and steady. Imagine you are standing barefoot on soft, warm sand at the edge of a calm beach. Feel the gentle warmth of the sun on your skin and a soft breeze brushing past you [pause]. With each breath, visualize a gentle wave rolling in, brushing over your feet and then receding back into the sea. Notice how the water leaves the sand refreshed, safe, and steady. As you continue to breathe, feel a sense of worthiness growing inside you, like the sun melting any fear or doubt away [pause]. Let the rhythm of the waves and your steady breath ground you in this moment of calm power. When you are ready, slowly begin to bring awareness back to your physical body. Gently wiggle your fingers and toes [pause]. When you feel ready, open your eyes softly. Remember, you are worthy and deeply supported in this present moment.",
+      "metadata": {
+        "source": "quick_shift",
+        "tags": [
+          "grounding",
+          "short-guided"
+        ],
+        "duration_sec": 195,
+        "tts_ready": true,
+        "escalation_flag": false,
+        "safe_response_template": null
+      }
+    }
+  }
+]

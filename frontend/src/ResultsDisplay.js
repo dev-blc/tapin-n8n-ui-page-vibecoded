@@ -26,6 +26,16 @@ function ResultsDisplay({ response, onReset }) {
 
   const sentences = getMeditationSentences();
 
+  // Cleanup object URL on unmount
+  useEffect(() => {
+    return () => {
+      // Revoke object URL if it exists to free memory
+      if (response[0]?.audioObjectUrl) {
+        URL.revokeObjectURL(response[0].audioObjectUrl);
+      }
+    };
+  }, [response]);
+
   // Calculate which sentence should be highlighted based on playback time
   useEffect(() => {
     if (isPlaying && sentences.length > 0 && duration > 0) {

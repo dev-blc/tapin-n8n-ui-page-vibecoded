@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { Download, Sparkles, ChevronRight, ChevronLeft, TestTube, Zap, SkipForward } from 'lucide-react';
-import { toPng } from 'html-to-image';
+import { Sparkles, ChevronRight, ChevronLeft, TestTube, Zap, SkipForward } from 'lucide-react';
 import axios from 'axios';
 import ResultsDisplay from './ResultsDisplay';
 import './App.css';

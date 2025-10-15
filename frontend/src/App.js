@@ -535,21 +535,6 @@ function App() {
     }
   };
 
-  const downloadCard = async (elementId, filename) => {
-    const element = document.getElementById(elementId);
-    if (element) {
-      try {
-        const dataUrl = await toPng(element, { quality: 0.95, pixelRatio: 2 });
-        const link = document.createElement('a');
-        link.download = filename;
-        link.href = dataUrl;
-        link.click();
-      } catch (err) {
-        console.error('Error downloading card:', err);
-      }
-    }
-  };
-
   const resetForm = () => {
     setFormData({});
     setResponse(null);

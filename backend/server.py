@@ -52,7 +52,15 @@ async def submit_to_n8n(request: TapInRequest):
             print(f"n8n Response Status: {response.status_code}")
             print(f"n8n Response Text: {response.text}")
             
-            if response.status_code != 200:
+            if response.status_code == 404:
+                # Webhook not registered or not activated
+                error_data = response.json() if response.text else {}
+                detail = error_data.get('hint', 'Webhook not found')
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"n8n Webhook Error: {detail}"
+                )
+            elif response.status_code != 200:
                 raise HTTPException(
                     status_code=response.status_code,
                     detail=f"n8n webhook returned error: {response.text}"

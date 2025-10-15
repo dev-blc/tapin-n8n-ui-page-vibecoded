@@ -62,7 +62,15 @@ async def submit_to_n8n(request: TapInRequest):
             status_code=504,
             detail="Request to n8n webhook timed out"
         )
+    except httpx.HTTPError as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"HTTP Error submitting to n8n: {str(e)}"
+        )
     except Exception as e:
+        import traceback
+        print(f"Error: {str(e)}")
+        print(traceback.format_exc())
         raise HTTPException(
             status_code=500,
             detail=f"Error submitting to n8n: {str(e)}"

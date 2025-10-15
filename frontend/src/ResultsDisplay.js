@@ -10,7 +10,9 @@ function ResultsDisplay({ response, onReset }) {
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const audioRef = useRef(null);
 
-  const audioUrl = response[0]?.id ? `https://dev-blc.app.n8n.cloud/file/${response[0].id}` : null;
+  // Use audioObjectUrl if available (blob), otherwise fall back to direct URL
+  const audioUrl = response[0]?.audioObjectUrl 
+    || (response[0]?.id ? `https://dev-blc.app.n8n.cloud/file/${response[0].id}` : null);
   const affirmation = response[0]?.affirmation;
   const meditation = response[0]?.meditation;
 

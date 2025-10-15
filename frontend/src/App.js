@@ -4,7 +4,11 @@ import { toPng } from 'html-to-image';
 import axios from 'axios';
 import './App.css';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL || 'http://localhost:8001';
+// n8n webhook URLs - direct frontend calls (POC mode)
+const N8N_WEBHOOKS = {
+  test: process.env.REACT_APP_N8N_WEBHOOK_URL_TEST || 'https://dev-blc.app.n8n.cloud/webhook-test/tapintoaffirmations',
+  production: process.env.REACT_APP_N8N_WEBHOOK_URL_PROD || 'https://dev-blc.app.n8n.cloud/webhook/tapintoaffirmations'
+};
 
 function App() {
   const [environment, setEnvironment] = useState('test');

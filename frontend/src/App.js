@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Download, Sparkles, ChevronRight, ChevronLeft, TestTube, Zap, SkipForward } from 'lucide-react';
 import { toPng } from 'html-to-image';
 import axios from 'axios';
+import ResultsDisplay from './ResultsDisplay';
 import './App.css';
 
 // n8n webhook URLs - direct frontend calls (POC mode)

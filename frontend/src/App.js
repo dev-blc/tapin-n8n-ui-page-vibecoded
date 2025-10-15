@@ -505,20 +505,29 @@ function App() {
   const handleSubmit = async () => {
     setLoading(true);
     try {
-      const res = await axios.post(`${BACKEND_URL}/api/tapin/submit`, {
-        environment,
-        formData
-      });
+      // Direct call to n8n webhook (POC mode - no backend proxy)
+      const webhookUrl = N8N_WEBHOOKS[environment];
+      
+      const res = await axios.post(webhookUrl, formData);
+      
       setResponse(res.data);
       setShowResults(true);
     } catch (error) {
       console.error('Error submitting form:', error);
-      const errorMessage = error.response?.data?.detail || error.message || 'Unknown error occurred';
+      
+      // Handle n8n specific errors
+      const errorData = error.response?.data;
+      const errorMessage = errorData?.message || errorData?.hint || error.message || 'Unknown error occurred';
       
       if (error.response?.status === 404) {
-        alert(`n8n Webhook Not Available:\n\n${errorMessage}\n\nNote: In test mode, you need to activate the webhook in n8n first by clicking "Execute workflow".`);
+        const hint = errorData?.hint || 'The webhook is not registered or not activated.';
+        alert(`n8n Webhook Not Available:\n\n${errorMessage}\n\n${hint}\n\nNote: In test mode, you need to activate the webhook in n8n first by clicking "Execute workflow".`);
+      } else if (error.response?.status === 403) {
+        alert(`Access Denied:\n\n${errorMessage}\n\nThe webhook may require authentication or has restricted access.`);
+      } else if (error.code === 'ERR_NETWORK') {
+        alert(`Network Error:\n\nUnable to reach the n8n webhook. Please check:\n1. Your internet connection\n2. The webhook URL is correct\n3. n8n service is running`);
       } else {
-        alert(`Error: ${errorMessage}`);
+        alert(`Error submitting to n8n:\n\n${errorMessage}`);
       }
     } finally {
       setLoading(false);

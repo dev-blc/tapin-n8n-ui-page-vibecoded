@@ -105,9 +105,24 @@ tail -f /var/log/supervisor/frontend.out.log
 # Test backend health
 curl http://localhost:8001/api/health
 
+# Test with sample response (without n8n)
+curl http://localhost:8001/api/tapin/test-response
+
 # Access frontend
 open http://localhost:3000
 ```
+
+### Testing Without n8n
+If you want to test the UI without connecting to n8n, you can use the test endpoint:
+- The backend provides `/api/tapin/test-response` which returns a sample response
+- This lets you see how the results will be displayed
+- Useful for UI/UX testing and development
+
+### n8n Webhook Notes
+- **Test webhook**: Requires manual activation in n8n (click "Execute workflow")
+- **Test webhook**: Only works for one call after activation
+- **Production webhook**: Should be always active
+- If you see a 404 error, the webhook needs to be activated in n8n
 
 ## User Interface
 

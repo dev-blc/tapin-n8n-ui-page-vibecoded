@@ -49,13 +49,18 @@ async def submit_to_n8n(request: TapInRequest):
                 json=request.formData
             )
             
+            print(f"n8n Response Status: {response.status_code}")
+            print(f"n8n Response Text: {response.text}")
+            
             if response.status_code != 200:
                 raise HTTPException(
                     status_code=response.status_code,
                     detail=f"n8n webhook returned error: {response.text}"
                 )
             
-            return response.json()
+            # Parse response
+            response_data = response.json()
+            return response_data
             
     except httpx.TimeoutException:
         raise HTTPException(

@@ -155,7 +155,13 @@ function App() {
       setShowResults(true);
     } catch (error) {
       console.error('Error submitting form:', error);
-      alert('Error submitting form. Please try again.');
+      const errorMessage = error.response?.data?.detail || error.message || 'Unknown error occurred';
+      
+      if (error.response?.status === 404) {
+        alert(`n8n Webhook Not Available:\n\n${errorMessage}\n\nNote: In test mode, you need to activate the webhook in n8n first by clicking "Execute workflow".`);
+      } else {
+        alert(`Error: ${errorMessage}`);
+      }
     } finally {
       setLoading(false);
     }

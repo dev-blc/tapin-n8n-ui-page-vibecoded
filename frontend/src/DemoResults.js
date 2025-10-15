@@ -9,6 +9,7 @@ const mockResponse = [
     "fileName": "audio.mp3",
     "id": "filesystem-v2:workflows/AKqi4mYvohKhq2pC/executions/52/binary_data/d47d90c3-ce1e-4b57-b93f-3fb5b1ffbb62",
     "fileSize": "1.51 MB",
+    "audioObjectUrl": null, // Will be set by handleSubmit in real app
     "affirmation": {
       "tool_type": "affirmation",
       "tool_text": "I am validated and enough, no matter my pace. I trust my journey and give myself permission to rest when I need it. I release worry and embrace relief.",

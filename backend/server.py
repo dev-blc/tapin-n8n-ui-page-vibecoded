@@ -45,58 +45,67 @@ async def get_test_response():
 @app.post("/api/tapin/submit")
 async def submit_to_n8n(request: TapInRequest):
     """
-    Submit form data to n8n workflow webhook
+    DISABLED: This endpoint is not available in POC mode.
+    Frontend now calls n8n webhooks directly.
+    
+    To re-enable backend proxy mode, uncomment the code below.
     """
-    try:
-        # Get the appropriate webhook URL
-        webhook_url = N8N_WEBHOOKS.get(request.environment, N8N_WEBHOOKS["test"])
-        
-        # Forward request to n8n
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                webhook_url,
-                json=request.formData
-            )
-            
-            print(f"n8n Response Status: {response.status_code}")
-            print(f"n8n Response Text: {response.text}")
-            
-            if response.status_code == 404:
-                # Webhook not registered or not activated
-                error_data = response.json() if response.text else {}
-                detail = error_data.get('hint', 'Webhook not found')
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"n8n Webhook Error: {detail}"
-                )
-            elif response.status_code != 200:
-                raise HTTPException(
-                    status_code=response.status_code,
-                    detail=f"n8n webhook returned error: {response.text}"
-                )
-            
-            # Parse response
-            response_data = response.json()
-            return response_data
-            
-    except httpx.TimeoutException:
-        raise HTTPException(
-            status_code=504,
-            detail="Request to n8n webhook timed out"
-        )
-    except httpx.HTTPError as e:
-        raise HTTPException(
-            status_code=500,
-            detail=f"HTTP Error submitting to n8n: {str(e)}"
-        )
-    except Exception as e:
-        import traceback
-        print(f"Error: {str(e)}")
-        print(traceback.format_exc())
-        raise HTTPException(
-            status_code=500,
-            detail=f"Error submitting to n8n: {str(e)}"
-        )
+    raise HTTPException(
+        status_code=501,
+        detail="Backend proxy disabled. Frontend calls n8n webhooks directly in POC mode."
+    )
+    
+    # DISABLED CODE - Uncomment to re-enable backend proxy mode
+    # try:
+    #     # Get the appropriate webhook URL
+    #     webhook_url = N8N_WEBHOOKS.get(request.environment, N8N_WEBHOOKS["test"])
+    #     
+    #     # Forward request to n8n
+    #     async with httpx.AsyncClient(timeout=30.0) as client:
+    #         response = await client.post(
+    #             webhook_url,
+    #             json=request.formData
+    #         )
+    #         
+    #         print(f"n8n Response Status: {response.status_code}")
+    #         print(f"n8n Response Text: {response.text}")
+    #         
+    #         if response.status_code == 404:
+    #             # Webhook not registered or not activated
+    #             error_data = response.json() if response.text else {}
+    #             detail = error_data.get('hint', 'Webhook not found')
+    #             raise HTTPException(
+    #                 status_code=404,
+    #                 detail=f"n8n Webhook Error: {detail}"
+    #             )
+    #         elif response.status_code != 200:
+    #             raise HTTPException(
+    #                 status_code=response.status_code,
+    #                 detail=f"n8n webhook returned error: {response.text}"
+    #             )
+    #         
+    #         # Parse response
+    #         response_data = response.json()
+    #         return response_data
+    #         
+    # except httpx.TimeoutException:
+    #     raise HTTPException(
+    #         status_code=504,
+    #         detail="Request to n8n webhook timed out"
+    #     )
+    # except httpx.HTTPError as e:
+    #     raise HTTPException(
+    #         status_code=500,
+    #         detail=f"HTTP Error submitting to n8n: {str(e)}"
+    #     )
+    # except Exception as e:
+    #     import traceback
+    #     print(f"Error: {str(e)}")
+    #     print(traceback.format_exc())
+    #     raise HTTPException(
+    #         status_code=500,
+    #         detail=f"Error submitting to n8n: {str(e)}"
+    #     )
 
 if __name__ == "__main__":
     import uvicorn

@@ -33,6 +33,15 @@ class TapInRequest(BaseModel):
 async def health_check():
     return {"status": "healthy", "service": "tapin-admin-api"}
 
+@app.get("/api/tapin/test-response")
+async def get_test_response():
+    """
+    Get sample response for testing UI without n8n
+    """
+    import json
+    with open('/app/backend/test_response.json', 'r') as f:
+        return json.load(f)
+
 @app.post("/api/tapin/submit")
 async def submit_to_n8n(request: TapInRequest):
     """

@@ -510,7 +510,31 @@ function App() {
       
       const res = await axios.post(webhookUrl, formData);
       
-      setResponse(res.data);
+      // Check if response contains audio file
+      const responseData = res.data;
+      if (responseData && responseData[0]?.id && responseData[0]?.fileType === 'audio') {
+        try {
+          // Fetch the audio file from n8n
+          const audioFileUrl = `https://dev-blc.app.n8n.cloud/file/${responseData[0].id}`;
+          const audioResponse = await axios.get(audioFileUrl, {
+            responseType: 'blob'
+          });
+          
+          // Convert to blob and create object URL
+          const audioBlob = audioResponse.data;
+          const audioObjectUrl = URL.createObjectURL(audioBlob);
+          
+          // Add the object URL to the response data
+          responseData[0].audioObjectUrl = audioObjectUrl;
+          
+          console.log('Audio file fetched and prepared for playback');
+        } catch (audioError) {
+          console.error('Error fetching audio file:', audioError);
+          // Continue anyway - audio will be unavailable but rest of data is fine
+        }
+      }
+      
+      setResponse(responseData);
       setShowResults(true);
     } catch (error) {
       console.error('Error submitting form:', error);

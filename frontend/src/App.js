@@ -345,6 +345,7 @@ function App() {
         title: 'PLOT TWIST: Select user tier',
         type: 'card-select',
         skippable: true,
+        condition: () => formData.plotTwistOption === 'yes',
         options: [
           { value: 'User 1', label: 'User 1' },
           { value: 'User 2', label: 'User 2' },

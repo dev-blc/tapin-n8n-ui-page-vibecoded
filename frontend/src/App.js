@@ -420,6 +420,7 @@ function App() {
         subtitle: 'What would you want younger-you to hear right now?',
         type: 'textarea',
         skippable: true,
+        condition: () => formData.plotTwistOption === 'yes',
         placeholder: 'Message to your younger self...'
       },
       {

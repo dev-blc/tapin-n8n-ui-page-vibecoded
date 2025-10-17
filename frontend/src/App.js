@@ -373,6 +373,7 @@ function App() {
         title: 'PLOT TWIST: Plot Twist Quest',
         type: 'card-select',
         skippable: true,
+        condition: () => formData.plotTwistOption === 'yes',
         options: [
           { value: 'Pause & Notice: Spend 3 mins noticing breath before reacting', label: 'Pause & Notice' },
           { value: 'Tiny Boundary: Say no to one small request that drains you', label: 'Tiny Boundary' },

@@ -411,6 +411,7 @@ function App() {
         title: 'PLOT TWIST: Teaching Moment — write your response or reflection',
         type: 'textarea',
         skippable: true,
+        condition: () => formData.plotTwistOption === 'yes',
         placeholder: 'Your teaching moment...'
       },
       {

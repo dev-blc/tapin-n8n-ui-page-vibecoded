@@ -428,6 +428,7 @@ function App() {
         title: 'PLOT TWIST: Select 3 small accountability moves',
         type: 'checkbox',
         skippable: true,
+        condition: () => formData.plotTwistOption === 'yes',
         options: [
           { value: 'Set a 10-minute timer and start one task', label: 'Set a timer & start' },
           { value: 'Send one message asking for support', label: 'Ask for support' },

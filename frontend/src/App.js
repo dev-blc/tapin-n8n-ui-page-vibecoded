@@ -443,6 +443,7 @@ function App() {
         title: 'PLOT TWIST: Rate how useful this Plot Twist felt (1-5)',
         type: 'card-select',
         skippable: true,
+        condition: () => formData.plotTwistOption === 'yes',
         options: [
           { value: '1', label: '1' },
           { value: '2', label: '2' },

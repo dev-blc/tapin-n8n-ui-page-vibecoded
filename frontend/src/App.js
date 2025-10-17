@@ -326,6 +326,7 @@ function App() {
         title: 'PLOT TWIST: Select main character archetype',
         type: 'card-select',
         skippable: true,
+        condition: () => formData.plotTwistOption === 'yes',
         options: [
           { value: 'The Deserving One', label: 'The Deserving One' },
           { value: 'The Capable One', label: 'The Capable One' },

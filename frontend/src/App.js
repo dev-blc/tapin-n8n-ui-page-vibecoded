@@ -390,7 +390,7 @@ function App() {
         title: 'PLOT TWIST: If \'Write your own\' — describe your Plot Twist Quest',
         type: 'textarea',
         skippable: true,
-        condition: () => formData.plotTwistQuest === 'Write your own Plot Twist Quest (open text)',
+        condition: () => formData.plotTwistOption === 'yes' && formData.plotTwistQuest === 'Write your own Plot Twist Quest (open text)',
         placeholder: 'Describe your custom quest...'
       },
       {

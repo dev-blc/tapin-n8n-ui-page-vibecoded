@@ -357,6 +357,7 @@ function App() {
         title: 'PLOT TWIST: Select aligned pillar',
         type: 'card-select',
         skippable: true,
+        condition: () => formData.plotTwistOption === 'yes',
         options: [
           { value: 'Awareness', label: 'Awareness' },
           { value: 'Light (Clarity)', label: 'Light (Clarity)' },

@@ -275,6 +275,22 @@ function App() {
         condition: () => toolChoice === 'Meditation',
         placeholder: 'Any specific guidance you want included...'
       },
+      // Voice Selection
+      {
+        id: 'voiceSelection',
+        title: 'Choose Voice for Audio',
+        subtitle: 'Select the voice that resonates with you',
+        type: 'card-select',
+        skippable: true,
+        options: [
+          { value: 'alloy', label: 'Alloy', subtitle: 'Neutral and balanced' },
+          { value: 'echo', label: 'Echo', subtitle: 'Warm and friendly' },
+          { value: 'fable', label: 'Fable', subtitle: 'Expressive and clear' },
+          { value: 'nova', label: 'Nova', subtitle: 'Bright and energetic' },
+          { value: 'onyx', label: 'Onyx', subtitle: 'Deep and grounded' },
+          { value: 'shimmer', label: 'Shimmer', subtitle: 'Soft and gentle' },
+        ]
+      },
       // Consent
       {
         id: 'consent',
@@ -292,7 +308,19 @@ function App() {
         skippable: true,
         placeholder: 'Any additional notes...'
       },
-      // Plot Twist section
+      // Plot Twist section - option to skip entire section
+      {
+        id: 'plotTwistOption',
+        title: 'Plot Twist Section',
+        subtitle: 'Would you like to add Plot Twist elements to deepen your experience?',
+        type: 'card-select',
+        skippable: false,
+        options: [
+          { value: 'yes', label: 'Yes, Add Plot Twist', subtitle: 'Personalize further' },
+          { value: 'no', label: 'Skip Plot Twist', subtitle: 'Continue without' },
+        ]
+      },
+      // Plot Twist questions - only show if user selected 'yes'
       {
         id: 'plotTwistArchetype',
         title: 'PLOT TWIST: Select main character archetype',

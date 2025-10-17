@@ -398,6 +398,7 @@ function App() {
         title: 'PLOT TWIST: Teaching Moment — choose response option',
         type: 'card-select',
         skippable: true,
+        condition: () => formData.plotTwistOption === 'yes',
         options: [
           { value: 'Option 1 — Gentle Reality Check', label: 'Gentle Reality Check' },
           { value: 'Option 2 — Reframe + Action', label: 'Reframe + Action' },

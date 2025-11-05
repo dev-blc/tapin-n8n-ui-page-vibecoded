@@ -891,7 +891,12 @@ export const OnboardingManagement = () => {
                 </Button>
                 <Button 
                   onClick={createQuestion}
-                  disabled={submitting || !newQuestion.text.trim() || newQuestion.options.filter(opt => opt.optionText.trim()).length < 2}
+                  disabled={
+                    submitting || 
+                    !newQuestion.text.trim() || 
+                    newQuestion.options.filter(opt => opt.optionText.trim()).length < 2 ||
+                    newQuestion.options.filter(opt => opt.optionText.trim() && !opt.assignsTier).length > 0
+                  }
                 >
                   {submitting ? (
                     <>

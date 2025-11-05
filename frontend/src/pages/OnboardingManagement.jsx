@@ -102,7 +102,7 @@ export const OnboardingManagement = () => {
     }
   };
 
-  // Create new onboarding question
+  // Create new onboarding question - Updated for new API schema
   const createQuestion = async () => {
     try {
       setSubmitting(true);
@@ -113,23 +113,34 @@ export const OnboardingManagement = () => {
         return;
       }
       
-      const validOptions = newQuestion.options.filter(opt => opt.text.trim());
+      const validOptions = newQuestion.options.filter(opt => opt.optionText.trim());
       if (validOptions.length < 2) {
         toast.error('At least 2 options are required');
         return;
       }
 
-      // Prepare API payload
-      const payload = {
+      // Step 1: Create the question using the new API schema
+      const questionPayload = {
         text: newQuestion.text.trim(),
         displayOrder: Math.max(...onboardingQuestions.map(q => q.displayOrder), 0) + 1,
-        options: validOptions.map((option, index) => ({
-          text: option.text.trim(),
-          displayOrder: index + 1
-        }))
+        isActive: newQuestion.isActive
       };
 
-      const response = await axios.post(`${API_BASE_URL}/users/onboarding-questions`, payload);
+      const questionResponse = await axios.post(`${API_BASE_URL}/admin/onboarding/questions`, questionPayload);
+      const createdQuestionId = questionResponse.data.id;
+      
+      // Step 2: Create each option separately using the new API
+      const optionPromises = validOptions.map((option, index) =>
+        axios.post(`${API_BASE_URL}/admin/onboarding/options`, {
+          questionId: createdQuestionId,
+          optionText: option.optionText.trim(),
+          assignsTier: option.assignsTier || '1', // Default tier if not specified
+          assignsCharacterId: option.assignsCharacterId || '', // Optional character assignment
+          displayOrder: index + 1
+        })
+      );
+
+      await Promise.all(optionPromises);
       
       // Refresh questions list
       await fetchOnboardingQuestions();
@@ -138,16 +149,17 @@ export const OnboardingManagement = () => {
       setNewQuestion({
         text: '',
         displayOrder: 1,
+        isActive: true,
         options: [
-          { text: '', displayOrder: 1 },
-          { text: '', displayOrder: 2 },
-          { text: '', displayOrder: 3 },
-          { text: '', displayOrder: 4 }
+          { optionText: '', displayOrder: 1, assignsTier: '', assignsCharacterId: '' },
+          { optionText: '', displayOrder: 2, assignsTier: '', assignsCharacterId: '' },
+          { optionText: '', displayOrder: 3, assignsTier: '', assignsCharacterId: '' },
+          { optionText: '', displayOrder: 4, assignsTier: '', assignsCharacterId: '' }
         ]
       });
       setIsCreateModalOpen(false);
       
-      toast.success('Question created successfully');
+      toast.success('Question and options created successfully');
     } catch (error) {
       console.error('Error creating question:', error);
       toast.error('Failed to create question: ' + (error.response?.data?.message || error.message));

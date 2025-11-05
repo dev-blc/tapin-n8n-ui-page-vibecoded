@@ -835,46 +835,51 @@ export const OnboardingManagement = () => {
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Question</CardTitle>
+                    <CardTitle className="text-lg">Question Details</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <p className="text-lg">{selectedQuestion.question}</p>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium">Question Text:</Label>
+                      <p className="text-lg mt-1">{selectedQuestion.text}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <Label className="font-medium">Question ID:</Label>
+                        <p className="text-muted-foreground font-mono">{selectedQuestion.id}</p>
+                      </div>
+                      <div>
+                        <Label className="font-medium">Display Order:</Label>
+                        <p className="text-muted-foreground">#{selectedQuestion.displayOrder}</p>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Answer Options & Assignments</CardTitle>
+                    <CardTitle className="text-lg">Answer Options ({selectedQuestion.options?.length || 0})</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Option</TableHead>
-                          <TableHead>Assigned Tier</TableHead>
-                          <TableHead>Assigned Character</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {selectedQuestion.options.map((option, index) => (
-                          <TableRow key={index}>
-                            <TableCell className="max-w-xs">
-                              <p className="text-sm">{option}</p>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">
-                                {selectedQuestion.tierAssignments[option]}
+                    <div className="space-y-2">
+                      {selectedQuestion.options?.map((option, index) => (
+                        <div key={option.id || index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <Badge variant="outline" className="text-xs">
+                                #{option.displayOrder}
                               </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant="outline">
-                                {selectedQuestion.characterAssignments[option]}
-                              </Badge>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                              <p className="text-sm">{option.text}</p>
+                            </div>
+                          </div>
+                          <div className="text-xs text-muted-foreground font-mono">
+                            {option.id?.substring(0, 8)}...
+                          </div>
+                        </div>
+                      )) || (
+                        <p className="text-muted-foreground text-sm">No options available</p>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               </div>

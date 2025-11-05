@@ -397,58 +397,67 @@ export const OnboardingManagement = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {onboardingQuestions.map((question) => (
-                      <TableRow key={question.id}>
-                        <TableCell>
-                          <div className="max-w-md">
-                            <p className="font-medium text-sm">{question.question}</p>
-                            <p className="text-xs text-muted-foreground">
-                              ID: {question.id}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{question.type}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            {question.options.length} options
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div className="font-medium">{question.usageCount}</div>
-                            <div className="text-muted-foreground">responses</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusColor(question.status)}>
-                            {question.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setSelectedQuestion(question)}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit Question
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                        {onboardingQuestions.map((question) => (
+                        <TableRow key={question.id}>
+                          <TableCell>
+                            <div className="max-w-md">
+                              <p className="font-medium text-sm">{question.text}</p>
+                              <p className="text-xs text-muted-foreground">
+                                ID: {question.id?.substring(0, 8)}...
+                              </p>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">#{question.displayOrder}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {question.options?.length || 0} options
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm text-muted-foreground">
+                              From API
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="success">Active</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setSelectedQuestion(question)}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit Question
+                                </DropdownMenuItem>
+                                <DropdownMenuItem 
+                                  onClick={() => {
+                                    if (window.confirm('Are you sure you want to delete this question?')) {
+                                      deleteQuestion(question.id);
+                                    }
+                                  }}
+                                  className="text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Question
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

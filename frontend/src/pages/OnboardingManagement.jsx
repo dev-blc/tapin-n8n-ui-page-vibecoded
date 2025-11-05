@@ -585,78 +585,96 @@ export const OnboardingManagement = () => {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Completion Rate</CardTitle>
+                  <CardTitle className="text-lg">Total Questions</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">87%</div>
-                  <p className="text-sm text-muted-foreground">Finish onboarding</p>
+                  <div className="text-3xl font-bold">{onboardingQuestions.length}</div>
+                  <p className="text-sm text-muted-foreground">Active questions</p>
                 </CardContent>
               </Card>
               
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Avg Time</CardTitle>
+                  <CardTitle className="text-lg">Total Options</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">4.2m</div>
-                  <p className="text-sm text-muted-foreground">To complete</p>
+                  <div className="text-3xl font-bold">
+                    {onboardingQuestions.reduce((total, q) => total + (q.options?.length || 0), 0)}
+                  </div>
+                  <p className="text-sm text-muted-foreground">Answer choices</p>
                 </CardContent>
               </Card>
               
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Most Common Tier</CardTitle>
+                  <CardTitle className="text-lg">Avg Options per Question</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="font-semibold">User 1</div>
-                  <p className="text-sm text-muted-foreground">67% assignment rate</p>
+                  <div className="text-3xl font-bold">
+                    {onboardingQuestions.length > 0 
+                      ? (onboardingQuestions.reduce((total, q) => total + (q.options?.length || 0), 0) / onboardingQuestions.length).toFixed(1)
+                      : '0'
+                    }
+                  </div>
+                  <p className="text-sm text-muted-foreground">Options per question</p>
                 </CardContent>
               </Card>
               
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Top Character</CardTitle>
+                  <CardTitle className="text-lg">Last Updated</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="font-semibold">The Deserving One</div>
-                  <p className="text-sm text-muted-foreground">18% assignment rate</p>
+                  <div className="font-semibold">Live Data</div>
+                  <p className="text-sm text-muted-foreground">From API source</p>
                 </CardContent>
               </Card>
             </div>
 
             <Card>
               <CardHeader>
-                <CardTitle>Question Performance</CardTitle>
+                <CardTitle>Question Overview</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Question</TableHead>
-                      <TableHead>Responses</TableHead>
-                      <TableHead>Skip Rate</TableHead>
-                      <TableHead>Avg Time</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {onboardingQuestions.slice(0, 3).map((question) => (
-                      <TableRow key={question.id}>
-                        <TableCell className="max-w-md">
-                          <p className="text-sm truncate">{question.question}</p>
-                        </TableCell>
-                        <TableCell>{question.usageCount}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">
-                            {Math.floor(Math.random() * 10) + 2}%
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {(Math.random() * 2 + 1).toFixed(1)}m
-                        </TableCell>
+                {loading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                    <span>Loading analytics...</span>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Question</TableHead>
+                        <TableHead>Display Order</TableHead>
+                        <TableHead>Options Count</TableHead>
+                        <TableHead>Question ID</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {onboardingQuestions.map((question) => (
+                        <TableRow key={question.id}>
+                          <TableCell className="max-w-md">
+                            <p className="text-sm truncate">{question.text}</p>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">#{question.displayOrder}</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">
+                              {question.options?.length || 0} options
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-mono text-xs text-muted-foreground">
+                              {question.id?.substring(0, 8)}...
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

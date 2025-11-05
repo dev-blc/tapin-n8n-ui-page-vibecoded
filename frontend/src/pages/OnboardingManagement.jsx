@@ -941,14 +941,22 @@ export const OnboardingManagement = () => {
                   <CardContent>
                     <div className="space-y-2">
                       {selectedQuestion.options?.map((option, index) => (
-                        <div key={option.id || index} className="flex items-center justify-between p-3 border rounded-lg">
-                          <div className="flex-1">
+                        <div key={option.id || index} className="grid grid-cols-4 gap-4 p-3 border rounded-lg">
+                          <div>
                             <div className="flex items-center space-x-2">
                               <Badge variant="outline" className="text-xs">
                                 #{option.displayOrder}
                               </Badge>
-                              <p className="text-sm">{option.text}</p>
+                              <p className="text-sm font-medium">{option.optionText || option.text}</p>
                             </div>
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Tier:</Label>
+                            <p className="text-sm">{option.assignsTier || 'Not assigned'}</p>
+                          </div>
+                          <div>
+                            <Label className="text-xs text-muted-foreground">Character:</Label>
+                            <p className="text-sm">{option.assignsCharacterId || 'Not assigned'}</p>
                           </div>
                           <div className="text-xs text-muted-foreground font-mono">
                             {option.id?.substring(0, 8)}...

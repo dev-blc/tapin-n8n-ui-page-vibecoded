@@ -72,8 +72,8 @@ export const OnboardingManagement = () => {
     ]
   });
 
-  // API configuration
-  const API_BASE_URL = 'https://miraculous-enjoyment-production.up.railway.app/api';
+  // API configuration - Updated to new admin service
+  const API_BASE_URL = 'https://admin-service-production-9d00.up.railway.app';
   
   // Fetch onboarding questions from API
   useEffect(() => {
@@ -83,9 +83,9 @@ export const OnboardingManagement = () => {
   const fetchOnboardingQuestions = async () => {
     try {
       setLoading(true);
-      // Try the correct API endpoint based on the swagger docs
-      const response = await axios.get(`${API_BASE_URL}/users/onboarding-questions`);
-      setOnboardingQuestions(response.data.questions || []);
+      // Use the correct API endpoint from the new admin service
+      const response = await axios.get(`${API_BASE_URL}/admin/onboarding/questions`);
+      setOnboardingQuestions(response.data || []);
       toast.success('Questions loaded successfully');
     } catch (error) {
       console.error('Error fetching onboarding questions:', error);
@@ -94,7 +94,6 @@ export const OnboardingManagement = () => {
       
       // For demo purposes, show some example data if API fails
       if (error.response?.status === 404) {
-        // Use mock data as fallback to show functionality
         toast.info('Using demo data - API endpoint may need configuration');
       }
     } finally {

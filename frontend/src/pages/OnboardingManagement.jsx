@@ -876,7 +876,8 @@ export const OnboardingManagement = () => {
                 <p className="text-sm text-muted-foreground">
                   <strong>Note:</strong> This will create a new question with associated options. 
                   The display order will be automatically set to appear after existing questions.
-                  Each option can optionally assign users to different tiers and character personas.
+                  Each option <strong>must</strong> have a tier assignment. Character assignment is optional.
+                  If creation fails, any partial changes will be automatically rolled back.
                 </p>
               </div>
               

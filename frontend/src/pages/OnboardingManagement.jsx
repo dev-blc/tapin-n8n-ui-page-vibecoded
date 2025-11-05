@@ -1037,7 +1037,12 @@ export const OnboardingManagement = () => {
                           </div>
                           <div>
                             <Label className="text-xs text-muted-foreground">Character:</Label>
-                            <p className="text-sm">{option.assignsCharacterId || 'Not assigned'}</p>
+                            <p className="text-sm">
+                              {option.assignsCharacterId ? 
+                                (Object.keys(characterMap).find(name => characterMap[name] === option.assignsCharacterId) || `ID: ${option.assignsCharacterId}`) : 
+                                'Not assigned'
+                              }
+                            </p>
                           </div>
                           <div className="text-xs text-muted-foreground font-mono">
                             {option.id?.substring(0, 8)}...

@@ -169,7 +169,7 @@ export const OnboardingManagement = () => {
       // STEP 2: Create options (with rollback if any fail)
       try {
         const optionPromises = validOptions.map((option, index) => {
-          const characterId = option.characterName ? characterMap[option.characterName] : '';
+          const characterId = (option.characterName && option.characterName !== "none") ? characterMap[option.characterName] : '';
           
           return axios.post(`${API_BASE_URL}/admin/onboarding/options`, {
             questionId: createdQuestionId,

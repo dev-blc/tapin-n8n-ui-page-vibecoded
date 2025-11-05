@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,7 +39,9 @@ import {
   Users,
   Target,
   Heart,
-  Send
+  Send,
+  Trash2,
+  Loader2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -47,6 +49,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
+import axios from 'axios';
 
 export const OnboardingManagement = () => {
   const [selectedQuestion, setSelectedQuestion] = useState(null);

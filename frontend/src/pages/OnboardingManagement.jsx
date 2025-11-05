@@ -799,8 +799,9 @@ export const OnboardingManagement = () => {
 
               <div className="bg-muted/50 p-3 rounded-lg">
                 <p className="text-sm text-muted-foreground">
-                  <strong>Note:</strong> This will create a new question that will be added to the onboarding flow. 
+                  <strong>Note:</strong> This will create a new question with associated options. 
                   The display order will be automatically set to appear after existing questions.
+                  Each option can optionally assign users to different tiers and character personas.
                 </p>
               </div>
               

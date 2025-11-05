@@ -837,10 +837,11 @@ export const OnboardingManagement = () => {
                     <div className="space-y-1">
                       <Label className="text-xs">Character (Optional)</Label>
                       <Select 
-                        value={option.characterName} 
+                        value={option.characterName || "none"} 
                         onValueChange={(value) => {
-                          updateOptionText(index, 'characterName', value);
-                          updateOptionText(index, 'assignsCharacterId', characterMap[value] || '');
+                          const characterName = value === "none" ? "" : value;
+                          updateOptionText(index, 'characterName', characterName);
+                          updateOptionText(index, 'assignsCharacterId', characterName ? characterMap[characterName] : '');
                         }}
                       >
                         <SelectTrigger>

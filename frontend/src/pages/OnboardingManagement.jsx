@@ -56,9 +56,136 @@ export const OnboardingManagement = () => {
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSendAffirmationOpen, setIsSendAffirmationOpen] = useState(false);
+  const [onboardingQuestions, setOnboardingQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  
+  // Form state for new question
+  const [newQuestion, setNewQuestion] = useState({
+    text: '',
+    displayOrder: 1,
+    options: [
+      { text: '', displayOrder: 1 },
+      { text: '', displayOrder: 2 },
+      { text: '', displayOrder: 3 },
+      { text: '', displayOrder: 4 }
+    ]
+  });
 
-  // Mock onboarding questions data
-  const onboardingQuestions = [
+  // API configuration
+  const API_BASE_URL = 'https://miraculous-enjoyment-production.up.railway.app/api';
+  
+  // Fetch onboarding questions from API
+  useEffect(() => {
+    fetchOnboardingQuestions();
+  }, []);
+
+  const fetchOnboardingQuestions = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(`${API_BASE_URL}/Users/onboarding-questions`);
+      setOnboardingQuestions(response.data.questions || []);
+      toast.success('Questions loaded successfully');
+    } catch (error) {
+      console.error('Error fetching onboarding questions:', error);
+      toast.error('Failed to load onboarding questions');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Create new onboarding question
+  const createQuestion = async () => {
+    try {
+      setSubmitting(true);
+      
+      // Validate form
+      if (!newQuestion.text.trim()) {
+        toast.error('Question text is required');
+        return;
+      }
+      
+      const validOptions = newQuestion.options.filter(opt => opt.text.trim());
+      if (validOptions.length < 2) {
+        toast.error('At least 2 options are required');
+        return;
+      }
+
+      // Prepare API payload
+      const payload = {
+        text: newQuestion.text.trim(),
+        displayOrder: Math.max(...onboardingQuestions.map(q => q.displayOrder), 0) + 1,
+        options: validOptions.map((option, index) => ({
+          text: option.text.trim(),
+          displayOrder: index + 1
+        }))
+      };
+
+      const response = await axios.post(`${API_BASE_URL}/Users/onboarding-questions`, payload);
+      
+      // Refresh questions list
+      await fetchOnboardingQuestions();
+      
+      // Reset form and close modal
+      setNewQuestion({
+        text: '',
+        displayOrder: 1,
+        options: [
+          { text: '', displayOrder: 1 },
+          { text: '', displayOrder: 2 },
+          { text: '', displayOrder: 3 },
+          { text: '', displayOrder: 4 }
+        ]
+      });
+      setIsCreateModalOpen(false);
+      
+      toast.success('Question created successfully');
+    } catch (error) {
+      console.error('Error creating question:', error);
+      toast.error('Failed to create question: ' + (error.response?.data?.message || error.message));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Delete question
+  const deleteQuestion = async (questionId) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/Users/onboarding-questions/${questionId}`);
+      await fetchOnboardingQuestions();
+      toast.success('Question deleted successfully');
+    } catch (error) {
+      console.error('Error deleting question:', error);
+      toast.error('Failed to delete question');
+    }
+  };
+
+  // Handle option text change
+  const updateOptionText = (optionIndex, text) => {
+    const updatedOptions = [...newQuestion.options];
+    updatedOptions[optionIndex] = { ...updatedOptions[optionIndex], text };
+    setNewQuestion({ ...newQuestion, options: updatedOptions });
+  };
+
+  // Add new option
+  const addOption = () => {
+    const newOptions = [...newQuestion.options, { 
+      text: '', 
+      displayOrder: newQuestion.options.length + 1 
+    }];
+    setNewQuestion({ ...newQuestion, options: newOptions });
+  };
+
+  // Remove option
+  const removeOption = (optionIndex) => {
+    if (newQuestion.options.length > 2) {
+      const updatedOptions = newQuestion.options.filter((_, index) => index !== optionIndex);
+      setNewQuestion({ ...newQuestion, options: updatedOptions });
+    }
+  };
+
+  // Mock data for other sections (keeping existing mock data for other features)
+  const mockOnboardingQuestions = [
     {
       id: 'OB-001',
       question: 'When you feel overwhelmed, what do you typically do first?',

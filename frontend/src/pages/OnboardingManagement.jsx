@@ -60,16 +60,30 @@ export const OnboardingManagement = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   
+  // Character mapping - name to ID
+  const characterMap = {
+    'The Deserving One': '1',
+    'The Capable One': '2', 
+    'The Magnetic One': '3',
+    'The Grounded One': '4',
+    'The Expressed One': '5',
+    'The Soft One': '6',
+    'The Intuitive One': '7',
+    'The Liberated One': '8',
+    'The Powerful One': '9',
+    'The Surrendered One': '10'
+  };
+
   // Form state for new question - Updated to match new API schema
   const [newQuestion, setNewQuestion] = useState({
     text: '',
     displayOrder: 1,
     isActive: true,
     options: [
-      { optionText: '', displayOrder: 1, assignsTier: '', assignsCharacterId: '' },
-      { optionText: '', displayOrder: 2, assignsTier: '', assignsCharacterId: '' },
-      { optionText: '', displayOrder: 3, assignsTier: '', assignsCharacterId: '' },
-      { optionText: '', displayOrder: 4, assignsTier: '', assignsCharacterId: '' }
+      { optionText: '', displayOrder: 1, assignsTier: '', characterName: '', assignsCharacterId: '' },
+      { optionText: '', displayOrder: 2, assignsTier: '', characterName: '', assignsCharacterId: '' },
+      { optionText: '', displayOrder: 3, assignsTier: '', characterName: '', assignsCharacterId: '' },
+      { optionText: '', displayOrder: 4, assignsTier: '', characterName: '', assignsCharacterId: '' }
     ]
   });
 

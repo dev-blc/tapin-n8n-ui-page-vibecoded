@@ -129,7 +129,7 @@ export const OnboardingManagement = () => {
         }))
       };
 
-      const response = await axios.post(`${API_BASE_URL}/Users/onboarding-questions`, payload);
+      const response = await axios.post(`${API_BASE_URL}/users/onboarding-questions`, payload);
       
       // Refresh questions list
       await fetchOnboardingQuestions();

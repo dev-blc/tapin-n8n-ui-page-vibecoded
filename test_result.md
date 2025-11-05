@@ -249,7 +249,7 @@ test_plan:
   current_focus: []
   stuck_tasks: []
   test_all: false
-  test_priority: "completed"
+  test_priority: "new_api_integration_verified"
 
 agent_communication:
     - agent: "testing"

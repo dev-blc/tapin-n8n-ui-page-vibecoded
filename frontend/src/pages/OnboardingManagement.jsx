@@ -168,10 +168,10 @@ export const OnboardingManagement = () => {
     }
   };
 
-  // Delete question
+  // Delete question - Updated for new API
   const deleteQuestion = async (questionId) => {
     try {
-      await axios.delete(`${API_BASE_URL}/users/onboarding-questions/${questionId}`);
+      await axios.delete(`${API_BASE_URL}/admin/onboarding/questions/${questionId}`);
       await fetchOnboardingQuestions();
       toast.success('Question deleted successfully');
     } catch (error) {

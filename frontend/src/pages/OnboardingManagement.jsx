@@ -749,26 +749,50 @@ export const OnboardingManagement = () => {
                 </div>
                 
                 {newQuestion.options.map((option, index) => (
-                  <div key={index} className="flex items-center gap-2 p-3 border rounded-lg">
-                    <div className="flex-1 space-y-1">
+                  <div key={index} className="grid grid-cols-4 gap-2 p-3 border rounded-lg">
+                    <div className="space-y-1">
                       <Label className="text-xs">Option {index + 1}</Label>
                       <Input 
-                        value={option.text}
-                        onChange={(e) => updateOptionText(index, e.target.value)}
+                        value={option.optionText}
+                        onChange={(e) => updateOptionText(index, 'optionText', e.target.value)}
                         placeholder="Enter answer option"
                       />
                     </div>
-                    {newQuestion.options.length > 2 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeOption(index)}
-                        className="mt-6"
-                      >
-                        <Trash2 className="h-4 w-4 text-destructive" />
-                      </Button>
-                    )}
+                    <div className="space-y-1">
+                      <Label className="text-xs">Assigns Tier</Label>
+                      <Select value={option.assignsTier} onValueChange={(value) => updateOptionText(index, 'assignsTier', value)}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select tier" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Tier 1</SelectItem>
+                          <SelectItem value="1A">Tier 1A</SelectItem>
+                          <SelectItem value="2">Tier 2</SelectItem>
+                          <SelectItem value="2A">Tier 2A</SelectItem>
+                          <SelectItem value="3">Tier 3</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Character ID</Label>
+                      <Input 
+                        value={option.assignsCharacterId}
+                        onChange={(e) => updateOptionText(index, 'assignsCharacterId', e.target.value)}
+                        placeholder="Character ID (optional)"
+                      />
+                    </div>
+                    <div className="flex items-end">
+                      {newQuestion.options.length > 2 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeOption(index)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
                 ))}
               </div>

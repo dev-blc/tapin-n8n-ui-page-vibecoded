@@ -116,12 +116,17 @@ export const OnboardingManagement = () => {
     }
   };
 
-  // Create new onboarding question - Updated for new API schema
+  // Create new onboarding question - Fixed with proper error handling
   const createQuestion = async () => {
+    // Prevent multiple submissions
+    if (submitting) {
+      return;
+    }
+
     try {
       setSubmitting(true);
       
-      // Validate form
+      // VALIDATION PHASE - Check all requirements before making ANY API calls
       if (!newQuestion.text.trim()) {
         toast.error('Question text is required');
         return;
@@ -133,50 +138,90 @@ export const OnboardingManagement = () => {
         return;
       }
 
-      // Step 1: Create the question using the new API schema
+      // Validate tier assignments
+      const invalidTiers = validOptions.filter(opt => !opt.assignsTier);
+      if (invalidTiers.length > 0) {
+        toast.error('All options must have a tier assignment');
+        return;
+      }
+
+      // STEP 1: Create the question (with rollback capability)
       const questionPayload = {
         text: newQuestion.text.trim(),
         displayOrder: Math.max(...onboardingQuestions.map(q => q.displayOrder), 0) + 1,
         isActive: newQuestion.isActive
       };
 
-      const questionResponse = await axios.post(`${API_BASE_URL}/admin/onboarding/questions`, questionPayload);
-      const createdQuestionId = questionResponse.data.id;
+      let createdQuestionId = null;
       
-      // Step 2: Create each option separately using the new API
-      const optionPromises = validOptions.map((option, index) =>
-        axios.post(`${API_BASE_URL}/admin/onboarding/options`, {
-          questionId: createdQuestionId,
-          optionText: option.optionText.trim(),
-          assignsTier: option.assignsTier || '1', // Default tier if not specified
-          assignsCharacterId: option.assignsCharacterId || '', // Optional character assignment
-          displayOrder: index + 1
-        })
-      );
+      try {
+        const questionResponse = await axios.post(`${API_BASE_URL}/admin/onboarding/questions`, questionPayload);
+        createdQuestionId = questionResponse.data.id;
+        
+        if (!createdQuestionId) {
+          throw new Error('Question created but no ID returned');
+        }
+      } catch (questionError) {
+        console.error('Failed to create question:', questionError);
+        throw new Error('Failed to create question: ' + (questionError.response?.data?.message || questionError.message));
+      }
+      
+      // STEP 2: Create options (with rollback if any fail)
+      try {
+        const optionPromises = validOptions.map((option, index) => {
+          const characterId = option.characterName ? characterMap[option.characterName] : '';
+          
+          return axios.post(`${API_BASE_URL}/admin/onboarding/options`, {
+            questionId: createdQuestionId,
+            optionText: option.optionText.trim(),
+            assignsTier: option.assignsTier,
+            assignsCharacterId: characterId,
+            displayOrder: index + 1
+          });
+        });
 
-      await Promise.all(optionPromises);
+        await Promise.all(optionPromises);
+      } catch (optionError) {
+        console.error('Failed to create options, attempting to rollback question:', optionError);
+        
+        // Try to rollback the created question
+        try {
+          await axios.delete(`${API_BASE_URL}/admin/onboarding/questions/${createdQuestionId}`);
+          console.log('Successfully rolled back question');
+        } catch (rollbackError) {
+          console.error('Failed to rollback question:', rollbackError);
+        }
+        
+        throw new Error('Failed to create options: ' + (optionError.response?.data?.message || optionError.message));
+      }
       
-      // Refresh questions list
-      await fetchOnboardingQuestions();
+      // STEP 3: Success - Update UI
+      try {
+        await fetchOnboardingQuestions();
+        
+        // Reset form and close modal
+        setNewQuestion({
+          text: '',
+          displayOrder: 1,
+          isActive: true,
+          options: [
+            { optionText: '', displayOrder: 1, assignsTier: '', characterName: '', assignsCharacterId: '' },
+            { optionText: '', displayOrder: 2, assignsTier: '', characterName: '', assignsCharacterId: '' },
+            { optionText: '', displayOrder: 3, assignsTier: '', characterName: '', assignsCharacterId: '' },
+            { optionText: '', displayOrder: 4, assignsTier: '', characterName: '', assignsCharacterId: '' }
+          ]
+        });
+        setIsCreateModalOpen(false);
+        
+        toast.success('Question and options created successfully');
+      } catch (refreshError) {
+        console.error('Failed to refresh questions:', refreshError);
+        toast.warning('Question created but failed to refresh list. Please refresh manually.');
+      }
       
-      // Reset form and close modal
-      setNewQuestion({
-        text: '',
-        displayOrder: 1,
-        isActive: true,
-        options: [
-          { optionText: '', displayOrder: 1, assignsTier: '', assignsCharacterId: '' },
-          { optionText: '', displayOrder: 2, assignsTier: '', assignsCharacterId: '' },
-          { optionText: '', displayOrder: 3, assignsTier: '', assignsCharacterId: '' },
-          { optionText: '', displayOrder: 4, assignsTier: '', assignsCharacterId: '' }
-        ]
-      });
-      setIsCreateModalOpen(false);
-      
-      toast.success('Question and options created successfully');
     } catch (error) {
-      console.error('Error creating question:', error);
-      toast.error('Failed to create question: ' + (error.response?.data?.message || error.message));
+      console.error('Error in createQuestion:', error);
+      toast.error(error.message || 'Failed to create question');
     } finally {
       setSubmitting(false);
     }

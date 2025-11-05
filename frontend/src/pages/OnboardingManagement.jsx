@@ -180,18 +180,20 @@ export const OnboardingManagement = () => {
     }
   };
 
-  // Handle option text change
-  const updateOptionText = (optionIndex, text) => {
+  // Handle option text change - Updated for new schema
+  const updateOptionText = (optionIndex, field, value) => {
     const updatedOptions = [...newQuestion.options];
-    updatedOptions[optionIndex] = { ...updatedOptions[optionIndex], text };
+    updatedOptions[optionIndex] = { ...updatedOptions[optionIndex], [field]: value };
     setNewQuestion({ ...newQuestion, options: updatedOptions });
   };
 
   // Add new option
   const addOption = () => {
     const newOptions = [...newQuestion.options, { 
-      text: '', 
-      displayOrder: newQuestion.options.length + 1 
+      optionText: '', 
+      displayOrder: newQuestion.options.length + 1,
+      assignsTier: '',
+      assignsCharacterId: ''
     }];
     setNewQuestion({ ...newQuestion, options: newOptions });
   };

@@ -252,6 +252,7 @@ export const OnboardingManagement = () => {
       optionText: '', 
       displayOrder: newQuestion.options.length + 1,
       assignsTier: '',
+      characterName: '',
       assignsCharacterId: ''
     }];
     setNewQuestion({ ...newQuestion, options: newOptions });

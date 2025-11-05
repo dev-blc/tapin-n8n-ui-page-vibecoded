@@ -847,7 +847,7 @@ export const OnboardingManagement = () => {
                           <SelectValue placeholder="Select character" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                           {Object.keys(characterMap).map((characterName) => (
                             <SelectItem key={characterName} value={characterName}>
                               {characterName}

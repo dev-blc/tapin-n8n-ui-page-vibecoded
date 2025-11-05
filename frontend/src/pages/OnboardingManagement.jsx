@@ -811,17 +811,18 @@ export const OnboardingManagement = () => {
                 {newQuestion.options.map((option, index) => (
                   <div key={index} className="grid grid-cols-4 gap-2 p-3 border rounded-lg">
                     <div className="space-y-1">
-                      <Label className="text-xs">Option {index + 1}</Label>
+                      <Label className="text-xs">Option {index + 1} *</Label>
                       <Input 
                         value={option.optionText}
                         onChange={(e) => updateOptionText(index, 'optionText', e.target.value)}
                         placeholder="Enter answer option"
+                        className={!option.optionText.trim() && newQuestion.options.filter(opt => opt.optionText.trim()).length < 2 ? 'border-destructive' : ''}
                       />
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Assigns Tier</Label>
+                      <Label className="text-xs">Assigns Tier *</Label>
                       <Select value={option.assignsTier} onValueChange={(value) => updateOptionText(index, 'assignsTier', value)}>
-                        <SelectTrigger>
+                        <SelectTrigger className={!option.assignsTier ? 'border-destructive' : ''}>
                           <SelectValue placeholder="Select tier" />
                         </SelectTrigger>
                         <SelectContent>
@@ -834,12 +835,26 @@ export const OnboardingManagement = () => {
                       </Select>
                     </div>
                     <div className="space-y-1">
-                      <Label className="text-xs">Character ID</Label>
-                      <Input 
-                        value={option.assignsCharacterId}
-                        onChange={(e) => updateOptionText(index, 'assignsCharacterId', e.target.value)}
-                        placeholder="Character ID (optional)"
-                      />
+                      <Label className="text-xs">Character (Optional)</Label>
+                      <Select 
+                        value={option.characterName} 
+                        onValueChange={(value) => {
+                          updateOptionText(index, 'characterName', value);
+                          updateOptionText(index, 'assignsCharacterId', characterMap[value] || '');
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select character" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">None</SelectItem>
+                          {Object.keys(characterMap).map((characterName) => (
+                            <SelectItem key={characterName} value={characterName}>
+                              {characterName}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="flex items-end">
                       {newQuestion.options.length > 2 && (

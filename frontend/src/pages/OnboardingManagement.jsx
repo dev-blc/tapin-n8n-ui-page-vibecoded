@@ -188,13 +188,13 @@ export const OnboardingManagement = () => {
   const mockOnboardingQuestions = [
     {
       id: 'OB-001',
-      question: 'When you feel overwhelmed, what do you typically do first?',
+      text: 'When you feel overwhelmed, what do you typically do first?',
       type: 'Multiple Choice',
       options: [
-        'Take deep breaths and try to calm down',
-        'Make a list to organize my thoughts', 
-        'Talk to someone I trust',
-        'Take a break or step away from the situation'
+        { text: 'Take deep breaths and try to calm down', displayOrder: 1 },
+        { text: 'Make a list to organize my thoughts', displayOrder: 2 }, 
+        { text: 'Talk to someone I trust', displayOrder: 3 },
+        { text: 'Take a break or step away from the situation', displayOrder: 4 }
       ],
       tierAssignments: {
         'Take deep breaths and try to calm down': 'User 1',

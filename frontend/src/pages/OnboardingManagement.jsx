@@ -671,59 +671,82 @@ export const OnboardingManagement = () => {
             
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="question">Question Text</Label>
+                <Label htmlFor="question">Question Text *</Label>
                 <Textarea 
+                  value={newQuestion.text}
+                  onChange={(e) => setNewQuestion({ ...newQuestion, text: e.target.value })}
                   placeholder="What question will help determine the user's tier and character?"
                   rows={3}
                 />
               </div>
               
               <div className="space-y-2">
-                <Label>Answer Options & Assignments</Label>
-                {[1, 2, 3, 4].map((index) => (
-                  <div key={index} className="grid grid-cols-3 gap-2 p-3 border rounded-lg">
-                    <div className="space-y-1">
-                      <Label className="text-xs">Option {index}</Label>
-                      <Input placeholder="Answer option text" />
+                <div className="flex items-center justify-between">
+                  <Label>Answer Options * (minimum 2 required)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addOption}
+                    disabled={newQuestion.options.length >= 8}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Option
+                  </Button>
+                </div>
+                
+                {newQuestion.options.map((option, index) => (
+                  <div key={index} className="flex items-center gap-2 p-3 border rounded-lg">
+                    <div className="flex-1 space-y-1">
+                      <Label className="text-xs">Option {index + 1}</Label>
+                      <Input 
+                        value={option.text}
+                        onChange={(e) => updateOptionText(index, e.target.value)}
+                        placeholder="Enter answer option"
+                      />
                     </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Assigns Tier</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select tier" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="user1">User 1</SelectItem>
-                          <SelectItem value="user2">User 2</SelectItem>
-                          <SelectItem value="user3">User 3</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs">Assigns Character</Label>
-                      <Select>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select character" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {characterTypes.slice(0, 4).map((character) => (
-                            <SelectItem key={character} value={character.toLowerCase().replace(/\s+/g, '-')}>
-                              {character}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    {newQuestion.options.length > 2 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeOption(index)}
+                        className="mt-6"
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>
+
+              <div className="bg-muted/50 p-3 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Note:</strong> This will create a new question that will be added to the onboarding flow. 
+                  The display order will be automatically set to appear after existing questions.
+                </p>
+              </div>
               
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+                <Button 
+                  variant="outline" 
+                  onClick={() => setIsCreateModalOpen(false)}
+                  disabled={submitting}
+                >
                   Cancel
                 </Button>
-                <Button onClick={() => setIsCreateModalOpen(false)}>
-                  Create Question
+                <Button 
+                  onClick={createQuestion}
+                  disabled={submitting || !newQuestion.text.trim()}
+                >
+                  {submitting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    'Create Question'
+                  )}
                 </Button>
               </div>
             </div>

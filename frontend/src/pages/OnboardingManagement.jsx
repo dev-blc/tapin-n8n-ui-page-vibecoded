@@ -60,15 +60,16 @@ export const OnboardingManagement = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   
-  // Form state for new question
+  // Form state for new question - Updated to match new API schema
   const [newQuestion, setNewQuestion] = useState({
     text: '',
     displayOrder: 1,
+    isActive: true,
     options: [
-      { text: '', displayOrder: 1 },
-      { text: '', displayOrder: 2 },
-      { text: '', displayOrder: 3 },
-      { text: '', displayOrder: 4 }
+      { optionText: '', displayOrder: 1, assignsTier: '', assignsCharacterId: '' },
+      { optionText: '', displayOrder: 2, assignsTier: '', assignsCharacterId: '' },
+      { optionText: '', displayOrder: 3, assignsTier: '', assignsCharacterId: '' },
+      { optionText: '', displayOrder: 4, assignsTier: '', assignsCharacterId: '' }
     ]
   });
 

@@ -324,6 +324,19 @@ export const OnboardingManagement = () => {
           <Button 
             variant="outline" 
             size="sm"
+            onClick={fetchOnboardingQuestions}
+            disabled={loading}
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Search className="h-4 w-4 mr-2" />
+            )}
+            Refresh
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
             onClick={() => setIsSendAffirmationOpen(true)}
           >
             <Send className="h-4 w-4 mr-2" />

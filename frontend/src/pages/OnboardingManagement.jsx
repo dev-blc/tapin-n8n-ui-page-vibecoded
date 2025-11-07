@@ -169,15 +169,27 @@ export const OnboardingManagement = () => {
       // STEP 2: Create options (with rollback if any fail)
       try {
         const optionPromises = validOptions.map((option, index) => {
-          const characterId = (option.characterName && option.characterName !== "none") ? characterMap[option.characterName] : '';
+          // Handle character ID properly - API expects UUID or empty string
+          let characterId = '';
+          if (option.characterName && option.characterName !== "none" && characterMap[option.characterName]) {
+            characterId = characterMap[option.characterName];
+          }
           
-          return axios.post(`${API_BASE_URL}/admin/onboarding/options`, {
+          const payload = {
             questionId: createdQuestionId,
             optionText: option.optionText.trim(),
             assignsTier: option.assignsTier,
-            assignsCharacterId: characterId,
             displayOrder: index + 1
-          });
+          };
+
+          // Only include assignsCharacterId if we have a valid UUID
+          if (characterId) {
+            payload.assignsCharacterId = characterId;
+          }
+          
+          console.log('Creating option with payload:', payload);
+          
+          return axios.post(`${API_BASE_URL}/admin/onboarding/options`, payload);
         });
 
         await Promise.all(optionPromises);

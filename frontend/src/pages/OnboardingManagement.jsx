@@ -851,13 +851,18 @@ export const OnboardingManagement = () => {
                       <Select 
                         value={option.characterName || "none"} 
                         onValueChange={(value) => {
+                          console.log('Character selected:', value);
                           const characterName = value === "none" ? "" : value;
                           updateOptionText(index, 'characterName', characterName);
-                          updateOptionText(index, 'assignsCharacterId', characterName ? characterMap[characterName] : '');
+                          // Update the UUID in assignsCharacterId
+                          const characterUUID = characterName && characterMap[characterName] ? characterMap[characterName] : '';
+                          updateOptionText(index, 'assignsCharacterId', characterUUID);
                         }}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select character" />
+                          <SelectValue placeholder="Select character">
+                            {option.characterName || "None"}
+                          </SelectValue>
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">None</SelectItem>

@@ -60,18 +60,18 @@ export const OnboardingManagement = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   
-  // Character mapping - name to ID
+  // Character mapping - name to UUID (using proper UUID format)
   const characterMap = {
-    'The Deserving One': '1',
-    'The Capable One': '2', 
-    'The Magnetic One': '3',
-    'The Grounded One': '4',
-    'The Expressed One': '5',
-    'The Soft One': '6',
-    'The Intuitive One': '7',
-    'The Liberated One': '8',
-    'The Powerful One': '9',
-    'The Surrendered One': '10'
+    'The Deserving One': '7cb764de-f38c-4fb4-ac66-60427c0620e1',
+    'The Capable One': '8db764de-f38c-4fb4-ac66-60427c0620e2', 
+    'The Magnetic One': '9eb764de-f38c-4fb4-ac66-60427c0620e3',
+    'The Grounded One': 'afc764de-f38c-4fb4-ac66-60427c0620e4',
+    'The Expressed One': 'bfd764de-f38c-4fb4-ac66-60427c0620e5',
+    'The Soft One': 'c0e764de-f38c-4fb4-ac66-60427c0620e6',
+    'The Intuitive One': 'd1f764de-f38c-4fb4-ac66-60427c0620e7',
+    'The Liberated One': 'e20764de-f38c-4fb4-ac66-60427c0620e8',
+    'The Powerful One': 'f31764de-f38c-4fb4-ac66-60427c0620e9',
+    'The Surrendered One': '042764de-f38c-4fb4-ac66-60427c0620ea'
   };
 
   // Form state for new question - Updated to match new API schema

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,29 +50,40 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
-import axios from 'axios';
+import { useOnboardingQuestions, useQuestionMutation, useOptionMutation, useCharacterMapping } from '@/hooks/useOnboarding';
+import { FullPageLoader, TableSkeleton } from '@/components/loading/LoadingSpinner';
 
 export const OnboardingManagement = () => {
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isSendAffirmationOpen, setIsSendAffirmationOpen] = useState(false);
-  const [onboardingQuestions, setOnboardingQuestions] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  
-  // Character mapping - name to UUID (using proper UUID format)
-  const characterMap = {
-    'The Deserving One': '7cb764de-f38c-4fb4-ac66-60427c0620e1',
-    'The Capable One': '8db764de-f38c-4fb4-ac66-60427c0620e2', 
-    'The Magnetic One': '9eb764de-f38c-4fb4-ac66-60427c0620e3',
-    'The Grounded One': 'afc764de-f38c-4fb4-ac66-60427c0620e4',
-    'The Expressed One': 'bfd764de-f38c-4fb4-ac66-60427c0620e5',
-    'The Soft One': 'c0e764de-f38c-4fb4-ac66-60427c0620e6',
-    'The Intuitive One': 'd1f764de-f38c-4fb4-ac66-60427c0620e7',
-    'The Liberated One': 'e20764de-f38c-4fb4-ac66-60427c0620e8',
-    'The Powerful One': 'f31764de-f38c-4fb4-ac66-60427c0620e9',
-    'The Surrendered One': '042764de-f38c-4fb4-ac66-60427c0620ea'
-  };
+
+  // Fetch data using hooks
+  const { data: onboardingQuestionsData, loading, error, refetch } = useOnboardingQuestions({ showErrorToast: false });
+  const { data: characterMappings = [], loading: characterMappingLoading } = useCharacterMapping({ showErrorToast: false });
+  const { createQuestion: createQuestionMutation, deleteQuestion: deleteQuestionMutation } = useQuestionMutation({
+    onSuccess: () => {
+      refetch();
+    },
+  });
+  const { createOption: createOptionMutation } = useOptionMutation();
+
+  // Ensure onboardingQuestions is always an array
+  const onboardingQuestions = Array.isArray(onboardingQuestionsData) ? onboardingQuestionsData : [];
+
+  // Build character map from API data - handle null/undefined safely
+  const characterMap = React.useMemo(() => {
+    if (!characterMappings || !Array.isArray(characterMappings)) {
+      return {};
+    }
+    return characterMappings.reduce((acc, char) => {
+      if (char && char.name && char.id) {
+        acc[char.name] = char.id;
+      }
+      return acc;
+    }, {});
+  }, [characterMappings]);
 
   // Form state for new question - Updated to match new API schema
   const [newQuestion, setNewQuestion] = useState({
@@ -87,36 +98,7 @@ export const OnboardingManagement = () => {
     ]
   });
 
-  // API configuration - Updated to new admin service
-  const API_BASE_URL = 'https://admin-service-production-9d00.up.railway.app';
-  
-  // Fetch onboarding questions from API
-  useEffect(() => {
-    fetchOnboardingQuestions();
-  }, []);
-
-  const fetchOnboardingQuestions = async () => {
-    try {
-      setLoading(true);
-      // Use the correct API endpoint from the new admin service
-      const response = await axios.get(`${API_BASE_URL}/admin/onboarding/questions`);
-      setOnboardingQuestions(response.data || []);
-      toast.success('Questions loaded successfully');
-    } catch (error) {
-      console.error('Error fetching onboarding questions:', error);
-      console.error('Response:', error.response?.data);
-      toast.error(`Failed to load onboarding questions: ${error.response?.status || error.message}`);
-      
-      // For demo purposes, show some example data if API fails
-      if (error.response?.status === 404) {
-        toast.info('Using demo data - API endpoint may need configuration');
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Create new onboarding question - Fixed with proper error handling
+  // Create new onboarding question - Using service layer
   const createQuestion = async () => {
     // Prevent multiple submissions
     if (submitting) {
@@ -125,13 +107,13 @@ export const OnboardingManagement = () => {
 
     try {
       setSubmitting(true);
-      
+
       // VALIDATION PHASE - Check all requirements before making ANY API calls
       if (!newQuestion.text.trim()) {
         toast.error('Question text is required');
         return;
       }
-      
+
       const validOptions = newQuestion.options.filter(opt => opt.optionText.trim());
       if (validOptions.length < 2) {
         toast.error('At least 2 options are required');
@@ -145,92 +127,61 @@ export const OnboardingManagement = () => {
         return;
       }
 
-      // STEP 1: Create the question (with rollback capability)
+      // STEP 1: Create the question
       const questionPayload = {
         text: newQuestion.text.trim(),
-        displayOrder: Math.max(...onboardingQuestions.map(q => q.displayOrder), 0) + 1,
+        displayOrder: Math.max(...onboardingQuestions.map(q => q.displayOrder || 0), 0) + 1,
         isActive: newQuestion.isActive
       };
 
-      let createdQuestionId = null;
-      
-      try {
-        const questionResponse = await axios.post(`${API_BASE_URL}/admin/onboarding/questions`, questionPayload);
-        createdQuestionId = questionResponse.data.id;
-        
-        if (!createdQuestionId) {
-          throw new Error('Question created but no ID returned');
-        }
-      } catch (questionError) {
-        console.error('Failed to create question:', questionError);
-        throw new Error('Failed to create question: ' + (questionError.response?.data?.message || questionError.message));
-      }
-      
-      // STEP 2: Create options (with rollback if any fail)
-      try {
-        const optionPromises = validOptions.map((option, index) => {
-          // Handle character ID properly - API expects UUID or empty string
-          let characterId = '';
-          if (option.characterName && option.characterName !== "none" && characterMap[option.characterName]) {
-            characterId = characterMap[option.characterName];
-          }
-          
-          const payload = {
-            questionId: createdQuestionId,
-            optionText: option.optionText.trim(),
-            assignsTier: option.assignsTier,
-            displayOrder: index + 1
-          };
+      const questionResponse = await createQuestionMutation(questionPayload, { showSuccessToast: false });
+      const createdQuestionId = questionResponse.id;
 
-          // Only include assignsCharacterId if we have a valid UUID
-          if (characterId) {
-            payload.assignsCharacterId = characterId;
-          }
-          
-          console.log('Creating option with payload:', payload);
-          
-          return axios.post(`${API_BASE_URL}/admin/onboarding/options`, payload);
-        });
+      if (!createdQuestionId) {
+        throw new Error('Question created but no ID returned');
+      }
 
-        await Promise.all(optionPromises);
-      } catch (optionError) {
-        console.error('Failed to create options, attempting to rollback question:', optionError);
-        
-        // Try to rollback the created question
-        try {
-          await axios.delete(`${API_BASE_URL}/admin/onboarding/questions/${createdQuestionId}`);
-          console.log('Successfully rolled back question');
-        } catch (rollbackError) {
-          console.error('Failed to rollback question:', rollbackError);
+      // STEP 2: Create options
+      const optionPromises = validOptions.map((option, index) => {
+        // Handle character ID properly - API expects UUID or empty string
+        let characterId = '';
+        if (option.characterName && option.characterName !== "none" && characterMap[option.characterName]) {
+          characterId = characterMap[option.characterName];
         }
-        
-        throw new Error('Failed to create options: ' + (optionError.response?.data?.message || optionError.message));
-      }
-      
-      // STEP 3: Success - Update UI
-      try {
-        await fetchOnboardingQuestions();
-        
-        // Reset form and close modal
-        setNewQuestion({
-          text: '',
-          displayOrder: 1,
-          isActive: true,
-          options: [
-            { optionText: '', displayOrder: 1, assignsTier: '', characterName: '', assignsCharacterId: '' },
-            { optionText: '', displayOrder: 2, assignsTier: '', characterName: '', assignsCharacterId: '' },
-            { optionText: '', displayOrder: 3, assignsTier: '', characterName: '', assignsCharacterId: '' },
-            { optionText: '', displayOrder: 4, assignsTier: '', characterName: '', assignsCharacterId: '' }
-          ]
-        });
-        setIsCreateModalOpen(false);
-        
-        toast.success('Question and options created successfully');
-      } catch (refreshError) {
-        console.error('Failed to refresh questions:', refreshError);
-        toast.warning('Question created but failed to refresh list. Please refresh manually.');
-      }
-      
+
+        const payload = {
+          questionId: createdQuestionId,
+          optionText: option.optionText.trim(),
+          assignsTier: option.assignsTier,
+          displayOrder: index + 1
+        };
+
+        // Only include assignsCharacterId if we have a valid UUID
+        if (characterId) {
+          payload.assignsCharacterId = characterId;
+        }
+
+        return createOptionMutation(payload, { showSuccessToast: false });
+      });
+
+      await Promise.all(optionPromises);
+
+      // STEP 3: Success - Reset form and close modal
+      setNewQuestion({
+        text: '',
+        displayOrder: 1,
+        isActive: true,
+        options: [
+          { optionText: '', displayOrder: 1, assignsTier: '', characterName: '', assignsCharacterId: '' },
+          { optionText: '', displayOrder: 2, assignsTier: '', characterName: '', assignsCharacterId: '' },
+          { optionText: '', displayOrder: 3, assignsTier: '', characterName: '', assignsCharacterId: '' },
+          { optionText: '', displayOrder: 4, assignsTier: '', characterName: '', assignsCharacterId: '' }
+        ]
+      });
+      setIsCreateModalOpen(false);
+
+      toast.success('Question and options created successfully');
+
     } catch (error) {
       console.error('Error in createQuestion:', error);
       toast.error(error.message || 'Failed to create question');
@@ -239,15 +190,12 @@ export const OnboardingManagement = () => {
     }
   };
 
-  // Delete question - Updated for new API
+  // Delete question - Using service layer
   const deleteQuestion = async (questionId) => {
     try {
-      await axios.delete(`${API_BASE_URL}/admin/onboarding/questions/${questionId}`);
-      await fetchOnboardingQuestions();
-      toast.success('Question deleted successfully');
+      await deleteQuestionMutation(questionId);
     } catch (error) {
       console.error('Error deleting question:', error);
-      toast.error('Failed to delete question');
     }
   };
 
@@ -260,8 +208,8 @@ export const OnboardingManagement = () => {
 
   // Add new option
   const addOption = () => {
-    const newOptions = [...newQuestion.options, { 
-      optionText: '', 
+    const newOptions = [...newQuestion.options, {
+      optionText: '',
       displayOrder: newQuestion.options.length + 1,
       assignsTier: '',
       characterName: '',
@@ -286,7 +234,7 @@ export const OnboardingManagement = () => {
       type: 'Multiple Choice',
       options: [
         { text: 'Take deep breaths and try to calm down', displayOrder: 1 },
-        { text: 'Make a list to organize my thoughts', displayOrder: 2 }, 
+        { text: 'Make a list to organize my thoughts', displayOrder: 2 },
         { text: 'Talk to someone I trust', displayOrder: 3 },
         { text: 'Take a break or step away from the situation', displayOrder: 4 }
       ],
@@ -415,10 +363,10 @@ export const OnboardingManagement = () => {
       subtitle="Manage assessment questions to assign user tiers and character personas"
       headerActions={
         <div className="flex space-x-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
-            onClick={fetchOnboardingQuestions}
+            onClick={refetch}
             disabled={loading}
           >
             {loading ? (
@@ -428,16 +376,16 @@ export const OnboardingManagement = () => {
             )}
             Refresh
           </Button>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             size="sm"
             onClick={() => setIsSendAffirmationOpen(true)}
           >
             <Send className="h-4 w-4 mr-2" />
             Send Affirmation
           </Button>
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             size="sm"
             onClick={() => setIsCreateModalOpen(true)}
           >
@@ -467,7 +415,7 @@ export const OnboardingManagement = () => {
                     className="pl-10 w-80"
                   />
                 </div>
-                
+
                 <Select>
                   <SelectTrigger className="w-32">
                     <SelectValue placeholder="Status" />
@@ -487,9 +435,13 @@ export const OnboardingManagement = () => {
               </CardHeader>
               <CardContent>
                 {loading ? (
-                  <div className="flex items-center justify-center py-8">
-                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
-                    <span>Loading questions...</span>
+                  <TableSkeleton rows={5} columns={6} />
+                ) : error ? (
+                  <div className="text-center py-8 text-destructive">
+                    <p>Error loading questions: {error}</p>
+                    <Button onClick={refetch} variant="outline" className="mt-4">
+                      Retry
+                    </Button>
                   </div>
                 ) : (
                   <Table>
@@ -504,7 +456,7 @@ export const OnboardingManagement = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {onboardingQuestions.map((question) => (
+                        {onboardingQuestions && onboardingQuestions.length > 0 ? onboardingQuestions.map((question) => (
                         <TableRow key={question.id}>
                           <TableCell>
                             <div className="max-w-md">
@@ -546,7 +498,7 @@ export const OnboardingManagement = () => {
                                   <Edit className="h-4 w-4 mr-2" />
                                   Edit Question
                                 </DropdownMenuItem>
-                                <DropdownMenuItem 
+                                <DropdownMenuItem
                                   onClick={() => {
                                     if (window.confirm('Are you sure you want to delete this question?')) {
                                       deleteQuestion(question.id);
@@ -561,7 +513,13 @@ export const OnboardingManagement = () => {
                             </DropdownMenu>
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            {loading ? 'Loading questions...' : 'No questions found'}
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 )}
@@ -590,7 +548,7 @@ export const OnboardingManagement = () => {
                         <Badge variant="secondary" className="text-xs">67% of new users</Badge>
                       </div>
                     </div>
-                    
+
                     <div className="p-3 border rounded-lg">
                       <div className="font-semibold text-sm">User 2 (Developing)</div>
                       <p className="text-xs text-muted-foreground mt-1">
@@ -600,7 +558,7 @@ export const OnboardingManagement = () => {
                         <Badge variant="secondary" className="text-xs">25% of new users</Badge>
                       </div>
                     </div>
-                    
+
                     <div className="p-3 border rounded-lg">
                       <div className="font-semibold text-sm">User 3 (Advanced)</div>
                       <p className="text-xs text-muted-foreground mt-1">
@@ -672,7 +630,7 @@ export const OnboardingManagement = () => {
                     </div>
                     <Badge variant="success">Delivered</Badge>
                   </div>
-                  
+
                   <div className="flex items-center justify-between p-3 border rounded-lg">
                     <div>
                       <div className="font-medium">Re-engagement Message</div>
@@ -699,7 +657,7 @@ export const OnboardingManagement = () => {
                   <p className="text-sm text-muted-foreground">Active questions</p>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Total Options</CardTitle>
@@ -711,14 +669,14 @@ export const OnboardingManagement = () => {
                   <p className="text-sm text-muted-foreground">Answer choices</p>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Avg Options per Question</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold">
-                    {onboardingQuestions.length > 0 
+                    {onboardingQuestions.length > 0
                       ? (onboardingQuestions.reduce((total, q) => total + (q.options?.length || 0), 0) / onboardingQuestions.length).toFixed(1)
                       : '0'
                     }
@@ -726,7 +684,7 @@ export const OnboardingManagement = () => {
                   <p className="text-sm text-muted-foreground">Options per question</p>
                 </CardContent>
               </Card>
-              
+
               <Card>
                 <CardHeader>
                   <CardTitle className="text-lg">Last Updated</CardTitle>
@@ -759,7 +717,7 @@ export const OnboardingManagement = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {onboardingQuestions.map((question) => (
+                      {onboardingQuestions && onboardingQuestions.length > 0 ? onboardingQuestions.map((question) => (
                         <TableRow key={question.id}>
                           <TableCell className="max-w-md">
                             <p className="text-sm truncate">{question.text}</p>
@@ -778,7 +736,13 @@ export const OnboardingManagement = () => {
                             </span>
                           </TableCell>
                         </TableRow>
-                      ))}
+                      )) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                            {loading ? 'Loading questions...' : 'No questions found'}
+                          </TableCell>
+                        </TableRow>
+                      )}
                     </TableBody>
                   </Table>
                 )}
@@ -793,18 +757,18 @@ export const OnboardingManagement = () => {
             <DialogHeader>
               <DialogTitle>Create New Onboarding Question</DialogTitle>
             </DialogHeader>
-            
+
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="question">Question Text *</Label>
-                <Textarea 
+                <Textarea
                   value={newQuestion.text}
                   onChange={(e) => setNewQuestion({ ...newQuestion, text: e.target.value })}
                   placeholder="What question will help determine the user's tier and character?"
                   rows={3}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>Answer Options * (minimum 2 required)</Label>
@@ -819,12 +783,12 @@ export const OnboardingManagement = () => {
                     Add Option
                   </Button>
                 </div>
-                
+
                 {newQuestion.options.map((option, index) => (
                   <div key={index} className="grid grid-cols-4 gap-2 p-3 border rounded-lg">
                     <div className="space-y-1">
                       <Label className="text-xs">Option {index + 1} *</Label>
-                      <Input 
+                      <Input
                         value={option.optionText}
                         onChange={(e) => updateOptionText(index, 'optionText', e.target.value)}
                         placeholder="Enter answer option"
@@ -848,8 +812,8 @@ export const OnboardingManagement = () => {
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Character (Optional)</Label>
-                      <Select 
-                        value={option.characterName || "none"} 
+                      <Select
+                        value={option.characterName || "none"}
                         onValueChange={(value) => {
                           console.log('Character selected:', value);
                           const characterName = value === "none" ? "" : value;
@@ -892,26 +856,26 @@ export const OnboardingManagement = () => {
 
               <div className="bg-muted/50 p-3 rounded-lg">
                 <p className="text-sm text-muted-foreground">
-                  <strong>Note:</strong> This will create a new question with associated options. 
+                  <strong>Note:</strong> This will create a new question with associated options.
                   The display order will be automatically set to appear after existing questions.
                   Each option <strong>must</strong> have a tier assignment. Character assignment is optional.
                   If creation fails, any partial changes will be automatically rolled back.
                 </p>
               </div>
-              
+
               <div className="flex justify-end space-x-2">
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   onClick={() => setIsCreateModalOpen(false)}
                   disabled={submitting}
                 >
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   onClick={createQuestion}
                   disabled={
-                    submitting || 
-                    !newQuestion.text.trim() || 
+                    submitting ||
+                    !newQuestion.text.trim() ||
                     newQuestion.options.filter(opt => opt.optionText.trim()).length < 2 ||
                     newQuestion.options.filter(opt => opt.optionText.trim() && !opt.assignsTier).length > 0
                   }
@@ -936,7 +900,7 @@ export const OnboardingManagement = () => {
             <DialogHeader>
               <DialogTitle>Send Positive Affirmation</DialogTitle>
             </DialogHeader>
-            
+
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -954,7 +918,7 @@ export const OnboardingManagement = () => {
                     </SelectContent>
                   </Select>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="character">Character Filter (Optional)</Label>
                   <Select>
@@ -972,22 +936,22 @@ export const OnboardingManagement = () => {
                   </Select>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="message">Affirmation Message</Label>
-                <Textarea 
+                <Textarea
                   placeholder="Write your positive affirmation message..."
                   rows={4}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <div className="flex items-center space-x-2">
                   <Checkbox id="schedule" />
                   <Label htmlFor="schedule">Schedule for later</Label>
                 </div>
               </div>
-              
+
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setIsSendAffirmationOpen(false)}>
                   Cancel
@@ -1008,7 +972,7 @@ export const OnboardingManagement = () => {
               <DialogHeader>
                 <DialogTitle>Question Details</DialogTitle>
               </DialogHeader>
-              
+
               <div className="space-y-6">
                 <Card>
                   <CardHeader>
@@ -1019,7 +983,7 @@ export const OnboardingManagement = () => {
                       <Label className="text-sm font-medium">Question Text:</Label>
                       <p className="text-lg mt-1">{selectedQuestion.text}</p>
                     </div>
-                    
+
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <Label className="font-medium">Question ID:</Label>
@@ -1056,8 +1020,8 @@ export const OnboardingManagement = () => {
                           <div>
                             <Label className="text-xs text-muted-foreground">Character:</Label>
                             <p className="text-sm">
-                              {option.assignsCharacterId ? 
-                                (Object.keys(characterMap).find(name => characterMap[name] === option.assignsCharacterId) || `ID: ${option.assignsCharacterId}`) : 
+                              {option.assignsCharacterId ?
+                                (Object.keys(characterMap).find(name => characterMap[name] === option.assignsCharacterId) || `ID: ${option.assignsCharacterId}`) :
                                 'Not assigned'
                               }
                             </p>

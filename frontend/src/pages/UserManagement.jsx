@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { FullPageLoader, TableSkeleton } from '@/components/loading/LoadingSpinner';
+import { useUsers, useUser } from '@/hooks/useUsers';
 import {
   Users,
   Search,
@@ -44,58 +46,17 @@ import {
 
 export const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   
-  // Mock user data
-  const users = [
-    {
-      id: 'USR-001',
-      name: 'Sarah Johnson',
-      email: 's.johnson@email.com',
-      phone: '+1 (555) 0123',
-      tier: 'User 2',
-      character: 'The Deserving One',
-      currentDay: 5,
-      quickShifts: 23,
-      plotTwists: 12,
-      toolsCreated: 8,
-      lastActive: '2 hours ago',
-      status: 'Active',
-      joinDate: '2024-01-15',
-      engagementScore: 85
-    },
-    {
-      id: 'USR-002',
-      name: 'Michael Chen',
-      email: 'm.chen@email.com',
-      phone: '+1 (555) 0124',
-      tier: 'User 3',
-      character: 'The Grounded One',
-      currentDay: 2,
-      quickShifts: 45,
-      plotTwists: 28,
-      toolsCreated: 15,
-      lastActive: '1 day ago',
-      status: 'Active',
-      joinDate: '2024-02-03',
-      engagementScore: 92
-    },
-    {
-      id: 'USR-003',
-      name: 'Emily Rodriguez',
-      email: 'e.rodriguez@email.com',
-      phone: '+1 (555) 0125',
-      tier: 'User 1',
-      character: 'The Intuitive One',
-      currentDay: 7,
-      quickShifts: 12,
-      plotTwists: 7,
-      toolsCreated: 4,
-      lastActive: '3 days ago',
-      status: 'Inactive',
-      joinDate: '2024-02-20',
-      engagementScore: 67
-    }
-  ];
+  // Fetch users from API
+  const filters = useMemo(() => ({
+    search: searchQuery || undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+  }), [searchQuery, statusFilter]);
+  
+  const { data: usersResponse, loading, error, refetch } = useUsers(filters);
+  const users = usersResponse?.data || [];
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -140,13 +101,15 @@ export const UserManagement = () => {
               <Input
                 placeholder="Search by name, email, or user ID..."
                 className="pl-10 w-80"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
           
           <div className="flex items-center space-x-4">
             <div className="text-sm text-muted-foreground">
-              <span className="font-medium">{users.length}</span> total users
+              <span className="font-medium">{usersResponse?.total || users.length}</span> total users
             </div>
             <Button>
               <Users className="h-4 w-4 mr-2" />
@@ -161,82 +124,99 @@ export const UserManagement = () => {
             <CardTitle>All Users</CardTitle>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Tier & Character</TableHead>
-                  <TableHead>Progress</TableHead>
-                  <TableHead>Activity</TableHead>
-                  <TableHead>Engagement</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {users.map((user) => (
+            {loading ? (
+              <TableSkeleton rows={5} columns={7} />
+            ) : error ? (
+              <div className="text-center py-8 text-destructive">
+                <p>Error loading users: {error}</p>
+                <Button onClick={refetch} variant="outline" className="mt-4">
+                  Retry
+                </Button>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>User</TableHead>
+                    <TableHead>Tier & Character</TableHead>
+                    <TableHead>Progress</TableHead>
+                    <TableHead>Activity</TableHead>
+                    <TableHead>Engagement</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {users.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                        No users found
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    users.map((user) => (
                   <TableRow key={user.id}>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{user.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {user.email}
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{user.name || 'N/A'}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {user.email || 'N/A'}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            ID: {user.id || 'N/A'}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <Badge variant={getTierColor(user.tier)}>
+                            {user.tier || 'N/A'}
+                          </Badge>
+                          <div className="text-sm text-muted-foreground">
+                            {user.character || 'N/A'}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="text-sm font-medium">
+                            Day {user.currentDay || 0}/7
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {user.quickShifts || 0} Quick Shifts
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-2 text-sm">
+                            <Zap className="h-3 w-3" />
+                            <span>{user.quickShifts || 0}</span>
+                          </div>
+                          <div className="flex items-center space-x-2 text-sm">
+                            <Heart className="h-3 w-3" />
+                            <span>{user.toolsCreated || 0}</span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <div className="text-sm font-medium">
+                            {user.engagementScore || 0}%
+                          </div>
+                          <Star className={`h-4 w-4 ${
+                            (user.engagementScore || 0) > 80 ? 'text-yellow-500' : 'text-muted-foreground'
+                          }`} />
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          ID: {user.id}
+                          {user.lastActive || 'Unknown'}
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <Badge variant={getTierColor(user.tier)}>
-                          {user.tier}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={getStatusColor(user.status)}>
+                          {user.status || 'Unknown'}
                         </Badge>
-                        <div className="text-sm text-muted-foreground">
-                          {user.character}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="text-sm font-medium">
-                          Day {user.currentDay}/7
-                        </div>
-                        <div className="text-xs text-muted-foreground">
-                          {user.quickShifts} Quick Shifts
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center space-x-2 text-sm">
-                          <Zap className="h-3 w-3" />
-                          <span>{user.quickShifts}</span>
-                        </div>
-                        <div className="flex items-center space-x-2 text-sm">
-                          <Heart className="h-3 w-3" />
-                          <span>{user.toolsCreated}</span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <div className="text-sm font-medium">
-                          {user.engagementScore}%
-                        </div>
-                        <Star className={`h-4 w-4 ${
-                          user.engagementScore > 80 ? 'text-yellow-500' : 'text-muted-foreground'
-                        }`} />
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {user.lastActive}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={getStatusColor(user.status)}>
-                        {user.status}
-                      </Badge>
-                    </TableCell>
+                      </TableCell>
                     <TableCell>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -260,10 +240,12 @@ export const UserManagement = () => {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 

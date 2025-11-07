@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Toaster } from '@/components/ui/sonner';
+import ErrorBoundary from '@/components/error/ErrorBoundary';
 import '@/App.css';
 
 // Pages
@@ -35,30 +36,32 @@ const TeachingMoments = () => (
 
 function App() {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          {/* Dashboard */}
-          <Route path="/" element={<Dashboard />} />
-          
-          {/* Content Management */}
-          <Route path="/quick-shifts" element={<QuickShifts />} />
-          <Route path="/plot-twists" element={<PlotTwists />} />
-          <Route path="/affirmations" element={<AffirmationMeditation />} />
-          <Route path="/teaching-moments" element={<TeachingMoments />} />
-          
-          {/* Management & Insights */}
-          <Route path="/users" element={<UserManagement />} />
-          <Route path="/onboarding" element={<OnboardingManagement />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/settings" element={<Settings />} />
-          
-          {/* Fallback */}
-          <Route path="*" element={<Dashboard />} />
-        </Routes>
-        <Toaster />
-      </BrowserRouter>
-    </div>
+    <ErrorBoundary>
+      <div className="App">
+        <BrowserRouter>
+          <Routes>
+            {/* Dashboard */}
+            <Route path="/" element={<Dashboard />} />
+            
+            {/* Content Management */}
+            <Route path="/quick-shifts" element={<QuickShifts />} />
+            <Route path="/plot-twists" element={<PlotTwists />} />
+            <Route path="/affirmations" element={<AffirmationMeditation />} />
+            <Route path="/teaching-moments" element={<TeachingMoments />} />
+            
+            {/* Management & Insights */}
+            <Route path="/users" element={<UserManagement />} />
+            <Route path="/onboarding" element={<OnboardingManagement />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/settings" element={<Settings />} />
+            
+            {/* Fallback */}
+            <Route path="*" element={<Dashboard />} />
+          </Routes>
+          <Toaster />
+        </BrowserRouter>
+      </div>
+    </ErrorBoundary>
   );
 }
 

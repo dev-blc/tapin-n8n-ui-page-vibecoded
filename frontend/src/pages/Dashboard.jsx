@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { FullPageLoader, TableSkeleton } from '@/components/loading/LoadingSpinner';
+import { useDashboardStats, useRecentActivity, useContentHealth } from '@/hooks/useDashboard';
 import {
   Users,
   FileText,
@@ -22,55 +24,103 @@ import {
 } from 'lucide-react';
 
 export const Dashboard = () => {
-  // Mock data - in real app this would come from API
-  const stats = {
-    activeUsers: { value: '12,480', change: '+8% this week', changeType: 'positive' },
-    contentVariations: { value: '1,320', change: '+24 new this month', changeType: 'positive' },
-    dailyEngagement: { value: '4.2', change: 'Steady', changeType: 'neutral' },
-    contentHealth: { value: '92%', change: '2 areas need attention', changeType: 'warning' }
+  // Fetch data from API
+  const { data: statsData, loading: statsLoading, error: statsError } = useDashboardStats({ showErrorToast: false });
+  const { data: activityData, loading: activityLoading, error: activityError } = useRecentActivity({ limit: 10 }, { showErrorToast: false });
+  const { data: healthData, loading: healthLoading, error: healthError } = useContentHealth({ showErrorToast: false });
+
+  // Transform stats data
+  const stats = statsData ? {
+    activeUsers: { 
+      value: statsData.activeUsers?.toLocaleString() || '0', 
+      change: statsData.activeUsersChange || '+0%', 
+      changeType: statsData.activeUsersChange?.includes('+') ? 'positive' : 'neutral' 
+    },
+    contentVariations: { 
+      value: statsData.contentVariations?.toLocaleString() || '0', 
+      change: statsData.contentVariationsChange || '+0%', 
+      changeType: statsData.contentVariationsChange?.includes('+') ? 'positive' : 'neutral' 
+    },
+    dailyEngagement: { 
+      value: statsData.dailyEngagement?.toString() || '0', 
+      change: statsData.dailyEngagementChange || 'Steady', 
+      changeType: 'neutral' 
+    },
+    contentHealth: { 
+      value: `${statsData.contentHealth || 0}%`, 
+      change: statsData.contentHealthChange || '', 
+      changeType: (statsData.contentHealth || 0) >= 90 ? 'positive' : (statsData.contentHealth || 0) >= 70 ? 'neutral' : 'warning' 
+    }
+  } : {
+    activeUsers: { value: '0', change: '+0%', changeType: 'neutral' },
+    contentVariations: { value: '0', change: '+0%', changeType: 'neutral' },
+    dailyEngagement: { value: '0', change: 'Steady', changeType: 'neutral' },
+    contentHealth: { value: '0%', change: '', changeType: 'neutral' }
   };
 
-  const recentActivity = [
-    {
-      id: 1,
-      time: '2 min ago',
-      action: 'Added new "Grounding" Quick Shift',
-      category: 'Quick Shift',
-      actor: 'Admin (Riya)',
-      type: 'create'
-    },
-    {
-      id: 2,
-      time: '5 min ago',
-      action: 'Locked "Overwhelmed" Loop',
-      category: 'Quick Shift',
-      actor: 'Admin (Tanisha)',
-      type: 'update'
-    },
-    {
-      id: 3,
-      time: '18 min ago',
-      action: 'User completed "The Intuitive One - Day 5"',
-      category: 'User',
-      actor: 'System',
-      type: 'activity'
-    },
-    {
-      id: 4,
-      time: '1 hr ago',
-      action: 'New Meditation Tool created',
-      category: 'Tool',
-      actor: 'Admin (Sarah)',
-      type: 'create'
-    }
+  // Use activity data from API or empty array
+  const recentActivity = activityData || [];
+
+  // Use health data from API or default
+  const contentHealth = healthData || [
+    { name: 'Quick Shift Pool Health', value: 0, color: 'muted' },
+    { name: 'Plot Twist Pool Health', value: 0, color: 'muted' },
+    { name: 'Teaching Moments', value: 0, color: 'muted' },
+    { name: 'Templates (Affirmations/Meditations)', value: 0, color: 'muted' }
   ];
 
-  const contentHealth = [
-    { name: 'Quick Shift Pool Health', value: 95, color: 'success' },
-    { name: 'Plot Twist Pool Health', value: 89, color: 'primary' },
-    { name: 'Teaching Moments', value: 82, color: 'warning' },
-    { name: 'Templates (Affirmations/Meditations)', value: 98, color: 'success' }
-  ];
+  // Show loading state
+  if (statsLoading || activityLoading || healthLoading) {
+    return (
+      <Layout
+        title="Dashboard Overview"
+        subtitle="Track engagement, content health, and user activity across TAP IN"
+      >
+        <FullPageLoader message="Loading dashboard data..." />
+      </Layout>
+    );
+  }
+
+  // Show error state if all requests failed
+  const hasErrors = statsError || activityError || healthError;
+  if (hasErrors && !statsData && !activityData && !healthData) {
+    return (
+      <Layout
+        title="Dashboard Overview"
+        subtitle="Track engagement, content health, and user activity across TAP IN"
+      >
+        <Card className="max-w-2xl mx-auto mt-8">
+          <CardHeader>
+            <CardTitle className="flex items-center space-x-2 text-destructive">
+              <AlertCircle className="h-5 w-5" />
+              <span>Unable to Load Dashboard Data</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-muted-foreground">
+              There was an error connecting to the API server. Please check:
+            </p>
+            <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground">
+              <li>The API server is running and accessible</li>
+              <li>Your network connection is working</li>
+              <li>CORS is properly configured on the API server</li>
+            </ul>
+            {(statsError || activityError || healthError) && (
+              <div className="mt-4 p-4 bg-muted rounded-lg">
+                <p className="text-sm font-medium mb-2">Error Details:</p>
+                <p className="text-xs text-muted-foreground font-mono">
+                  {statsError || activityError || healthError}
+                </p>
+              </div>
+            )}
+            <Button onClick={() => window.location.reload()} className="mt-4">
+              Retry
+            </Button>
+          </CardContent>
+        </Card>
+      </Layout>
+    );
+  }
 
   const quickActions = [
     { 
@@ -174,42 +224,48 @@ export const Dashboard = () => {
                 </Button>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {recentActivity.map((activity, index) => (
-                    <div key={activity.id}>
-                      <div className="flex items-start space-x-3">
-                        <div className="flex-shrink-0">
-                          <div className={`w-2 h-2 rounded-full mt-2 ${
-                            activity.type === 'create' ? 'bg-success' :
-                            activity.type === 'update' ? 'bg-warning' :
-                            'bg-info'
-                          }`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <p className="text-sm font-medium text-foreground">
-                              {activity.action}
-                            </p>
-                            <Badge variant="outline" className="text-xs">
-                              {activity.category}
-                            </Badge>
+                {recentActivity.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No recent activity
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {recentActivity.map((activity, index) => (
+                      <div key={activity.id || index}>
+                        <div className="flex items-start space-x-3">
+                          <div className="flex-shrink-0">
+                            <div className={`w-2 h-2 rounded-full mt-2 ${
+                              activity.type === 'create' ? 'bg-success' :
+                              activity.type === 'update' ? 'bg-warning' :
+                              'bg-info'
+                            }`} />
                           </div>
-                          <div className="flex items-center justify-between mt-1">
-                            <p className="text-xs text-muted-foreground">
-                              {activity.actor}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {activity.time}
-                            </p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between">
+                              <p className="text-sm font-medium text-foreground">
+                                {activity.action}
+                              </p>
+                              <Badge variant="outline" className="text-xs">
+                                {activity.category}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center justify-between mt-1">
+                              <p className="text-xs text-muted-foreground">
+                                {activity.actor}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {activity.time}
+                              </p>
+                            </div>
                           </div>
                         </div>
+                        {index < recentActivity.length - 1 && (
+                          <Separator className="mt-4" />
+                        )}
                       </div>
-                      {index < recentActivity.length - 1 && (
-                        <Separator className="mt-4" />
-                      )}
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>

@@ -12,6 +12,7 @@ from typing import List, Optional, Dict, Any
 import uuid
 from datetime import datetime, timezone
 from functools import wraps
+import httpx
 
 
 ROOT_DIR = Path(__file__).parent
@@ -78,7 +79,7 @@ admin_router = APIRouter(prefix="/api/admin")
 # Define Models
 class StatusCheck(BaseModel):
     model_config = ConfigDict(extra="ignore")  # Ignore MongoDB's _id field
-
+    
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     client_name: str
     timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
@@ -142,11 +143,11 @@ async def create_status_check(input: StatusCheckCreate):
     try:
         status_dict = input.model_dump()
         status_obj = StatusCheck(**status_dict)
-
+        
         # Convert to dict and serialize datetime to ISO string for MongoDB
         doc = status_obj.model_dump()
         doc['timestamp'] = doc['timestamp'].isoformat()
-
+        
         await db.status_checks.insert_one(doc)
         return status_obj
     except Exception as e:
@@ -158,7 +159,7 @@ async def create_status_check(input: StatusCheckCreate):
 async def get_status_checks():
     if not db:
         raise HTTPException(status_code=503, detail="Database not available")
-
+    
     try:
         # Exclude MongoDB's _id field from the query results
         status_checks = await db.status_checks.find({}, {"_id": 0}).to_list(1000)
@@ -873,18 +874,47 @@ async def get_plot_twist_response_options():
 # ============================================================================
 
 @admin_router.get("/onboarding/characters")
-@handle_db_error
 async def get_character_mapping():
-    """Get character mapping (name to UUID)"""
-    if not db:
-        raise HTTPException(status_code=503, detail="Database not available")
-
+    """Get character mapping (name to UUID) from Supabase"""
+    supabase_url = "https://cehslgskpbamfuhkooez.supabase.co/functions/v1/database-access"
+    
     try:
-        characters = await db.character_mapping.find({}, {"_id": 0}).to_list(1000)
-        return characters or []
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(supabase_url)
+            response.raise_for_status()
+            data = response.json()
+            
+            # Extract the data array from the response
+            characters = data.get("data", [])
+            
+            # Transform to match expected format if needed
+            # The response already has id, name, emoji, description, traits, created_at
+            return characters or []
+            
+    except httpx.TimeoutException as e:
+        logger.error(f'Timeout fetching character mapping from Supabase: {e}')
+        raise HTTPException(
+            status_code=504,
+            detail="Request to Supabase timed out. Please try again later."
+        )
+    except httpx.HTTPStatusError as e:
+        logger.error(f'HTTP error fetching character mapping from Supabase: {e.response.status_code} - {e.response.text}')
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Failed to fetch character mapping from Supabase: {e.response.status_code}"
+        )
+    except httpx.RequestError as e:
+        logger.error(f'Request error fetching character mapping from Supabase: {e}')
+        raise HTTPException(
+            status_code=503,
+            detail="Unable to connect to Supabase. Please check the service availability."
+        )
     except Exception as e:
-        logger.error(f'Error getting character mapping: {e}')
-        raise HTTPException(status_code=500, detail=f"Failed to retrieve character mapping: {str(e)}")
+        logger.error(f'Unexpected error getting character mapping: {e}', exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to retrieve character mapping: {str(e)}"
+        )
 
 # Include the routers in the main app
 app.include_router(api_router)

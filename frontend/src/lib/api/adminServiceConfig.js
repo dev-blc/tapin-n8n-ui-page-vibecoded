@@ -27,6 +27,16 @@ export const ADMIN_SERVICE_ENDPOINTS = {
   // Plot Twist endpoints (basic CRUD only)
   PLOT_TWIST_QUESTS: '/admin/plot-twists',
   PLOT_TWIST_QUEST_BY_ID: (id) => `/admin/plot-twists/${id}`,
+  PLOT_TWIST_CHARACTERS: '/admin/plot-twists/characters',
+  PLOT_TWIST_RESPONSE_OPTIONS: '/admin/plot-twists/response-options',
+
+  // Quick Shift endpoints
+  QUICK_SHIFT_LOOPS: '/admin/quick-shifts/loops',
+  QUICK_SHIFT_LOOP_BY_ID: (id) => `/admin/quick-shifts/loops/${id}`,
+  QUICK_SHIFT_REFRAMES: '/admin/quick-shifts/reframes',
+  QUICK_SHIFT_REFRAME_BY_ID: (id) => `/admin/quick-shifts/reframes/${id}`,
+  QUICK_SHIFT_PROTECTORS: '/admin/quick-shifts/protectors',
+  QUICK_SHIFT_PROTECTOR_BY_ID: (id) => `/admin/quick-shifts/protectors/${id}`,
 
   // Health check
   HEALTH: '/health',

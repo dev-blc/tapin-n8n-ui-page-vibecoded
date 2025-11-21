@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -41,7 +41,8 @@ import {
   Eye,
   Copy,
   MoreHorizontal,
-  BarChart3
+  BarChart3,
+  Loader2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -49,13 +50,74 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { toast } from 'sonner';
+import {
+  useQuickShiftLoops,
+  useQuickShiftReframes,
+  useQuickShiftProtectors,
+  useQuickShiftLoopMutation,
+  useQuickShiftReframeMutation,
+  useQuickShiftProtectorMutation,
+} from '@/hooks/useQuickShifts';
+import { FullPageLoader, TableSkeleton } from '@/components/loading/LoadingSpinner';
 
 export const QuickShifts = () => {
   const [selectedLoop, setSelectedLoop] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [selectedTier, setSelectedTier] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  // Mock data for Quick Shift loops and variations
-  const quickShiftLoops = [
+  // Fetch data from API
+  const filterParams = useMemo(() => {
+    const params = {};
+    if (selectedTier !== 'all') params.tier = selectedTier;
+    return params;
+  }, [selectedTier]);
+
+  const { data: quickShiftLoopsData = [], loading: loopsLoading, error: loopsError, refetch: refetchLoops } = useQuickShiftLoops({
+    params: filterParams,
+    showErrorToast: false
+  });
+  const { data: reframesData = [], loading: reframesLoading, error: reframesError, refetch: refetchReframes } = useQuickShiftReframes({
+    params: filterParams,
+    showErrorToast: false
+  });
+  const { data: protectorsData = [], loading: protectorsLoading, error: protectorsError, refetch: refetchProtectors } = useQuickShiftProtectors({
+    showErrorToast: false
+  });
+
+  const { createLoop, updateLoop, deleteLoop, loading: loopMutationLoading } = useQuickShiftLoopMutation({
+    onSuccess: () => {
+      refetchLoops();
+    }
+  });
+  const { createReframe, updateReframe, deleteReframe, loading: reframeMutationLoading } = useQuickShiftReframeMutation({
+    onSuccess: () => {
+      refetchReframes();
+    }
+  });
+  const { createProtector, updateProtector, deleteProtector, loading: protectorMutationLoading } = useQuickShiftProtectorMutation({
+    onSuccess: () => {
+      refetchProtectors();
+    }
+  });
+
+  // Ensure arrays
+  const quickShiftLoops = Array.isArray(quickShiftLoopsData) ? quickShiftLoopsData : [];
+  const reframeLibrary = Array.isArray(reframesData) ? reframesData : [];
+  const protectors = Array.isArray(protectorsData) ? protectorsData : [];
+
+  // Form state for new loop
+  const [loopForm, setLoopForm] = useState({
+    category: '',
+    tierAvailability: [],
+    icon: '',
+    description: ''
+  });
+
+  // Mock data for Quick Shift loops and variations (keeping for reference structure)
+  const mockQuickShiftLoops = [
     {
       id: 'QS-001',
       category: 'Too Much on My Plate',
@@ -107,54 +169,98 @@ export const QuickShifts = () => {
     }
   ];
 
-  const reframeLibrary = [
-    {
-      id: 'RF-001',
-      category: 'Too Much on My Plate',
-      insteadOf: 'I have to handle everything perfectly or it will all fall apart',
-      truthBecomes: 'I can slow down and trust that what matters will get done',
-      tierAvailability: ['User 1', 'User 2'],
-      usageCount: 156,
-      tone: 'Gentle',
-      status: 'Active'
-    },
-    {
-      id: 'RF-002',
-      category: 'What Will They Think',
-      insteadOf: 'Everyone is watching and judging everything I do',
-      truthBecomes: 'Most people are focused on their own lives, and I can be myself',
-      tierAvailability: ['User 1'],
-      usageCount: 89,
-      tone: 'Reassuring',
-      status: 'Active'
-    }
-  ];
-
-  const protectors = [
-    {
-      id: 'PR-001',
-      name: 'The Perfectionist',
-      description: 'Tries to control outcomes by making everything flawless',
-      associatedLoops: ['Too Much on My Plate', 'Being Hard on Myself'],
-      usageCount: 234,
-      status: 'Active'
-    },
-    {
-      id: 'PR-002',
-      name: 'The People Pleaser',
-      description: 'Avoids conflict by making everyone else happy first',
-      associatedLoops: ['What Will They Think', 'Being Hard on Myself'],
-      usageCount: 189,
-      status: 'Active'
-    }
-  ];
-
   const getStatusColor = (status) => {
     switch (status) {
       case 'Active': return 'success';
       case 'Locked': return 'warning';
       case 'Draft': return 'secondary';
       default: return 'outline';
+    }
+  };
+
+  // Filter loops by search query
+  const filteredLoops = useMemo(() => {
+    let filtered = quickShiftLoops;
+    
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(loop => 
+        loop.category?.toLowerCase().includes(query) ||
+        loop.description?.toLowerCase().includes(query)
+      );
+    }
+    
+    return filtered;
+  }, [quickShiftLoops, searchQuery]);
+
+  // Handle create loop
+  const handleCreateLoop = async () => {
+    if (submitting) return;
+
+    try {
+      setSubmitting(true);
+
+      if (!loopForm.category?.trim()) {
+        toast.error('Category is required');
+        return;
+      }
+
+      const payload = {
+        category: loopForm.category.trim(),
+        tierAvailability: loopForm.tierAvailability,
+        icon: loopForm.icon || '',
+        description: loopForm.description || ''
+      };
+
+      await createLoop(payload, { showSuccessToast: true });
+      
+      setLoopForm({
+        category: '',
+        tierAvailability: [],
+        icon: '',
+        description: ''
+      });
+      setIsCreateModalOpen(false);
+    } catch (error) {
+      console.error('Error creating loop:', error);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Handle delete loop
+  const handleDeleteLoop = async (loopId) => {
+    if (window.confirm('Are you sure you want to delete this loop?')) {
+      try {
+        await deleteLoop(loopId, { showSuccessToast: true });
+        if (selectedLoop?.id === loopId) {
+          setSelectedLoop(null);
+        }
+      } catch (error) {
+        console.error('Error deleting loop:', error);
+      }
+    }
+  };
+
+  // Handle delete reframe
+  const handleDeleteReframe = async (reframeId) => {
+    if (window.confirm('Are you sure you want to delete this reframe?')) {
+      try {
+        await deleteReframe(reframeId, { showSuccessToast: true });
+      } catch (error) {
+        console.error('Error deleting reframe:', error);
+      }
+    }
+  };
+
+  // Handle delete protector
+  const handleDeleteProtector = async (protectorId) => {
+    if (window.confirm('Are you sure you want to delete this protector?')) {
+      try {
+        await deleteProtector(protectorId, { showSuccessToast: true });
+      } catch (error) {
+        console.error('Error deleting protector:', error);
+      }
     }
   };
 
@@ -201,17 +307,21 @@ export const QuickShifts = () => {
                   <Input
                     placeholder="Search loop categories..."
                     className="pl-10 w-80"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
-                <Select>
+                <Select value={selectedTier} onValueChange={setSelectedTier}>
                   <SelectTrigger className="w-40">
                     <SelectValue placeholder="Tier Level" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Tiers</SelectItem>
-                    <SelectItem value="user1">User 1</SelectItem>
-                    <SelectItem value="user2">User 2</SelectItem>
-                    <SelectItem value="user3">User 3</SelectItem>
+                    <SelectItem value="1">Tier 1</SelectItem>
+                    <SelectItem value="1A">Tier 1A</SelectItem>
+                    <SelectItem value="2">Tier 2</SelectItem>
+                    <SelectItem value="2A">Tier 2A</SelectItem>
+                    <SelectItem value="3">Tier 3</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -222,97 +332,92 @@ export const QuickShifts = () => {
                 <CardTitle>Quick Shift Loop Categories</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Loop Category</TableHead>
-                      <TableHead>Emotions</TableHead>
-                      <TableHead>Variations</TableHead>
-                      <TableHead>Usage (30 days)</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {quickShiftLoops.map((loop) => (
-                      <TableRow key={loop.id} className="cursor-pointer hover:bg-muted/50">
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
-                            <span className="text-2xl">{loop.icon}</span>
-                            <div>
-                              <div className="font-medium">{loop.category}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {loop.tierAvailability.join(', ')}
+                {loopsLoading ? (
+                  <TableSkeleton rows={5} columns={6} />
+                ) : loopsError ? (
+                  <div className="text-center py-8 text-destructive">
+                    <p>Error loading loops: {loopsError}</p>
+                    <Button onClick={refetchLoops} variant="outline" className="mt-4">
+                      Retry
+                    </Button>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Loop Category</TableHead>
+                        <TableHead>Tier Availability</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredLoops.length > 0 ? filteredLoops.map((loop) => (
+                        <TableRow key={loop.id} className="cursor-pointer hover:bg-muted/50">
+                          <TableCell>
+                            <div className="flex items-center space-x-3">
+                              {loop.icon && <span className="text-2xl">{loop.icon}</span>}
+                              <div>
+                                <div className="font-medium">{loop.category || 'Untitled'}</div>
+                                {loop.description && (
+                                  <div className="text-sm text-muted-foreground">
+                                    {loop.description}
+                                  </div>
+                                )}
                               </div>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {loop.emotionCount} emotions
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="text-sm">
-                              {loop.protectorVariations} protectors
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {loop.reframeVariations} reframes
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium">{loop.usageCount}</div>
-                          <div className="text-xs text-muted-foreground">
-                            Updated {loop.lastModified}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={getStatusColor(loop.status)}>
-                            {loop.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setSelectedLoop(loop)}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Copy className="h-4 w-4 mr-2" />
-                                Duplicate
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                {loop.status === 'Active' ? (
-                                  <>
-                                    <Lock className="h-4 w-4 mr-2" />
-                                    Lock
-                                  </>
-                                ) : (
-                                  <>
-                                    <Unlock className="h-4 w-4 mr-2" />
-                                    Unlock
-                                  </>
-                                )}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                          </TableCell>
+                          <TableCell>
+                            {loop.tierAvailability && Array.isArray(loop.tierAvailability) && loop.tierAvailability.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {loop.tierAvailability.map((tier) => (
+                                  <Badge key={tier} variant="secondary" className="text-xs">
+                                    {tier}
+                                  </Badge>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">No tiers</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusColor(loop.status || 'Active')}>
+                              {loop.status || 'Active'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => setSelectedLoop(loop)}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteLoop(loop.id)}
+                                  className="text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      )) : (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                            {searchQuery ? 'No loops found matching your search' : 'No loops found'}
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -324,62 +429,86 @@ export const QuickShifts = () => {
                 <CardTitle>Reframe Statement Library</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Instead of...</TableHead>
-                      <TableHead>Truth becomes...</TableHead>
-                      <TableHead>Tier</TableHead>
-                      <TableHead>Usage</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {reframeLibrary.map((reframe) => (
-                      <TableRow key={reframe.id}>
-                        <TableCell>
-                          <Badge variant="outline">{reframe.category}</Badge>
-                        </TableCell>
-                        <TableCell className="max-w-xs">
-                          <p className="text-sm truncate">{reframe.insteadOf}</p>
-                        </TableCell>
-                        <TableCell className="max-w-xs">
-                          <p className="text-sm truncate">{reframe.truthBecomes}</p>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {reframe.tierAvailability.map((tier) => (
-                              <Badge key={tier} variant="secondary" className="text-xs">
-                                {tier}
-                              </Badge>
-                            ))}
-                          </div>
-                        </TableCell>
-                        <TableCell>{reframe.usageCount}</TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Copy className="h-4 w-4 mr-2" />
-                                Duplicate
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
+                {reframesLoading ? (
+                  <TableSkeleton rows={5} columns={6} />
+                ) : reframesError ? (
+                  <div className="text-center py-8 text-destructive">
+                    <p>Error loading reframes: {reframesError}</p>
+                    <Button onClick={refetchReframes} variant="outline" className="mt-4">
+                      Retry
+                    </Button>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Instead of...</TableHead>
+                        <TableHead>Truth becomes...</TableHead>
+                        <TableHead>Tier</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {reframeLibrary.length > 0 ? reframeLibrary.map((reframe) => (
+                        <TableRow key={reframe.id}>
+                          <TableCell>
+                            <Badge variant="outline">{reframe.category || 'N/A'}</Badge>
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <p className="text-sm truncate">{reframe.insteadOf || 'N/A'}</p>
+                          </TableCell>
+                          <TableCell className="max-w-xs">
+                            <p className="text-sm truncate">{reframe.truthBecomes || 'N/A'}</p>
+                          </TableCell>
+                          <TableCell>
+                            {reframe.tierAvailability && Array.isArray(reframe.tierAvailability) && reframe.tierAvailability.length > 0 ? (
+                              <div className="flex flex-wrap gap-1">
+                                {reframe.tierAvailability.map((tier) => (
+                                  <Badge key={tier} variant="secondary" className="text-xs">
+                                    {tier}
+                                  </Badge>
+                                ))}
+                              </div>
+                            ) : (
+                              <span className="text-sm text-muted-foreground">No tiers</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusColor(reframe.status || 'Active')}>
+                              {reframe.status || 'Active'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => handleDeleteReframe(reframe.id)}
+                                  className="text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      )) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                            No reframes found
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -391,45 +520,64 @@ export const QuickShifts = () => {
                 <CardTitle>Protector Archetypes</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {protectors.map((protector) => (
-                    <Card key={protector.id} className="p-4 hover:shadow-lg transition-shadow">
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h3 className="font-semibold">{protector.name}</h3>
-                          <Badge variant={getStatusColor(protector.status)}>
-                            {protector.status}
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          {protector.description}
-                        </p>
-                        <div className="space-y-2">
-                          <div className="text-sm font-medium">Associated Loops:</div>
-                          <div className="flex flex-wrap gap-1">
-                            {protector.associatedLoops.map((loop) => (
-                              <Badge key={loop} variant="outline" className="text-xs">
-                                {loop}
-                              </Badge>
-                            ))}
+                {protectorsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin mr-2" />
+                    <span>Loading protectors...</span>
+                  </div>
+                ) : protectorsError ? (
+                  <div className="text-center py-8 text-destructive">
+                    <p>Error loading protectors: {protectorsError}</p>
+                    <Button onClick={refetchProtectors} variant="outline" className="mt-4">
+                      Retry
+                    </Button>
+                  </div>
+                ) : protectors.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No protectors found
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {protectors.map((protector) => (
+                      <Card key={protector.id} className="p-4 hover:shadow-lg transition-shadow">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <h3 className="font-semibold">{protector.name || 'Unnamed Protector'}</h3>
+                            <Badge variant={getStatusColor(protector.status || 'Active')}>
+                              {protector.status || 'Active'}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {protector.description || 'No description'}
+                          </p>
+                          {protector.associatedLoops && Array.isArray(protector.associatedLoops) && protector.associatedLoops.length > 0 && (
+                            <div className="space-y-2">
+                              <div className="text-sm font-medium">Associated Loops:</div>
+                              <div className="flex flex-wrap gap-1">
+                                {protector.associatedLoops.map((loop) => (
+                                  <Badge key={loop} variant="outline" className="text-xs">
+                                    {loop}
+                                  </Badge>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          <div className="flex space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteProtector(protector.id)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
                           </div>
                         </div>
-                        <div className="text-sm text-muted-foreground">
-                          Usage: {protector.usageCount} times
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm">
-                            <Edit className="h-4 w-4 mr-1" />
-                            Edit
-                          </Button>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

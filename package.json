@@ -1,0 +1,20 @@
+{
+  "name": "tapin-admin-dashboard",
+  "version": "1.0.0",
+  "description": "TapIn Admin Dashboard - Full Stack Application",
+  "scripts": {
+    "start": "node start.js",
+    "start:bash": "./start.sh",
+    "start:backend": "cd backend && ./start.sh",
+    "start:frontend": "cd frontend && npm start",
+    "install:all": "cd backend && python3 -m venv venv && source venv/bin/activate && pip install -r requirements.txt && cd ../frontend && npm install",
+    "setup": "npm run install:all"
+  },
+  "keywords": [
+    "admin",
+    "dashboard",
+    "tapin"
+  ],
+  "author": "",
+  "license": "ISC"
+}

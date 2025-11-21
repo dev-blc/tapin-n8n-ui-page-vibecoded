@@ -1,18 +1,18 @@
 /**
  * Quick Shift Service
  * API service for Quick Shift loops, reframes, and protectors
- * Uses local backend
+ * Uses admin-service
  */
 
 import BaseService from './baseService';
-import { LOCAL_BACKEND_ENDPOINTS } from '@/lib/api/localBackendConfig';
-import localBackendClient from '@/lib/api/localBackendClient';
+import { ADMIN_SERVICE_ENDPOINTS } from '@/lib/api/adminServiceConfig';
+import adminServiceClient from '@/lib/api/adminServiceClient';
 import { handleApiError } from '@/utils/apiHelpers';
-import { buildFilterParams, combineQueryParams } from '@/utils/queryBuilder';
+import { buildFilterParams } from '@/utils/queryBuilder';
 
 class QuickShiftService extends BaseService {
   constructor() {
-    super(LOCAL_BACKEND_ENDPOINTS.QUICK_SHIFT_LOOPS, localBackendClient);
+    super(ADMIN_SERVICE_ENDPOINTS.QUICK_SHIFT_LOOPS, adminServiceClient);
   }
 
   /**
@@ -94,7 +94,7 @@ class QuickShiftService extends BaseService {
   async getReframes(params = {}) {
     try {
       const filterParams = buildFilterParams(params);
-      const response = await localBackendClient.get(LOCAL_BACKEND_ENDPOINTS.QUICK_SHIFT_REFRAMES, { params: filterParams });
+      const response = await adminServiceClient.get(ADMIN_SERVICE_ENDPOINTS.QUICK_SHIFT_REFRAMES, { params: filterParams });
       return Array.isArray(response.data) ? response.data : (response.data.data || response.data.items || []);
     } catch (error) {
       throw handleApiError(error);
@@ -108,7 +108,7 @@ class QuickShiftService extends BaseService {
    */
   async getReframeById(id) {
     try {
-      const response = await localBackendClient.get(LOCAL_BACKEND_ENDPOINTS.QUICK_SHIFT_REFRAME_BY_ID(id));
+      const response = await adminServiceClient.get(ADMIN_SERVICE_ENDPOINTS.QUICK_SHIFT_REFRAME_BY_ID(id));
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -122,8 +122,36 @@ class QuickShiftService extends BaseService {
    */
   async createReframe(data) {
     try {
-      const response = await localBackendClient.post(LOCAL_BACKEND_ENDPOINTS.QUICK_SHIFT_REFRAMES, data);
+      const response = await adminServiceClient.post(ADMIN_SERVICE_ENDPOINTS.QUICK_SHIFT_REFRAMES, data);
       return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
+
+  /**
+   * Update a reframe
+   * @param {string} id - Reframe ID
+   * @param {Object} data - Updated reframe data
+   * @returns {Promise<import('@/models').QuickShiftReframe>}
+   */
+  async updateReframe(id, data) {
+    try {
+      const response = await adminServiceClient.put(ADMIN_SERVICE_ENDPOINTS.QUICK_SHIFT_REFRAME_BY_ID(id), data);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
+
+  /**
+   * Delete a reframe
+   * @param {string} id - Reframe ID
+   * @returns {Promise<void>}
+   */
+  async deleteReframe(id) {
+    try {
+      await adminServiceClient.delete(ADMIN_SERVICE_ENDPOINTS.QUICK_SHIFT_REFRAME_BY_ID(id));
     } catch (error) {
       throw handleApiError(error);
     }
@@ -137,7 +165,7 @@ class QuickShiftService extends BaseService {
   async getProtectors(params = {}) {
     try {
       const filterParams = buildFilterParams(params);
-      const response = await localBackendClient.get(LOCAL_BACKEND_ENDPOINTS.QUICK_SHIFT_PROTECTORS, { params: filterParams });
+      const response = await adminServiceClient.get(ADMIN_SERVICE_ENDPOINTS.QUICK_SHIFT_PROTECTORS, { params: filterParams });
       return Array.isArray(response.data) ? response.data : (response.data.data || response.data.items || []);
     } catch (error) {
       throw handleApiError(error);
@@ -151,7 +179,7 @@ class QuickShiftService extends BaseService {
    */
   async getProtectorById(id) {
     try {
-      const response = await localBackendClient.get(LOCAL_BACKEND_ENDPOINTS.QUICK_SHIFT_PROTECTOR_BY_ID(id));
+      const response = await adminServiceClient.get(ADMIN_SERVICE_ENDPOINTS.QUICK_SHIFT_PROTECTOR_BY_ID(id));
       return response.data;
     } catch (error) {
       throw handleApiError(error);
@@ -165,8 +193,36 @@ class QuickShiftService extends BaseService {
    */
   async createProtector(data) {
     try {
-      const response = await localBackendClient.post(LOCAL_BACKEND_ENDPOINTS.QUICK_SHIFT_PROTECTORS, data);
+      const response = await adminServiceClient.post(ADMIN_SERVICE_ENDPOINTS.QUICK_SHIFT_PROTECTORS, data);
       return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
+
+  /**
+   * Update a protector
+   * @param {string} id - Protector ID
+   * @param {Object} data - Updated protector data
+   * @returns {Promise<import('@/models').QuickShiftProtector>}
+   */
+  async updateProtector(id, data) {
+    try {
+      const response = await adminServiceClient.put(ADMIN_SERVICE_ENDPOINTS.QUICK_SHIFT_PROTECTOR_BY_ID(id), data);
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error);
+    }
+  }
+
+  /**
+   * Delete a protector
+   * @param {string} id - Protector ID
+   * @returns {Promise<void>}
+   */
+  async deleteProtector(id) {
+    try {
+      await adminServiceClient.delete(ADMIN_SERVICE_ENDPOINTS.QUICK_SHIFT_PROTECTOR_BY_ID(id));
     } catch (error) {
       throw handleApiError(error);
     }

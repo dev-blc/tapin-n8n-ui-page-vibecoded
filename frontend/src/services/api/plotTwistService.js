@@ -6,11 +6,9 @@
 
 import BaseService from './baseService';
 import { ADMIN_SERVICE_ENDPOINTS } from '@/lib/api/adminServiceConfig';
-import { LOCAL_BACKEND_ENDPOINTS } from '@/lib/api/localBackendConfig';
 import adminServiceClient from '@/lib/api/adminServiceClient';
-import localBackendClient from '@/lib/api/localBackendClient';
 import { handleApiError } from '@/utils/apiHelpers';
-import { buildFilterParams, combineQueryParams } from '@/utils/queryBuilder';
+import { buildFilterParams } from '@/utils/queryBuilder';
 
 class PlotTwistService extends BaseService {
   constructor() {
@@ -97,9 +95,8 @@ class PlotTwistService extends BaseService {
    * @returns {Promise<import('@/models').PlotTwistCharacter[]>}
    */
   async getCharacters() {
-    // Characters endpoint is handled by local backend
     try {
-      const response = await localBackendClient.get(LOCAL_BACKEND_ENDPOINTS.PLOT_TWIST_CHARACTERS);
+      const response = await adminServiceClient.get(ADMIN_SERVICE_ENDPOINTS.PLOT_TWIST_CHARACTERS);
       return Array.isArray(response.data) ? response.data : (response.data.data || response.data.items || []);
     } catch (error) {
       throw handleApiError(error);
@@ -111,9 +108,8 @@ class PlotTwistService extends BaseService {
    * @returns {Promise<import('@/models').PlotTwistResponseOption[]>}
    */
   async getResponseOptions() {
-    // Response options endpoint is handled by local backend
     try {
-      const response = await localBackendClient.get(LOCAL_BACKEND_ENDPOINTS.PLOT_TWIST_RESPONSE_OPTIONS);
+      const response = await adminServiceClient.get(ADMIN_SERVICE_ENDPOINTS.PLOT_TWIST_RESPONSE_OPTIONS);
       return Array.isArray(response.data) ? response.data : (response.data.data || response.data.items || []);
     } catch (error) {
       throw handleApiError(error);

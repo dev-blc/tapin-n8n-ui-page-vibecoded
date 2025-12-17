@@ -809,24 +809,39 @@ export const QuickShifts = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {selectedLoop.emotions.map((emotion, index) => (
-                          <TableRow key={index}>
-                            <TableCell className="font-medium">{emotion.emotion}</TableCell>
-                            <TableCell className="max-w-md">
-                              <p className="text-sm">{emotion.fearStatement}</p>
+                        {Array.isArray(selectedLoop.emotions) && selectedLoop.emotions.length > 0 ? (
+                          selectedLoop.emotions.map((emotion, index) => {
+                            const tiers = Array.isArray(emotion.tier) ? emotion.tier : [];
+                            return (
+                              <TableRow key={emotion.id || index}>
+                                <TableCell className="font-medium">{emotion.emotion || 'N/A'}</TableCell>
+                                <TableCell className="max-w-md">
+                                  <p className="text-sm">{emotion.fearStatement || 'N/A'}</p>
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex flex-wrap gap-1">
+                                    {tiers.length > 0 ? (
+                                      tiers.map((tier) => (
+                                        <Badge key={tier} variant="secondary" className="text-xs">
+                                          {tier}
+                                        </Badge>
+                                      ))
+                                    ) : (
+                                      <span className="text-xs text-muted-foreground">No tiers</span>
+                                    )}
+                                  </div>
+                                </TableCell>
+                                <TableCell>{emotion.usageCount ?? '—'}</TableCell>
+                              </TableRow>
+                            );
+                          })
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                              No associated emotions available
                             </TableCell>
-                            <TableCell>
-                              <div className="flex flex-wrap gap-1">
-                                {emotion.tier.map((tier) => (
-                                  <Badge key={tier} variant="secondary" className="text-xs">
-                                    {tier}
-                                  </Badge>
-                                ))}
-                              </div>
-                            </TableCell>
-                            <TableCell>{emotion.usageCount}</TableCell>
                           </TableRow>
-                        ))}
+                        )}
                       </TableBody>
                     </Table>
                   </CardContent>

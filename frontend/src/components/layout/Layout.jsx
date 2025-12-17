@@ -3,7 +3,7 @@ import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { cn } from '@/lib/utils';
 
-export const Layout = ({ children, title, subtitle, headerActions }) => {
+export const Layout = ({ children, title, subtitle, headerActions, hideHeaderQuickActions = false }) => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   return (
@@ -21,6 +21,7 @@ export const Layout = ({ children, title, subtitle, headerActions }) => {
           title={title}
           subtitle={subtitle}
           actions={headerActions}
+          showQuickActions={!hideHeaderQuickActions}
         />
 
         {/* Page Content */}

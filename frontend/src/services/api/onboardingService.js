@@ -6,9 +6,7 @@
 
 import BaseService from './baseService';
 import { ADMIN_SERVICE_ENDPOINTS } from '@/lib/api/adminServiceConfig';
-import { LOCAL_BACKEND_ENDPOINTS } from '@/lib/api/localBackendConfig';
 import adminServiceClient from '@/lib/api/adminServiceClient';
-import localBackendClient from '@/lib/api/localBackendClient';
 import { transformQuestionResponse, transformOptionResponse } from '@/utils/dataTransformers';
 import { handleApiError } from '@/utils/apiHelpers';
 
@@ -39,11 +37,11 @@ class OnboardingService extends BaseService {
 
   /**
    * Create a new onboarding question
-   * @param {Object} data - Question data
+   * @param {import('@/models').CreateOnboardingQuestionDto} data - Question data
    * @param {string} data.text - Question text
    * @param {number} data.displayOrder - Display order
    * @param {boolean} data.isActive - Whether question is active
-   * @returns {Promise<import('@/models').OnboardingQuestion>}
+   * @returns {Promise<import('@/models').OnboardingQuestionResponseDto>}
    */
   async createQuestion(data) {
     const response = await this.create(data);
@@ -53,8 +51,8 @@ class OnboardingService extends BaseService {
   /**
    * Update an onboarding question
    * @param {string} id - Question ID
-   * @param {Object} data - Updated question data
-   * @returns {Promise<import('@/models').OnboardingQuestion>}
+   * @param {import('@/models').UpdateOnboardingQuestionDto} data - Updated question data
+   * @returns {Promise<import('@/models').OnboardingQuestionResponseDto>}
    */
   async updateQuestion(id, data) {
     const response = await this.update(id, data);
@@ -72,13 +70,13 @@ class OnboardingService extends BaseService {
 
   /**
    * Create a new onboarding option
-   * @param {Object} data - Option data
+   * @param {import('@/models').CreateOnboardingOptionDto} data - Option data
    * @param {string} data.questionId - Parent question ID
    * @param {string} data.optionText - Option text
    * @param {number} data.displayOrder - Display order
-   * @param {string} data.assignsTier - Tier to assign
+   * @param {string} [data.assignsTier] - Tier to assign
    * @param {string} [data.assignsCharacterId] - Character ID to assign
-   * @returns {Promise<import('@/models').OnboardingOption>}
+   * @returns {Promise<import('@/models').OnboardingOptionResponseDto>}
    */
   async createOption(data) {
     try {
@@ -92,8 +90,8 @@ class OnboardingService extends BaseService {
   /**
    * Update an onboarding option
    * @param {string} id - Option ID
-   * @param {Object} data - Updated option data
-   * @returns {Promise<import('@/models').OnboardingOption>}
+   * @param {import('@/models').UpdateOnboardingOptionDto} data - Updated option data
+   * @returns {Promise<import('@/models').OnboardingOptionResponseDto>}
    */
   async updateOption(id, data) {
     try {
@@ -119,12 +117,12 @@ class OnboardingService extends BaseService {
 
   /**
    * Get character mapping (name to UUID)
-   * @returns {Promise<import('@/models').CharacterMapping[]>}
+   * @returns {Promise<import('@/models').CharacterResponseDto[]>}
    */
   async getCharacterMapping() {
-    // Character mapping is handled by local backend, not admin-service
+    // Use admin-service characters endpoint
     try {
-      const response = await localBackendClient.get(LOCAL_BACKEND_ENDPOINTS.CHARACTER_MAPPING);
+      const response = await adminServiceClient.get(ADMIN_SERVICE_ENDPOINTS.CHARACTERS);
       return Array.isArray(response.data) ? response.data : (response.data.data || response.data.items || []);
     } catch (error) {
       throw handleApiError(error);

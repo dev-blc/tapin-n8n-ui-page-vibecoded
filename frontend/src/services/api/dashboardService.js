@@ -1,68 +1,47 @@
 /**
  * Dashboard Service
  * API service for dashboard statistics and activity
- * Uses local backend
+ * 
+ * NOTE: Dashboard endpoints are NOT in the admin-service OpenAPI spec.
+ * These methods return empty/default data to prevent API calls to non-existent endpoints.
+ * The UI will display empty states instead of making invalid API requests.
  */
 
-import BaseService from './baseService';
-import { LOCAL_BACKEND_ENDPOINTS } from '@/lib/api/localBackendConfig';
-import localBackendClient from '@/lib/api/localBackendClient';
-import { transformStatsResponse, transformActivityResponse, transformContentHealthResponse } from '@/utils/dataTransformers';
-import { handleApiError } from '@/utils/apiHelpers';
-
-class DashboardService extends BaseService {
-  constructor() {
-    super(LOCAL_BACKEND_ENDPOINTS.DASHBOARD_STATS, localBackendClient);
-  }
-
+class DashboardService {
   /**
    * Get dashboard statistics
-   * @returns {Promise<import('@/models').DashboardStats>}
+   * Returns empty stats since this endpoint is not in the OpenAPI spec
+   * @returns {Promise<Object>}
    */
   async getStats() {
-    try {
-      const response = await localBackendClient.get(LOCAL_BACKEND_ENDPOINTS.DASHBOARD_STATS);
-      return transformStatsResponse(response.data);
-    } catch (error) {
-      throw handleApiError(error);
-    }
+    // Return empty stats object to prevent API call to non-existent endpoint
+    return {
+      totalUsers: 0,
+      activeUsers: 0,
+      totalContent: 0,
+      activeContent: 0,
+    };
   }
 
   /**
    * Get recent activity feed
-   * @param {Object} [params] - Query parameters
-   * @param {number} [params.limit] - Number of activities to return
-   * @returns {Promise<import('@/models').RecentActivity[]>}
+   * Returns empty array since this endpoint is not in the OpenAPI spec
+   * @param {Object} [params] - Query parameters (ignored)
+   * @returns {Promise<Array>}
    */
   async getRecentActivity(params = {}) {
-    try {
-      const { limit = 10, ...otherParams } = params;
-      const response = await localBackendClient.get(LOCAL_BACKEND_ENDPOINTS.DASHBOARD_ACTIVITY, {
-        params: { limit, ...otherParams },
-      });
-      const activities = Array.isArray(response.data) 
-        ? response.data 
-        : (response.data.data || response.data.items || []);
-      return activities.map(transformActivityResponse);
-    } catch (error) {
-      throw handleApiError(error);
-    }
+    // Return empty array to prevent API call to non-existent endpoint
+    return [];
   }
 
   /**
    * Get content health metrics
-   * @returns {Promise<import('@/models').ContentHealth[]>}
+   * Returns empty array since this endpoint is not in the OpenAPI spec
+   * @returns {Promise<Array>}
    */
   async getContentHealth() {
-    try {
-      const response = await localBackendClient.get(LOCAL_BACKEND_ENDPOINTS.DASHBOARD_CONTENT_HEALTH);
-      const healthData = Array.isArray(response.data) 
-        ? response.data 
-        : (response.data.data || response.data.items || []);
-      return healthData.map(transformContentHealthResponse);
-    } catch (error) {
-      throw handleApiError(error);
-    }
+    // Return empty array to prevent API call to non-existent endpoint
+    return [];
   }
 }
 

@@ -17,37 +17,12 @@ if (process.env.NODE_ENV === 'development') {
  * Endpoints handled by the local backend (not in admin-service)
  */
 export const LOCAL_BACKEND_ENDPOINTS = {
-  // User endpoints
-  USERS: '/api/admin/users',
-  USER_BY_ID: (id) => `/api/admin/users/${id}`,
-  USER_ENGAGEMENT: (id) => `/api/admin/users/${id}/engagement`,
-  USER_ACTIVITY: (id) => `/api/admin/users/${id}/activity`,
+  // User endpoints - REMOVED: Not in OpenAPI spec
+  // Dashboard endpoints - REMOVED: Not in OpenAPI spec
+  // These endpoints are no longer available
 
-  // Dashboard endpoints
-  DASHBOARD_STATS: '/api/admin/dashboard/stats',
-  DASHBOARD_ACTIVITY: '/api/admin/dashboard/activity',
-  DASHBOARD_CONTENT_HEALTH: '/api/admin/dashboard/content-health',
-
-  // Quick Shift endpoints
-  QUICK_SHIFT_LOOPS: '/api/admin/quick-shifts/loops',
-  QUICK_SHIFT_LOOP_BY_ID: (id) => `/api/admin/quick-shifts/loops/${id}`,
-  QUICK_SHIFT_REFRAMES: '/api/admin/quick-shifts/reframes',
-  QUICK_SHIFT_REFRAME_BY_ID: (id) => `/api/admin/quick-shifts/reframes/${id}`,
-  QUICK_SHIFT_PROTECTORS: '/api/admin/quick-shifts/protectors',
-  QUICK_SHIFT_PROTECTOR_BY_ID: (id) => `/api/admin/quick-shifts/protectors/${id}`,
-
-  // Plot Twist extended endpoints (not in admin-service)
-  PLOT_TWIST_CHARACTERS: '/api/admin/plot-twists/characters',
-  PLOT_TWIST_RESPONSE_OPTIONS: '/api/admin/plot-twists/response-options',
-
-  // Template endpoints
-  AFFIRMATION_TEMPLATES: '/api/admin/templates/affirmations',
-  AFFIRMATION_TEMPLATE_BY_ID: (id) => `/api/admin/templates/affirmations/${id}`,
-  MEDITATION_TEMPLATES: '/api/admin/templates/meditations',
-  MEDITATION_TEMPLATE_BY_ID: (id) => `/api/admin/templates/meditations/${id}`,
-
-  // Character mapping (for onboarding)
-  CHARACTER_MAPPING: '/api/admin/onboarding/characters',
+  // Note: Most endpoints have been moved to admin-service
+  // Only endpoints that truly need local backend processing should remain here
 };
 
 /**

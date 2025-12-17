@@ -94,3 +94,5 @@ android-sdk/ -e
 *.env
 *.env.*
 docs/Swagger UI.pdf
+docs/admin-spi.json
+API_INTEGRATION_ANALYSIS.md

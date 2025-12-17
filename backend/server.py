@@ -184,339 +184,418 @@ async def health_check():
         )
 
 # ============================================================================
-# Admin Routes - Users (Proxy to admin-service)
-# ============================================================================
-
-@admin_router.get("/users")
-@handle_admin_service_error
-async def get_users(
-    search: Optional[str] = Query(None),
-    status: Optional[str] = Query(None),
-    tier: Optional[str] = Query(None),
-    page: int = Query(1, ge=1),
-    limit: int = Query(10, ge=1, le=100)
-):
-    """Get all users - proxied to admin-service"""
-    if not admin_client:
-        raise HTTPException(status_code=503, detail="Admin service not configured")
-
-    params = {
-        "page": page,
-        "limit": limit
-    }
-    if search:
-        params["search"] = search
-    if status:
-        params["status"] = status
-    if tier:
-        params["tier"] = tier
-
-    return await admin_client.get('/admin/users', params=params)
-
-@admin_router.get("/users/{user_id}")
-@handle_admin_service_error
-async def get_user(user_id: str):
-    """Get user by ID - proxied to admin-service"""
-    if not admin_client:
-        raise HTTPException(status_code=503, detail="Admin service not configured")
-
-    return await admin_client.get(f'/admin/users/{user_id}')
-
-@admin_router.put("/users/{user_id}")
-@handle_admin_service_error
-async def update_user(user_id: str, data: Dict[str, Any] = Body(...)):
-    """Update user information - proxied to admin-service"""
-    if not admin_client:
-        raise HTTPException(status_code=503, detail="Admin service not configured")
-
-    return await admin_client.put(f'/admin/users/{user_id}', json_data=data)
-
-@admin_router.get("/users/{user_id}/engagement")
-@handle_admin_service_error
-async def get_user_engagement(user_id: str):
-    """Get user engagement metrics - proxied to admin-service"""
-    if not admin_client:
-        raise HTTPException(status_code=503, detail="Admin service not configured")
-
-    return await admin_client.get(f'/admin/users/{user_id}/engagement')
-
-@admin_router.get("/users/{user_id}/activity")
-@handle_admin_service_error
-async def get_user_activity(
-    user_id: str,
-    limit: int = Query(10, ge=1, le=100),
-    offset: int = Query(0, ge=0)
-):
-    """Get user activity log - proxied to admin-service"""
-    if not admin_client:
-        raise HTTPException(status_code=503, detail="Admin service not configured")
-
-    params = {"limit": limit, "offset": offset}
-    return await admin_client.get(f'/admin/users/{user_id}/activity', params=params)
-
-# ============================================================================
-# Admin Routes - Dashboard (Proxy to admin-service)
-# ============================================================================
-
-@admin_router.get("/dashboard/stats")
-@handle_admin_service_error
-async def get_dashboard_stats():
-    """Get dashboard statistics - proxied to admin-service"""
-    if not admin_client:
-        raise HTTPException(status_code=503, detail="Admin service not configured")
-
-    return await admin_client.get('/admin/dashboard/stats')
-
-@admin_router.get("/dashboard/activity")
-@handle_admin_service_error
-async def get_dashboard_activity(limit: int = Query(10, ge=1, le=100)):
-    """Get recent activity feed - proxied to admin-service"""
-    if not admin_client:
-        raise HTTPException(status_code=503, detail="Admin service not configured")
-
-    params = {"limit": limit}
-    return await admin_client.get('/admin/dashboard/activity', params=params)
-
-@admin_router.get("/dashboard/content-health")
-@handle_admin_service_error
-async def get_content_health():
-    """Get content health metrics - proxied to admin-service"""
-    if not admin_client:
-        raise HTTPException(status_code=503, detail="Admin service not configured")
-
-    return await admin_client.get('/admin/dashboard/content-health')
-
-# ============================================================================
 # Admin Routes - Quick Shifts (Proxy to admin-service)
 # ============================================================================
 
-@admin_router.get("/quick-shifts/loops")
+@admin_router.get("/quick-shift/get-all")
 @handle_admin_service_error
 async def get_quick_shift_loops():
     """Get all Quick Shift loops - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.get('/admin/quick-shifts/loops')
+    return await admin_client.get('/admin/quick-shift/get-all')
 
-@admin_router.get("/quick-shifts/loops/{loop_id}")
+@admin_router.get("/quick-shift/get/{loop_id}")
 @handle_admin_service_error
 async def get_quick_shift_loop(loop_id: str):
     """Get Quick Shift loop by ID - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.get(f'/admin/quick-shifts/loops/{loop_id}')
+    return await admin_client.get(f'/admin/quick-shift/get/{loop_id}')
 
-@admin_router.post("/quick-shifts/loops")
+@admin_router.post("/quick-shift/create-loop")
 @handle_admin_service_error
 async def create_quick_shift_loop(data: Dict[str, Any] = Body(...)):
     """Create a new Quick Shift loop - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.post('/admin/quick-shifts/loops', json_data=data)
+    return await admin_client.post('/admin/quick-shift/create-loop', json_data=data)
 
-@admin_router.put("/quick-shifts/loops/{loop_id}")
+@admin_router.put("/quick-shift/update-loop/{loop_id}")
 @handle_admin_service_error
 async def update_quick_shift_loop(loop_id: str, data: Dict[str, Any] = Body(...)):
     """Update a Quick Shift loop - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.put(f'/admin/quick-shifts/loops/{loop_id}', json_data=data)
+    return await admin_client.put(f'/admin/quick-shift/update-loop/{loop_id}', json_data=data)
 
-@admin_router.delete("/quick-shifts/loops/{loop_id}")
+@admin_router.delete("/quick-shift/delete-loop/{loop_id}")
 @handle_admin_service_error
 async def delete_quick_shift_loop(loop_id: str):
     """Delete a Quick Shift loop - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.delete(f'/admin/quick-shifts/loops/{loop_id}')
+    return await admin_client.delete(f'/admin/quick-shift/delete-loop/{loop_id}')
 
-@admin_router.get("/quick-shifts/reframes")
+@admin_router.post("/quick-shift/create-sensation-prompt")
 @handle_admin_service_error
-async def get_quick_shift_reframes():
-    """Get all Quick Shift reframes - proxied to admin-service"""
+async def create_quick_shift_sensation(data: Dict[str, Any] = Body(...)):
+    """Create a new Quick Shift sensation prompt - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.get('/admin/quick-shifts/reframes')
+    return await admin_client.post('/admin/quick-shift/create-sensation-prompt', json_data=data)
 
-@admin_router.get("/quick-shifts/reframes/{reframe_id}")
+@admin_router.get("/quick-shift/get-all-sensation-prompts")
 @handle_admin_service_error
-async def get_quick_shift_reframe(reframe_id: str):
-    """Get Quick Shift reframe by ID - proxied to admin-service"""
+async def get_quick_shift_sensations(isActive: bool = Query(...)):
+    """Get all Quick Shift sensation prompts - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.get(f'/admin/quick-shifts/reframes/{reframe_id}')
+    params = {"isActive": isActive}
+    return await admin_client.get('/admin/quick-shift/get-all-sensation-prompts', params=params)
 
-@admin_router.post("/quick-shifts/reframes")
+@admin_router.put("/quick-shift/update-sensation-prompt/{sensation_id}")
 @handle_admin_service_error
-async def create_quick_shift_reframe(data: Dict[str, Any] = Body(...)):
-    """Create a new Quick Shift reframe - proxied to admin-service"""
+async def update_quick_shift_sensation(sensation_id: str, data: Dict[str, Any] = Body(...)):
+    """Update a Quick Shift sensation prompt - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.post('/admin/quick-shifts/reframes', json_data=data)
+    return await admin_client.put(f'/admin/quick-shift/update-sensation-prompt/{sensation_id}', json_data=data)
 
-@admin_router.get("/quick-shifts/protectors")
+@admin_router.delete("/quick-shift/delete-sensation-prompt/{sensation_id}")
 @handle_admin_service_error
-async def get_quick_shift_protectors():
-    """Get all Quick Shift protectors - proxied to admin-service"""
+async def delete_quick_shift_sensation(sensation_id: str):
+    """Delete a Quick Shift sensation prompt - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.get('/admin/quick-shifts/protectors')
-
-@admin_router.get("/quick-shifts/protectors/{protector_id}")
-@handle_admin_service_error
-async def get_quick_shift_protector(protector_id: str):
-    """Get Quick Shift protector by ID - proxied to admin-service"""
-    if not admin_client:
-        raise HTTPException(status_code=503, detail="Admin service not configured")
-
-    return await admin_client.get(f'/admin/quick-shifts/protectors/{protector_id}')
-
-@admin_router.post("/quick-shifts/protectors")
-@handle_admin_service_error
-async def create_quick_shift_protector(data: Dict[str, Any] = Body(...)):
-    """Create a new Quick Shift protector - proxied to admin-service"""
-    if not admin_client:
-        raise HTTPException(status_code=503, detail="Admin service not configured")
-
-    return await admin_client.post('/admin/quick-shifts/protectors', json_data=data)
+    return await admin_client.delete(f'/admin/quick-shift/delete-sensation-prompt/{sensation_id}')
 
 # ============================================================================
 # Admin Routes - Templates (Proxy to admin-service)
 # ============================================================================
 
-@admin_router.get("/templates/affirmations")
+@admin_router.get("/affirmation-templates")
 @handle_admin_service_error
-async def get_affirmation_templates():
+async def get_affirmation_templates(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    search: Optional[str] = Query(None),
+    characterId: Optional[str] = Query(None),
+    isActive: Optional[bool] = Query(None)
+):
     """Get all affirmation templates - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.get('/admin/templates/affirmations')
+    params = {"page": page, "limit": limit}
+    if search:
+        params["search"] = search
+    if characterId:
+        params["characterId"] = characterId
+    if isActive is not None:
+        params["isActive"] = isActive
 
-@admin_router.get("/templates/affirmations/{template_id}")
+    return await admin_client.get('/admin/affirmation-templates', params=params)
+
+@admin_router.get("/affirmation-templates/{template_id}")
 @handle_admin_service_error
 async def get_affirmation_template(template_id: str):
     """Get affirmation template by ID - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.get(f'/admin/templates/affirmations/{template_id}')
+    return await admin_client.get(f'/admin/affirmation-templates/{template_id}')
 
-@admin_router.post("/templates/affirmations")
+@admin_router.post("/affirmation-templates")
 @handle_admin_service_error
 async def create_affirmation_template(data: Dict[str, Any] = Body(...)):
     """Create a new affirmation template - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.post('/admin/templates/affirmations', json_data=data)
+    return await admin_client.post('/admin/affirmation-templates', json_data=data)
 
-@admin_router.put("/templates/affirmations/{template_id}")
+@admin_router.put("/affirmation-templates/{template_id}")
 @handle_admin_service_error
 async def update_affirmation_template(template_id: str, data: Dict[str, Any] = Body(...)):
     """Update an affirmation template - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.put(f'/admin/templates/affirmations/{template_id}', json_data=data)
+    return await admin_client.put(f'/admin/affirmation-templates/{template_id}', json_data=data)
 
-@admin_router.delete("/templates/affirmations/{template_id}")
+@admin_router.delete("/affirmation-templates/{template_id}")
 @handle_admin_service_error
 async def delete_affirmation_template(template_id: str):
     """Delete an affirmation template - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.delete(f'/admin/templates/affirmations/{template_id}')
+    return await admin_client.delete(f'/admin/affirmation-templates/{template_id}')
 
-@admin_router.get("/templates/meditations")
+@admin_router.get("/meditation-templates")
 @handle_admin_service_error
-async def get_meditation_templates():
+async def get_meditation_templates(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    search: Optional[str] = Query(None),
+    characterId: Optional[str] = Query(None),
+    isActive: Optional[bool] = Query(None)
+):
     """Get all meditation templates - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.get('/admin/templates/meditations')
+    params = {"page": page, "limit": limit}
+    if search:
+        params["search"] = search
+    if characterId:
+        params["characterId"] = characterId
+    if isActive is not None:
+        params["isActive"] = isActive
 
-@admin_router.get("/templates/meditations/{template_id}")
+    return await admin_client.get('/admin/meditation-templates', params=params)
+
+@admin_router.get("/meditation-templates/{template_id}")
 @handle_admin_service_error
 async def get_meditation_template(template_id: str):
     """Get meditation template by ID - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.get(f'/admin/templates/meditations/{template_id}')
+    return await admin_client.get(f'/admin/meditation-templates/{template_id}')
 
-@admin_router.post("/templates/meditations")
+@admin_router.post("/meditation-templates")
 @handle_admin_service_error
 async def create_meditation_template(data: Dict[str, Any] = Body(...)):
     """Create a new meditation template - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.post('/admin/templates/meditations', json_data=data)
+    return await admin_client.post('/admin/meditation-templates', json_data=data)
 
-@admin_router.put("/templates/meditations/{template_id}")
+@admin_router.put("/meditation-templates/{template_id}")
 @handle_admin_service_error
 async def update_meditation_template(template_id: str, data: Dict[str, Any] = Body(...)):
     """Update a meditation template - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.put(f'/admin/templates/meditations/{template_id}', json_data=data)
+    return await admin_client.put(f'/admin/meditation-templates/{template_id}', json_data=data)
 
-@admin_router.delete("/templates/meditations/{template_id}")
+@admin_router.delete("/meditation-templates/{template_id}")
 @handle_admin_service_error
 async def delete_meditation_template(template_id: str):
     """Delete a meditation template - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.delete(f'/admin/templates/meditations/{template_id}')
+    return await admin_client.delete(f'/admin/meditation-templates/{template_id}')
 
 # ============================================================================
-# Admin Routes - Plot Twist Extended (Proxy to admin-service)
+# Admin Routes - Plot Twist (Proxy to admin-service)
 # ============================================================================
 
-@admin_router.get("/plot-twists/characters")
+@admin_router.get("/plot-twists")
 @handle_admin_service_error
-async def get_plot_twist_characters():
-    """Get all Plot Twist characters - proxied to admin-service"""
+async def get_plot_twist_quests(
+    page: int = Query(1, ge=1),
+    limit: int = Query(20, ge=1, le=100),
+    search: Optional[str] = Query(None),
+    tags: Optional[List[str]] = Query(None),
+    dayNumber: Optional[int] = Query(None),
+    createdBy: Optional[str] = Query(None),
+    characterId: Optional[str] = Query(None),
+    isActive: Optional[bool] = Query(None)
+):
+    """Get all Plot Twist quests - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.get('/admin/plot-twists/characters')
+    params = {"page": page, "limit": limit}
+    if search:
+        params["search"] = search
+    if tags:
+        params["tags"] = tags
+    if dayNumber:
+        params["dayNumber"] = dayNumber
+    if createdBy:
+        params["createdBy"] = createdBy
+    if characterId:
+        params["characterId"] = characterId
+    if isActive is not None:
+        params["isActive"] = isActive
 
-@admin_router.get("/plot-twists/response-options")
+    return await admin_client.get('/admin/plot-twists', params=params)
+
+@admin_router.post("/plot-twists")
 @handle_admin_service_error
-async def get_plot_twist_response_options():
-    """Get Plot Twist response options - proxied to admin-service"""
+async def create_plot_twist_quest(data: Dict[str, Any] = Body(...)):
+    """Create a new Plot Twist quest - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.get('/admin/plot-twists/response-options')
+    return await admin_client.post('/admin/plot-twists', json_data=data)
+
+@admin_router.put("/plot-twists/{quest_id}")
+@handle_admin_service_error
+async def update_plot_twist_quest(quest_id: str, data: Dict[str, Any] = Body(...)):
+    """Update a Plot Twist quest - proxied to admin-service"""
+    if not admin_client:
+        raise HTTPException(status_code=503, detail="Admin service not configured")
+
+    return await admin_client.put(f'/admin/plot-twists/{quest_id}', json_data=data)
+
+@admin_router.delete("/plot-twists/{quest_id}")
+@handle_admin_service_error
+async def delete_plot_twist_quest(quest_id: str):
+    """Delete a Plot Twist quest - proxied to admin-service"""
+    if not admin_client:
+        raise HTTPException(status_code=503, detail="Admin service not configured")
+
+    return await admin_client.delete(f'/admin/plot-twists/{quest_id}')
+
+@admin_router.put("/plot-twist-options/{option_id}")
+@handle_admin_service_error
+async def update_plot_twist_option(option_id: str, data: Dict[str, Any] = Body(...)):
+    """Update a plot twist option - proxied to admin-service"""
+    if not admin_client:
+        raise HTTPException(status_code=503, detail="Admin service not configured")
+
+    return await admin_client.put(f'/admin/plot-twist-options/{option_id}', json_data=data)
+
+@admin_router.delete("/plot-twist-options/{option_id}")
+@handle_admin_service_error
+async def delete_plot_twist_option(option_id: str):
+    """Delete a plot twist option - proxied to admin-service"""
+    if not admin_client:
+        raise HTTPException(status_code=503, detail="Admin service not configured")
+
+    return await admin_client.delete(f'/admin/plot-twist-options/{option_id}')
+
+@admin_router.put("/plot-twist-responses/{response_id}")
+@handle_admin_service_error
+async def update_plot_twist_response(response_id: str, data: Dict[str, Any] = Body(...)):
+    """Update a plot twist response - proxied to admin-service"""
+    if not admin_client:
+        raise HTTPException(status_code=503, detail="Admin service not configured")
+
+    return await admin_client.put(f'/admin/plot-twist-responses/{response_id}', json_data=data)
+
+@admin_router.delete("/plot-twist-responses/{response_id}")
+@handle_admin_service_error
+async def delete_plot_twist_response(response_id: str):
+    """Delete a plot twist response - proxied to admin-service"""
+    if not admin_client:
+        raise HTTPException(status_code=503, detail="Admin service not configured")
+
+    return await admin_client.delete(f'/admin/plot-twist-responses/{response_id}')
+
+# ============================================================================
+# Admin Routes - Characters (Proxy to admin-service)
+# ============================================================================
+
+@admin_router.get("/characters")
+@handle_admin_service_error
+async def get_characters():
+    """Get all characters - proxied to admin-service"""
+    if not admin_client:
+        raise HTTPException(status_code=503, detail="Admin service not configured")
+
+    return await admin_client.get('/admin/characters')
+
+@admin_router.post("/characters")
+@handle_admin_service_error
+async def create_character(data: Dict[str, Any] = Body(...)):
+    """Create a new character - proxied to admin-service"""
+    if not admin_client:
+        raise HTTPException(status_code=503, detail="Admin service not configured")
+
+    return await admin_client.post('/admin/characters', json_data=data)
+
+@admin_router.put("/characters/{character_id}")
+@handle_admin_service_error
+async def update_character(character_id: str, data: Dict[str, Any] = Body(...)):
+    """Update a character - proxied to admin-service"""
+    if not admin_client:
+        raise HTTPException(status_code=503, detail="Admin service not configured")
+
+    return await admin_client.put(f'/admin/characters/{character_id}', json_data=data)
+
+@admin_router.delete("/characters/{character_id}")
+@handle_admin_service_error
+async def delete_character(character_id: str):
+    """Delete a character - proxied to admin-service"""
+    if not admin_client:
+        raise HTTPException(status_code=503, detail="Admin service not configured")
+
+    return await admin_client.delete(f'/admin/characters/{character_id}')
 
 # ============================================================================
 # Admin Routes - Onboarding (Proxy to admin-service)
 # ============================================================================
 
-@admin_router.get("/onboarding/characters")
+@admin_router.get("/onboarding/questions")
 @handle_admin_service_error
-async def get_character_mapping():
-    """Get character mapping - proxied to admin-service"""
+async def get_onboarding_questions():
+    """Get all onboarding questions - proxied to admin-service"""
     if not admin_client:
         raise HTTPException(status_code=503, detail="Admin service not configured")
 
-    return await admin_client.get('/admin/onboarding/characters')
+    return await admin_client.get('/admin/onboarding/questions')
+
+@admin_router.post("/onboarding/questions")
+@handle_admin_service_error
+async def create_onboarding_question(data: Dict[str, Any] = Body(...)):
+    """Create a new onboarding question - proxied to admin-service"""
+    if not admin_client:
+        raise HTTPException(status_code=503, detail="Admin service not configured")
+
+    return await admin_client.post('/admin/onboarding/questions', json_data=data)
+
+@admin_router.put("/onboarding/questions/{question_id}")
+@handle_admin_service_error
+async def update_onboarding_question(question_id: str, data: Dict[str, Any] = Body(...)):
+    """Update an onboarding question - proxied to admin-service"""
+    if not admin_client:
+        raise HTTPException(status_code=503, detail="Admin service not configured")
+
+    return await admin_client.put(f'/admin/onboarding/questions/{question_id}', json_data=data)
+
+@admin_router.delete("/onboarding/questions/{question_id}")
+@handle_admin_service_error
+async def delete_onboarding_question(question_id: str):
+    """Delete an onboarding question - proxied to admin-service"""
+    if not admin_client:
+        raise HTTPException(status_code=503, detail="Admin service not configured")
+
+    return await admin_client.delete(f'/admin/onboarding/questions/{question_id}')
+
+@admin_router.post("/onboarding/options")
+@handle_admin_service_error
+async def create_onboarding_option(data: Dict[str, Any] = Body(...)):
+    """Create a new onboarding option - proxied to admin-service"""
+    if not admin_client:
+        raise HTTPException(status_code=503, detail="Admin service not configured")
+
+    return await admin_client.post('/admin/onboarding/options', json_data=data)
+
+@admin_router.put("/onboarding/options/{option_id}")
+@handle_admin_service_error
+async def update_onboarding_option(option_id: str, data: Dict[str, Any] = Body(...)):
+    """Update an onboarding option - proxied to admin-service"""
+    if not admin_client:
+        raise HTTPException(status_code=503, detail="Admin service not configured")
+
+    return await admin_client.put(f'/admin/onboarding/options/{option_id}', json_data=data)
+
+@admin_router.delete("/onboarding/options/{option_id}")
+@handle_admin_service_error
+async def delete_onboarding_option(option_id: str):
+    """Delete an onboarding option - proxied to admin-service"""
+    if not admin_client:
+        raise HTTPException(status_code=503, detail="Admin service not configured")
+
+    return await admin_client.delete(f'/admin/onboarding/options/{option_id}')
 
 # Include the routers in the main app
 app.include_router(api_router)

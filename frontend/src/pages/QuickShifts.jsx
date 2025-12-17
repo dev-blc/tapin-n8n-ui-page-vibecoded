@@ -103,8 +103,52 @@ export const QuickShifts = () => {
     }
   });
 
-  // Ensure arrays
-  const quickShiftLoops = Array.isArray(quickShiftLoopsData) ? quickShiftLoopsData : [];
+  // Transform API data to match UI expectations
+  const transformLoopData = (loop) => {
+    if (!loop) return null;
+    
+    const transformed = {
+      id: loop.id || loop._id || '',
+      category: loop.category || loop.name || loop.title || 'Untitled',
+      icon: loop.icon || loop.emoji || '',
+      description: loop.description || '',
+      status: loop.status || (loop.isActive !== false ? 'Active' : 'Inactive'),
+      tierAvailability: Array.isArray(loop.tierAvailability) 
+        ? loop.tierAvailability 
+        : Array.isArray(loop.tiers) 
+          ? loop.tiers 
+          : loop.tier 
+            ? [loop.tier] 
+            : [],
+      // Preserve all other fields for potential use
+      ...loop
+    };
+    
+    // Log in development for debugging
+    if (process.env.NODE_ENV === 'development' && !loop.category && !loop.name && !loop.title) {
+      console.log('[QuickShifts] Transformed loop data:', transformed);
+    }
+    
+    return transformed;
+  };
+
+  // Ensure arrays and transform data
+  const quickShiftLoops = useMemo(() => {
+    if (!Array.isArray(quickShiftLoopsData)) {
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[QuickShifts] Received non-array data:', quickShiftLoopsData);
+      }
+      return [];
+    }
+    
+    const transformed = quickShiftLoopsData.map(transformLoopData).filter(Boolean);
+    
+    if (process.env.NODE_ENV === 'development' && transformed.length > 0) {
+      console.log(`[QuickShifts] Loaded ${transformed.length} loop(s) from API`);
+    }
+    
+    return transformed;
+  }, [quickShiftLoopsData]);
   const reframeLibrary = Array.isArray(reframesData) ? reframesData : [];
   const protectors = Array.isArray(protectorsData) ? protectorsData : [];
 
@@ -178,20 +222,45 @@ export const QuickShifts = () => {
     }
   };
 
-  // Filter loops by search query
+  // Filter and sort loops
   const filteredLoops = useMemo(() => {
-    let filtered = quickShiftLoops;
+    let filtered = [...quickShiftLoops];
     
+    // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(loop => 
         loop.category?.toLowerCase().includes(query) ||
-        loop.description?.toLowerCase().includes(query)
+        loop.description?.toLowerCase().includes(query) ||
+        loop.name?.toLowerCase().includes(query) ||
+        loop.title?.toLowerCase().includes(query)
       );
     }
     
+    // Apply tier filter if selected
+    if (selectedTier !== 'all') {
+      filtered = filtered.filter(loop => {
+        if (!loop.tierAvailability || loop.tierAvailability.length === 0) {
+          return false;
+        }
+        return loop.tierAvailability.includes(selectedTier) || 
+               loop.tierAvailability.some(tier => tier.toString().includes(selectedTier));
+      });
+    }
+    
+    // Sort by category name (alphabetically), with "Untitled" at the end
+    filtered.sort((a, b) => {
+      const aCategory = a.category || 'Untitled';
+      const bCategory = b.category || 'Untitled';
+      
+      if (aCategory === 'Untitled' && bCategory !== 'Untitled') return 1;
+      if (bCategory === 'Untitled' && aCategory !== 'Untitled') return -1;
+      
+      return aCategory.localeCompare(bCategory);
+    });
+    
     return filtered;
-  }, [quickShiftLoops, searchQuery]);
+  }, [quickShiftLoops, searchQuery, selectedTier]);
 
   // Handle create loop
   const handleCreateLoop = async () => {
@@ -244,24 +313,14 @@ export const QuickShifts = () => {
 
   // Handle delete reframe
   const handleDeleteReframe = async (reframeId) => {
-    if (window.confirm('Are you sure you want to delete this reframe?')) {
-      try {
-        await deleteReframe(reframeId, { showSuccessToast: true });
-      } catch (error) {
-        console.error('Error deleting reframe:', error);
-      }
-    }
+    // Reframe deletion is not available - endpoint not in OpenAPI spec
+    toast.error('Reframe deletion is not available in the current API specification');
   };
 
   // Handle delete protector
   const handleDeleteProtector = async (protectorId) => {
-    if (window.confirm('Are you sure you want to delete this protector?')) {
-      try {
-        await deleteProtector(protectorId, { showSuccessToast: true });
-      } catch (error) {
-        console.error('Error deleting protector:', error);
-      }
-    }
+    // Protector deletion is not available - endpoint not in OpenAPI spec
+    toast.error('Protector deletion is not available in the current API specification');
   };
 
   return (
@@ -270,14 +329,7 @@ export const QuickShifts = () => {
       subtitle="Manage emotional regulation content variations across user tiers"
       headerActions={
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Analytics
-          </Button>
-          <Button variant="outline" size="sm">
-            <Filter className="h-4 w-4 mr-2" />
-            Filters
-          </Button>
+          {/* Header Analytics and Filters hidden for Quick Shifts */}
           <Button 
             variant="primary" 
             size="sm"
@@ -370,9 +422,9 @@ export const QuickShifts = () => {
                           <TableCell>
                             {loop.tierAvailability && Array.isArray(loop.tierAvailability) && loop.tierAvailability.length > 0 ? (
                               <div className="flex flex-wrap gap-1">
-                                {loop.tierAvailability.map((tier) => (
-                                  <Badge key={tier} variant="secondary" className="text-xs">
-                                    {tier}
+                                {loop.tierAvailability.map((tier, idx) => (
+                                  <Badge key={tier || idx} variant="secondary" className="text-xs">
+                                    {tier || 'N/A'}
                                   </Badge>
                                 ))}
                               </div>
@@ -427,16 +479,16 @@ export const QuickShifts = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Reframe Statement Library</CardTitle>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Note: Reframe endpoints are not available in the current API specification.
+                </p>
               </CardHeader>
               <CardContent>
                 {reframesLoading ? (
                   <TableSkeleton rows={5} columns={6} />
                 ) : reframesError ? (
-                  <div className="text-center py-8 text-destructive">
-                    <p>Error loading reframes: {reframesError}</p>
-                    <Button onClick={refetchReframes} variant="outline" className="mt-4">
-                      Retry
-                    </Button>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Reframes feature is not available</p>
                   </div>
                 ) : (
                   <Table>
@@ -518,6 +570,9 @@ export const QuickShifts = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Protector Archetypes</CardTitle>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Note: Protector endpoints are not available in the current API specification.
+                </p>
               </CardHeader>
               <CardContent>
                 {protectorsLoading ? (
@@ -526,11 +581,8 @@ export const QuickShifts = () => {
                     <span>Loading protectors...</span>
                   </div>
                 ) : protectorsError ? (
-                  <div className="text-center py-8 text-destructive">
-                    <p>Error loading protectors: {protectorsError}</p>
-                    <Button onClick={refetchProtectors} variant="outline" className="mt-4">
-                      Retry
-                    </Button>
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Protectors feature is not available</p>
                   </div>
                 ) : protectors.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">

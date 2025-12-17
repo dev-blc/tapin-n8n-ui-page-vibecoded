@@ -52,12 +52,12 @@ export const Sidebar = ({ collapsed = false, onToggle }) => {
           href: '/affirmations',
           description: 'Positive affirmation templates'
         },
-        {
-          title: 'Teaching Moments',
-          icon: BookOpen,
-          href: '/teaching-moments',
-          description: 'Personal growth insights'
-        }
+        // {
+        //   title: 'Teaching Moments',
+        //   icon: BookOpen,
+        //   href: '/teaching-moments',
+        //   description: 'Personal growth insights'
+        // }
       ]
     },
     {
@@ -81,12 +81,12 @@ export const Sidebar = ({ collapsed = false, onToggle }) => {
           href: '/analytics',
           description: 'Insights & performance'
         },
-        {
-          title: 'Settings',
-          icon: Settings,
-          href: '/settings',
-          description: 'Platform configuration'
-        }
+        // {
+        //   title: 'Settings',
+        //   icon: Settings,
+        //   href: '/settings',
+        //   description: 'Platform configuration'
+        // }
       ]
     }
   ];

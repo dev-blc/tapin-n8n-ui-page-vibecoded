@@ -41,7 +41,9 @@ import {
   Heart,
   Send,
   Trash2,
-  Loader2
+  Loader2,
+  Pause,
+  Play
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -56,18 +58,33 @@ import { FullPageLoader, TableSkeleton } from '@/components/loading/LoadingSpinn
 export const OnboardingManagement = () => {
   const [selectedQuestion, setSelectedQuestion] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingQuestion, setEditingQuestion] = useState(null);
   const [isSendAffirmationOpen, setIsSendAffirmationOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [updating, setUpdating] = useState(false);
+
+  // Track created items for cleanup on cancel
+  const [createdQuestionId, setCreatedQuestionId] = useState(null);
+  const [createdOptionIds, setCreatedOptionIds] = useState([]);
 
   // Fetch data using hooks
   const { data: onboardingQuestionsData, loading, error, refetch } = useOnboardingQuestions({ showErrorToast: false });
   const { data: characterMappings = [], loading: characterMappingLoading } = useCharacterMapping({ showErrorToast: false });
-  const { createQuestion: createQuestionMutation, deleteQuestion: deleteQuestionMutation } = useQuestionMutation({
+  const { 
+    createQuestion: createQuestionMutation, 
+    updateQuestion: updateQuestionMutation,
+    deleteQuestion: deleteQuestionMutation 
+  } = useQuestionMutation({
     onSuccess: () => {
       refetch();
     },
   });
-  const { createOption: createOptionMutation } = useOptionMutation();
+  const { 
+    createOption: createOptionMutation, 
+    updateOption: updateOptionMutation,
+    deleteOption: deleteOptionMutation 
+  } = useOptionMutation();
 
   // Ensure onboardingQuestions is always an array
   const onboardingQuestions = Array.isArray(onboardingQuestionsData) ? onboardingQuestionsData : [];
@@ -98,6 +115,14 @@ export const OnboardingManagement = () => {
     ]
   });
 
+  // Form state for editing question
+  const [editQuestion, setEditQuestion] = useState({
+    text: '',
+    displayOrder: 1,
+    isActive: true,
+    options: []
+  });
+
   // Create new onboarding question - Using service layer
   const createQuestion = async () => {
     // Prevent multiple submissions
@@ -107,6 +132,10 @@ export const OnboardingManagement = () => {
 
     try {
       setSubmitting(true);
+
+      // Reset tracking state
+      setCreatedQuestionId(null);
+      setCreatedOptionIds([]);
 
       // VALIDATION PHASE - Check all requirements before making ANY API calls
       if (!newQuestion.text.trim()) {
@@ -135,38 +164,108 @@ export const OnboardingManagement = () => {
       };
 
       const questionResponse = await createQuestionMutation(questionPayload, { showSuccessToast: false });
-      const createdQuestionId = questionResponse.id;
+      // Extract question ID from response (handle both transformed and raw responses)
+      const questionId = questionResponse?.id || questionResponse?.data?.id || questionResponse?.data?.data?.id;
 
-      if (!createdQuestionId) {
+      if (!questionId) {
         throw new Error('Question created but no ID returned');
       }
 
+      // Track created question ID
+      setCreatedQuestionId(questionId);
+
       // STEP 2: Create options
-      const optionPromises = validOptions.map((option, index) => {
-        // Handle character ID properly - API expects UUID or empty string
-        let characterId = '';
-        if (option.characterName && option.characterName !== "none" && characterMap[option.characterName]) {
+      const optionPromises = validOptions.map(async (option, index) => {
+        // Use assignsCharacterId directly from state, or fallback to characterMap lookup
+        let characterId = option.assignsCharacterId || '';
+        
+        // Fallback: if assignsCharacterId is not set but characterName is, look it up
+        if (!characterId && option.characterName && option.characterName !== "none" && characterMap[option.characterName]) {
           characterId = characterMap[option.characterName];
+          console.log('Fallback lookup - Character name:', option.characterName, 'Found UUID:', characterId);
         }
 
         const payload = {
-          questionId: createdQuestionId,
+          questionId: questionId,
           optionText: option.optionText.trim(),
           assignsTier: option.assignsTier,
           displayOrder: index + 1
         };
 
         // Only include assignsCharacterId if we have a valid UUID
-        if (characterId) {
+        if (characterId && characterId.trim() !== '') {
           payload.assignsCharacterId = characterId;
+          console.log('Including characterId in payload:', characterId);
+        } else {
+          console.log('No characterId to include for option:', option.optionText);
         }
 
-        return createOptionMutation(payload, { showSuccessToast: false });
+        const optionResponse = await createOptionMutation(payload, { showSuccessToast: false });
+        // Extract option ID from response (handle both transformed and raw responses)
+        const optionId = optionResponse?.id || optionResponse?.data?.id || optionResponse?.data?.data?.id;
+
+        // Track created option ID for cleanup
+        if (optionId) {
+          setCreatedOptionIds(prev => [...prev, optionId]);
+        } else {
+          console.warn('Option created but no ID returned:', optionResponse);
+        }
+
+        return optionResponse;
       });
 
       await Promise.all(optionPromises);
 
       // STEP 3: Success - Reset form and close modal
+      resetForm();
+      setIsCreateModalOpen(false);
+      setCreatedQuestionId(null);
+      setCreatedOptionIds([]);
+
+      toast.success('Question and options created successfully');
+
+    } catch (error) {
+      console.error('Error in createQuestion:', error);
+
+      // Cleanup: Delete created question and options on error
+      await cleanupCreatedItems();
+
+      toast.error(error.message || 'Failed to create question');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // Cleanup function to delete created items
+  const cleanupCreatedItems = async () => {
+    try {
+      // Delete all created options first (in reverse order to handle dependencies)
+      if (createdOptionIds.length > 0) {
+        const deleteOptionPromises = createdOptionIds.map(optionId =>
+          deleteOptionMutation(optionId).catch(err => {
+            console.error(`Failed to delete option ${optionId}:`, err);
+            // Don't throw - continue with other deletions
+            return null;
+          })
+        );
+        await Promise.all(deleteOptionPromises);
+      }
+
+      // Delete the created question
+      if (createdQuestionId) {
+        await deleteQuestionMutation(createdQuestionId).catch(err => {
+          console.error(`Failed to delete question ${createdQuestionId}:`, err);
+          // Don't throw - log error but continue
+        });
+      }
+    } catch (error) {
+      console.error('Error during cleanup:', error);
+      // Don't throw - cleanup errors shouldn't break the UI
+    }
+  };
+
+  // Reset form to initial state
+  const resetForm = () => {
       setNewQuestion({
         text: '',
         displayOrder: 1,
@@ -178,15 +277,19 @@ export const OnboardingManagement = () => {
           { optionText: '', displayOrder: 4, assignsTier: '', characterName: '', assignsCharacterId: '' }
         ]
       });
-      setIsCreateModalOpen(false);
+  };
 
-      toast.success('Question and options created successfully');
-
-    } catch (error) {
-      console.error('Error in createQuestion:', error);
-      toast.error(error.message || 'Failed to create question');
-    } finally {
-      setSubmitting(false);
+  // Handle modal close/cancel
+  const handleModalClose = async (open) => {
+    if (!open && (createdQuestionId || createdOptionIds.length > 0)) {
+      // User is closing/canceling - cleanup created items
+      await cleanupCreatedItems();
+      setCreatedQuestionId(null);
+      setCreatedOptionIds([]);
+    }
+    setIsCreateModalOpen(open);
+    if (!open) {
+      resetForm();
     }
   };
 
@@ -199,11 +302,221 @@ export const OnboardingManagement = () => {
     }
   };
 
+  // Open edit modal with question data
+  const openEditModal = (question) => {
+    // Find character name for each option
+    const optionsWithCharacterNames = (question.options || []).map(option => {
+      let characterName = '';
+      if (option.assignsCharacterId) {
+        // Find character name from characterMappings
+        const character = characterMappings.find(
+          char => char && char.id === option.assignsCharacterId
+        );
+        characterName = character?.name || '';
+      }
+      
+      return {
+        id: option.id,
+        optionText: option.optionText || option.text || '',
+        displayOrder: option.displayOrder || 1,
+        assignsTier: option.assignsTier || '',
+        characterName: characterName,
+        assignsCharacterId: option.assignsCharacterId || ''
+      };
+    });
+
+    setEditQuestion({
+      id: question.id,
+      text: question.text || '',
+      displayOrder: question.displayOrder || 1,
+      isActive: question.isActive !== undefined ? question.isActive : true,
+      options: optionsWithCharacterNames.length > 0 
+        ? optionsWithCharacterNames 
+        : [
+            { optionText: '', displayOrder: 1, assignsTier: '', characterName: '', assignsCharacterId: '' },
+            { optionText: '', displayOrder: 2, assignsTier: '', characterName: '', assignsCharacterId: '' }
+          ]
+    });
+    setEditingQuestion(question);
+    setIsEditModalOpen(true);
+  };
+
+  // Update question and options
+  const updateQuestion = async () => {
+    if (updating) {
+      return;
+    }
+
+    try {
+      setUpdating(true);
+
+      // Validation
+      if (!editQuestion.text.trim()) {
+        toast.error('Question text is required');
+        return;
+      }
+
+      const validOptions = editQuestion.options.filter(opt => opt.optionText.trim());
+      if (validOptions.length < 2) {
+        toast.error('At least 2 options are required');
+        return;
+      }
+
+      // Validate tier assignments
+      const invalidTiers = validOptions.filter(opt => !opt.assignsTier);
+      if (invalidTiers.length > 0) {
+        toast.error('All options must have a tier assignment');
+        return;
+      }
+
+      // STEP 1: Update the question
+      const questionPayload = {
+        text: editQuestion.text.trim(),
+        displayOrder: editQuestion.displayOrder,
+        isActive: editQuestion.isActive
+      };
+
+      await updateQuestionMutation(
+        { id: editQuestion.id, data: questionPayload },
+        { showSuccessToast: false }
+      );
+
+      // STEP 2: Handle options - update existing, create new, delete removed
+      const existingOptionIds = new Set(
+        (editingQuestion?.options || [])
+          .map(opt => opt.id)
+          .filter(Boolean)
+      );
+
+      const currentOptionIds = new Set(
+        validOptions
+          .map(opt => opt.id)
+          .filter(Boolean)
+      );
+
+      // Delete options that were removed
+      const optionsToDelete = Array.from(existingOptionIds).filter(
+        id => !currentOptionIds.has(id)
+      );
+      for (const optionId of optionsToDelete) {
+        await deleteOptionMutation(optionId, { showSuccessToast: false });
+      }
+
+      // Update or create options
+      const optionPromises = validOptions.map(async (option, index) => {
+        let characterId = option.assignsCharacterId || '';
+        
+        // Fallback: if assignsCharacterId is not set but characterName is, look it up
+        if (!characterId && option.characterName && option.characterName !== "none") {
+          characterId = characterMap[option.characterName] || '';
+          if (!characterId && characterMappings && characterMappings.length > 0) {
+            const foundChar = characterMappings.find(
+              char => char && char.name && char.name === option.characterName
+            );
+            if (foundChar && foundChar.id) {
+              characterId = foundChar.id;
+            }
+          }
+        }
+
+        const payload = {
+          optionText: option.optionText.trim(),
+          assignsTier: option.assignsTier,
+          displayOrder: index + 1
+        };
+
+        // Only include assignsCharacterId if we have a valid UUID
+        if (characterId && characterId.trim() !== '') {
+          payload.assignsCharacterId = characterId;
+        }
+
+        if (option.id) {
+          // Update existing option
+          await updateOptionMutation(
+            { id: option.id, data: payload },
+            { showSuccessToast: false }
+          );
+        } else {
+          // Create new option
+          await createOptionMutation(
+            {
+              questionId: editQuestion.id,
+              ...payload
+            },
+            { showSuccessToast: false }
+          );
+        }
+      });
+
+      await Promise.all(optionPromises);
+
+      // Success
+      setIsEditModalOpen(false);
+      setEditingQuestion(null);
+      toast.success('Question and options updated successfully');
+
+    } catch (error) {
+      console.error('Error in updateQuestion:', error);
+      toast.error(error.message || 'Failed to update question');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // Toggle question active status (pause/resume)
+  const toggleQuestionStatus = async (question) => {
+    try {
+      const newStatus = !question.isActive;
+      await updateQuestionMutation(
+        { 
+          id: question.id, 
+          data: { 
+            text: question.text,
+            displayOrder: question.displayOrder,
+            isActive: newStatus 
+          } 
+        },
+        { showSuccessToast: false }
+      );
+      toast.success(`Question ${newStatus ? 'activated' : 'paused'} successfully`);
+    } catch (error) {
+      console.error('Error toggling question status:', error);
+      toast.error('Failed to update question status');
+    }
+  };
+
   // Handle option text change - Updated for new schema
   const updateOptionText = (optionIndex, field, value) => {
     const updatedOptions = [...newQuestion.options];
     updatedOptions[optionIndex] = { ...updatedOptions[optionIndex], [field]: value };
     setNewQuestion({ ...newQuestion, options: updatedOptions });
+  };
+
+  // Handle edit option text change
+  const updateEditOptionText = (optionIndex, field, value) => {
+    const updatedOptions = [...editQuestion.options];
+    updatedOptions[optionIndex] = { ...updatedOptions[optionIndex], [field]: value };
+    setEditQuestion({ ...editQuestion, options: updatedOptions });
+  };
+
+  // Add new option to edit form
+  const addEditOption = () => {
+    const newOptions = [...editQuestion.options, {
+      optionText: '',
+      displayOrder: editQuestion.options.length + 1,
+      assignsTier: '',
+      characterName: '',
+      assignsCharacterId: ''
+    }];
+    setEditQuestion({ ...editQuestion, options: newOptions });
+  };
+
+  // Remove option from edit form
+  const removeEditOption = (optionIndex) => {
+    if (editQuestion.options.length > 2) {
+      const updatedOptions = editQuestion.options.filter((_, index) => index !== optionIndex);
+      setEditQuestion({ ...editQuestion, options: updatedOptions });
+    }
   };
 
   // Add new option
@@ -480,7 +793,9 @@ export const OnboardingManagement = () => {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="success">Active</Badge>
+                            <Badge variant={question.isActive ? "success" : "secondary"}>
+                              {question.isActive ? 'Active' : 'Paused'}
+                            </Badge>
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -494,9 +809,24 @@ export const OnboardingManagement = () => {
                                   <Eye className="h-4 w-4 mr-2" />
                                   View Details
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => openEditModal(question)}>
                                   <Edit className="h-4 w-4 mr-2" />
                                   Edit Question
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => toggleQuestionStatus(question)}
+                                >
+                                  {question.isActive ? (
+                                    <>
+                                      <Pause className="h-4 w-4 mr-2" />
+                                      Pause Question
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Play className="h-4 w-4 mr-2" />
+                                      Resume Question
+                                    </>
+                                  )}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem
                                   onClick={() => {
@@ -752,7 +1082,7 @@ export const OnboardingManagement = () => {
         </Tabs>
 
         {/* Create Question Modal */}
-        <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <Dialog open={isCreateModalOpen} onOpenChange={handleModalClose}>
           <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>Create New Onboarding Question</DialogTitle>
@@ -813,28 +1143,65 @@ export const OnboardingManagement = () => {
                     <div className="space-y-1">
                       <Label className="text-xs">Character (Optional)</Label>
                       <Select
-                        value={option.characterName || "none"}
+                        value={option.characterName ? option.characterName : "none"}
                         onValueChange={(value) => {
-                          console.log('Character selected:', value);
                           const characterName = value === "none" ? "" : value;
-                          updateOptionText(index, 'characterName', characterName);
-                          // Update the UUID in assignsCharacterId
-                          const characterUUID = characterName && characterMap[characterName] ? characterMap[characterName] : '';
-                          updateOptionText(index, 'assignsCharacterId', characterUUID);
+                          
+                          // Get the UUID from characterMap or characterMappings
+                          let characterUUID = '';
+                          if (characterName) {
+                            // First try direct lookup in characterMap
+                            characterUUID = characterMap[characterName] || '';
+                            
+                            // If not found in characterMap, search characterMappings directly
+                            if (!characterUUID && characterMappings && characterMappings.length > 0) {
+                              const foundChar = characterMappings.find(
+                                char => char && char.name && char.name === characterName
+                              );
+                              if (foundChar && foundChar.id) {
+                                characterUUID = foundChar.id;
+                              }
+                            }
+                          }
+                          
+                          console.log('Character selection:', {
+                            selectedValue: value,
+                            characterName,
+                            characterUUID,
+                            characterMapKeys: Object.keys(characterMap || {}),
+                            characterMappingsCount: characterMappings?.length || 0,
+                            characterMapHasKey: characterName ? characterName in (characterMap || {}) : false
+                          });
+                          
+                          // Update both characterName and assignsCharacterId in a single state update
+                          const updatedOptions = [...newQuestion.options];
+                          updatedOptions[index] = { 
+                            ...updatedOptions[index], 
+                            characterName: characterName,
+                            assignsCharacterId: characterUUID
+                          };
+                          setNewQuestion({ ...newQuestion, options: updatedOptions });
                         }}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select character">
-                            {option.characterName || "None"}
-                          </SelectValue>
+                          <SelectValue placeholder="Select character" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="none">None</SelectItem>
-                          {Object.keys(characterMap).map((characterName) => (
-                            <SelectItem key={characterName} value={characterName}>
-                              {characterName}
+                          {characterMappingLoading ? (
+                            <SelectItem value="loading" disabled>Loading characters...</SelectItem>
+                          ) : characterMappings && characterMappings.length > 0 ? (
+                            characterMappings
+                              .filter(char => char && char.name && char.id)
+                              .map((character) => (
+                                <SelectItem key={character.id} value={character.name}>
+                                  {character.name}
+                                  {character.emoji ? ` ${character.emoji}` : ''}
                             </SelectItem>
-                          ))}
+                              ))
+                          ) : (
+                            <SelectItem value="no-characters" disabled>No characters available</SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -866,7 +1233,15 @@ export const OnboardingManagement = () => {
               <div className="flex justify-end space-x-2">
                 <Button
                   variant="outline"
-                  onClick={() => setIsCreateModalOpen(false)}
+                  onClick={async () => {
+                    if (createdQuestionId || createdOptionIds.length > 0) {
+                      await cleanupCreatedItems();
+                      setCreatedQuestionId(null);
+                      setCreatedOptionIds([]);
+                    }
+                    resetForm();
+                    setIsCreateModalOpen(false);
+                  }}
                   disabled={submitting}
                 >
                   Cancel
@@ -887,6 +1262,196 @@ export const OnboardingManagement = () => {
                     </>
                   ) : (
                     'Create Question'
+                  )}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Question Modal */}
+        <Dialog open={isEditModalOpen} onOpenChange={(open) => {
+          setIsEditModalOpen(open);
+          if (!open) {
+            setEditingQuestion(null);
+            setEditQuestion({
+              text: '',
+              displayOrder: 1,
+              isActive: true,
+              options: []
+            });
+          }
+        }}>
+          <DialogContent className="max-w-3xl">
+            <DialogHeader>
+              <DialogTitle>Edit Onboarding Question</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-question">Question Text *</Label>
+                <Textarea
+                  value={editQuestion.text}
+                  onChange={(e) => setEditQuestion({ ...editQuestion, text: e.target.value })}
+                  placeholder="What question will help determine the user's tier and character?"
+                  rows={3}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label>Answer Options * (minimum 2 required)</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addEditOption}
+                    disabled={editQuestion.options.length >= 8}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Option
+                  </Button>
+                </div>
+
+                {editQuestion.options.map((option, index) => (
+                  <div key={option.id || index} className="grid grid-cols-4 gap-2 p-3 border rounded-lg">
+                    <div className="space-y-1">
+                      <Label className="text-xs">Option {index + 1} *</Label>
+                      <Input
+                        value={option.optionText}
+                        onChange={(e) => updateEditOptionText(index, 'optionText', e.target.value)}
+                        placeholder="Enter answer option"
+                        className={!option.optionText.trim() && editQuestion.options.filter(opt => opt.optionText.trim()).length < 2 ? 'border-destructive' : ''}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Assigns Tier *</Label>
+                      <Select 
+                        value={option.assignsTier} 
+                        onValueChange={(value) => updateEditOptionText(index, 'assignsTier', value)}
+                      >
+                        <SelectTrigger className={!option.assignsTier ? 'border-destructive' : ''}>
+                          <SelectValue placeholder="Select tier" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="1">Tier 1</SelectItem>
+                          <SelectItem value="1A">Tier 1A</SelectItem>
+                          <SelectItem value="2">Tier 2</SelectItem>
+                          <SelectItem value="2A">Tier 2A</SelectItem>
+                          <SelectItem value="3">Tier 3</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs">Character (Optional)</Label>
+                      <Select
+                        value={option.characterName ? option.characterName : "none"}
+                        onValueChange={(value) => {
+                          const characterName = value === "none" ? "" : value;
+                          
+                          // Get the UUID from characterMap or characterMappings
+                          let characterUUID = '';
+                          if (characterName) {
+                            characterUUID = characterMap[characterName] || '';
+                            
+                            if (!characterUUID && characterMappings && characterMappings.length > 0) {
+                              const foundChar = characterMappings.find(
+                                char => char && char.name && char.name === characterName
+                              );
+                              if (foundChar && foundChar.id) {
+                                characterUUID = foundChar.id;
+                              }
+                            }
+                          }
+                          
+                          const updatedOptions = [...editQuestion.options];
+                          updatedOptions[index] = { 
+                            ...updatedOptions[index], 
+                            characterName: characterName,
+                            assignsCharacterId: characterUUID
+                          };
+                          setEditQuestion({ ...editQuestion, options: updatedOptions });
+                        }}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select character" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">None</SelectItem>
+                          {characterMappingLoading ? (
+                            <SelectItem value="loading" disabled>Loading characters...</SelectItem>
+                          ) : characterMappings && characterMappings.length > 0 ? (
+                            characterMappings
+                              .filter(char => char && char.name && char.id)
+                              .map((character) => (
+                                <SelectItem key={character.id} value={character.name}>
+                                  {character.name}
+                                  {character.emoji ? ` ${character.emoji}` : ''}
+                                </SelectItem>
+                              ))
+                          ) : (
+                            <SelectItem value="no-characters" disabled>No characters available</SelectItem>
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-end">
+                      {editQuestion.options.length > 2 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeEditOption(index)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-muted/50 p-3 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  <strong>Note:</strong> This will update the question and its options.
+                  Existing options will be updated, new options will be created, and removed options will be deleted.
+                  Each option <strong>must</strong> have a tier assignment. Character assignment is optional.
+                </p>
+              </div>
+
+              <div className="flex justify-end space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setEditingQuestion(null);
+                    setEditQuestion({
+                      text: '',
+                      displayOrder: 1,
+                      isActive: true,
+                      options: []
+                    });
+                  }}
+                  disabled={updating}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={updateQuestion}
+                  disabled={
+                    updating ||
+                    !editQuestion.text.trim() ||
+                    editQuestion.options.filter(opt => opt.optionText.trim()).length < 2 ||
+                    editQuestion.options.filter(opt => opt.optionText.trim() && !opt.assignsTier).length > 0
+                  }
+                >
+                  {updating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    'Update Question'
                   )}
                 </Button>
               </div>

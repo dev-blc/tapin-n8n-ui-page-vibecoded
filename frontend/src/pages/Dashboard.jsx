@@ -75,6 +75,7 @@ export const Dashboard = () => {
       <Layout
         title="Dashboard Overview"
         subtitle="Track engagement, content health, and user activity across TAP IN"
+        hideHeaderQuickActions
       >
         <FullPageLoader message="Loading dashboard data..." />
       </Layout>
@@ -88,6 +89,7 @@ export const Dashboard = () => {
       <Layout
         title="Dashboard Overview"
         subtitle="Track engagement, content health, and user activity across TAP IN"
+        hideHeaderQuickActions
       >
         <Card className="max-w-2xl mx-auto mt-8">
           <CardHeader>
@@ -159,22 +161,7 @@ export const Dashboard = () => {
     <Layout
       title="Dashboard Overview"
       subtitle="Track engagement, content health, and user activity across TAP IN"
-      headerActions={
-        <div className="flex space-x-2">
-          <Button variant="outline" size="sm">
-            <ExternalLink className="h-4 w-4 mr-2" />
-            Message
-          </Button>
-          <Button variant="outline" size="sm">
-            <AlertCircle className="h-4 w-4 mr-2" />
-            Notification
-          </Button>
-          <Button variant="primary" size="sm">
-            <Plus className="h-4 w-4 mr-2" />
-            Add New Quick Shift
-          </Button>
-        </div>
-      }
+      hideHeaderQuickActions
     >
       <div className="space-y-6">
         {/* Stats Grid */}

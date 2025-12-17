@@ -4,6 +4,7 @@
   "description": "TapIn Admin Dashboard - Full Stack Application",
   "scripts": {
     "start": "node start.js",
+    "start:dev": "NODE_ENV=development node start.js",
     "start:bash": "./start.sh",
     "start:backend": "cd backend && ./start.sh",
     "start:frontend": "cd frontend && npm start",

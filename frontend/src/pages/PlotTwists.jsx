@@ -67,22 +67,66 @@ export const PlotTwists = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedCharacter, setSelectedCharacter] = useState('all');
   const [selectedTier, setSelectedTier] = useState('all');
+  const [selectedDay, setSelectedDay] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Fetch characters first to build character map for filtering
+  const { data: charactersData = [], loading: charactersLoading } = usePlotTwistCharacters({ showErrorToast: false });
+  const characters = Array.isArray(charactersData) ? charactersData : [];
+
+  // Build character map from API data - handle null/undefined safely
+  const characterMap = useMemo(() => {
+    if (!characters || !Array.isArray(characters)) {
+      return {};
+    }
+    return characters.reduce((acc, char) => {
+      if (char && char.name && char.id) {
+        acc[char.name] = char.id;
+        // Also map by id for reverse lookup
+        acc[char.id] = char.id;
+      }
+      return acc;
+    }, {});
+  }, [characters]);
+
+  // Build reverse map (id to name) for display
+  const characterNameMap = useMemo(() => {
+    if (!characters || !Array.isArray(characters)) {
+      return {};
+    }
+    return characters.reduce((acc, char) => {
+      if (char && char.name && char.id) {
+        acc[char.id] = char.name;
+      }
+      return acc;
+    }, {});
+  }, [characters]);
 
   // Fetch data from API
   const filterParams = useMemo(() => {
     const params = {};
-    if (selectedCharacter !== 'all') params.character = selectedCharacter;
-    if (selectedTier !== 'all') params.tier = selectedTier;
+    // Convert character name to UUID if not 'all'
+    if (selectedCharacter !== 'all' && characterMap[selectedCharacter]) {
+      params.characterId = characterMap[selectedCharacter];
+    }
+    if (selectedTier !== 'all') {
+      params.tier = selectedTier;
+    }
+    // Add dayNumber filter if not 'all'
+    if (selectedDay !== 'all') {
+      const dayNumber = parseInt(selectedDay, 10);
+      if (!isNaN(dayNumber) && dayNumber >= 1 && dayNumber <= 7) {
+        params.dayNumber = dayNumber;
+      }
+    }
     return params;
-  }, [selectedCharacter, selectedTier]);
+  }, [selectedCharacter, selectedTier, selectedDay, characterMap]);
 
-  const { data: plotTwistQuestsData = [], loading: questsLoading, error: questsError, refetch: refetchQuests } = usePlotTwistQuests({
+  const { data: plotTwistQuestsResponse, loading: questsLoading, error: questsError, refetch: refetchQuests } = usePlotTwistQuests({
     params: filterParams,
     showErrorToast: false
   });
-  const { data: charactersData = [], loading: charactersLoading } = usePlotTwistCharacters({ showErrorToast: false });
   const { data: responseOptionsData = [] } = usePlotTwistResponseOptions({ showErrorToast: false });
   const { createQuest, updateQuest, deleteQuest, loading: mutationLoading } = usePlotTwistQuestMutation({
     onSuccess: () => {
@@ -90,9 +134,33 @@ export const PlotTwists = () => {
     }
   });
 
-  // Ensure arrays
-  const plotTwistQuests = Array.isArray(plotTwistQuestsData) ? plotTwistQuestsData : [];
-  const characters = Array.isArray(charactersData) ? charactersData : [];
+  // Extract plotTwists from paginated response and transform for UI
+  const plotTwistQuests = useMemo(() => {
+    // Handle paginated response structure
+    let questsArray = [];
+    if (plotTwistQuestsResponse) {
+      if (plotTwistQuestsResponse.plotTwists && Array.isArray(plotTwistQuestsResponse.plotTwists)) {
+        questsArray = plotTwistQuestsResponse.plotTwists;
+      } else if (Array.isArray(plotTwistQuestsResponse)) {
+        questsArray = plotTwistQuestsResponse;
+      } else if (plotTwistQuestsResponse.data && Array.isArray(plotTwistQuestsResponse.data)) {
+        questsArray = plotTwistQuestsResponse.data;
+      }
+    }
+
+    // Transform API data to UI format
+    return questsArray.map(quest => ({
+      ...quest,
+      // Map characterId to character name for display
+      character: characterNameMap[quest.characterId] || quest.character || 'N/A',
+      // Map dayNumber to day for display
+      day: quest.dayNumber || quest.day,
+      // Map isActive to status
+      status: quest.isActive === false ? 'Inactive' : (quest.status || 'Active'),
+      // Ensure responseOptions exists (may need to fetch separately or derive from options/responses)
+      responseOptions: quest.responseOptions || quest.responses || []
+    }));
+  }, [plotTwistQuestsResponse, characterNameMap]);
 
   // Form state for new/edit quest
   const [questForm, setQuestForm] = useState({
@@ -182,14 +250,54 @@ export const PlotTwists = () => {
         return;
       }
 
+      // Get character UUID from character name
+      const characterId = characterMap[questForm.character];
+      if (!characterId) {
+        toast.error('Invalid character selected');
+        return;
+      }
+
+      // Convert day to number
+      const dayNumber = parseInt(questForm.day, 10);
+      if (isNaN(dayNumber) || dayNumber < 1 || dayNumber > 7) {
+        toast.error('Day must be a number between 1 and 7');
+        return;
+      }
+
+      // Transform responseOptions to API format
+      const responseOptionsArray = Array.isArray(questForm.responseOptions) ? questForm.responseOptions : [];
+      const validResponseOptions = responseOptionsArray.filter(opt => opt && opt.emoji && opt.text);
+      
+      // Map responseOptions to responses array (PlotTwistResponseInput)
+      // API requires responses to be an array (can be empty)
+      const responses = validResponseOptions.map((opt, index) => ({
+        tier: questForm.tier,
+        characterId: characterId,
+        engagementLevel: (opt.level || 'High').toLowerCase(), // Convert "High" to "high"
+        responseEmoji: opt.emoji,
+        responseText: opt.text,
+        responseDescription: opt.text, // Use text as description if not provided
+        displayOrder: index + 1
+      }));
+
+      // Create options array (PlotTwistOptionInput) - using response text as option text
+      // API requires options to be an array (can be empty)
+      const options = validResponseOptions.map((opt, index) => ({
+        optionText: opt.text,
+        displayOrder: index + 1,
+        tier: questForm.tier,
+        characterId: characterId,
+        engagementLevel: (opt.level || 'High').toLowerCase()
+      }));
+
       const payload = {
+        characterId: characterId,
+        tier: questForm.tier,
         title: questForm.title.trim(),
         description: questForm.description.trim(),
-        character: questForm.character,
-        day: parseInt(questForm.day),
-        pillar: questForm.pillar,
-        tier: questForm.tier,
-        responseOptions: questForm.responseOptions.filter(opt => opt.emoji && opt.text)
+        dayNumber: dayNumber,
+        options: options,
+        responses: responses
       };
 
       await createQuest(payload, { showSuccessToast: true });
@@ -233,18 +341,43 @@ export const PlotTwists = () => {
   // Handle edit quest
   const handleEditQuest = (quest) => {
     setSelectedQuest(quest);
+    
+    // Try to get character name from characterId, fallback to character name if available
+    let characterValue = '';
+    if (quest.characterId) {
+      // Find character by ID
+      const char = characters.find(c => c.id === quest.characterId);
+      characterValue = char?.name || quest.characterId;
+    } else if (quest.character) {
+      characterValue = quest.character;
+    }
+
+    // Transform responses/options back to responseOptions format if available
+    let responseOptions = [
+      { emoji: '', text: '', level: 'High' },
+      { emoji: '', text: '', level: 'Medium' },
+      { emoji: '', text: '', level: 'Low' }
+    ];
+    
+    // If quest has responses, use them
+    if (quest.responses && Array.isArray(quest.responses) && quest.responses.length > 0) {
+      responseOptions = quest.responses.map((resp, index) => ({
+        emoji: resp.responseEmoji || '',
+        text: resp.responseText || '',
+        level: resp.engagementLevel ? resp.engagementLevel.charAt(0).toUpperCase() + resp.engagementLevel.slice(1) : 'High'
+      }));
+    } else if (quest.responseOptions && Array.isArray(quest.responseOptions)) {
+      responseOptions = quest.responseOptions;
+    }
+
     setQuestForm({
-      character: quest.character || '',
-      day: quest.day?.toString() || '',
+      character: characterValue,
+      day: quest.dayNumber?.toString() || quest.day?.toString() || '',
       pillar: quest.pillar || '',
       title: quest.title || '',
       description: quest.description || '',
       tier: quest.tier || '',
-      responseOptions: quest.responseOptions || [
-        { emoji: '', text: '', level: 'High' },
-        { emoji: '', text: '', level: 'Medium' },
-        { emoji: '', text: '', level: 'Low' }
-      ]
+      responseOptions: responseOptions
     });
     setIsEditModalOpen(true);
   };
@@ -256,14 +389,54 @@ export const PlotTwists = () => {
     try {
       setSubmitting(true);
 
+      // Get character UUID from character name
+      const characterId = characterMap[questForm.character];
+      if (!characterId) {
+        toast.error('Invalid character selected');
+        return;
+      }
+
+      // Convert day to number
+      const dayNumber = parseInt(questForm.day, 10);
+      if (isNaN(dayNumber) || dayNumber < 1 || dayNumber > 7) {
+        toast.error('Day must be a number between 1 and 7');
+        return;
+      }
+
+      // Transform responseOptions to API format
+      const responseOptionsArray = Array.isArray(questForm.responseOptions) ? questForm.responseOptions : [];
+      const validResponseOptions = responseOptionsArray.filter(opt => opt && opt.emoji && opt.text);
+      
+      // Map responseOptions to responses array (PlotTwistResponseInput)
+      // API requires responses to be an array (can be empty)
+      const responses = validResponseOptions.map((opt, index) => ({
+        tier: questForm.tier,
+        characterId: characterId,
+        engagementLevel: (opt.level || 'High').toLowerCase(), // Convert "High" to "high"
+        responseEmoji: opt.emoji,
+        responseText: opt.text,
+        responseDescription: opt.text, // Use text as description if not provided
+        displayOrder: index + 1
+      }));
+
+      // Create options array (PlotTwistOptionInput) - using response text as option text
+      // API requires options to be an array (can be empty)
+      const options = validResponseOptions.map((opt, index) => ({
+        optionText: opt.text,
+        displayOrder: index + 1,
+        tier: questForm.tier,
+        characterId: characterId,
+        engagementLevel: (opt.level || 'High').toLowerCase()
+      }));
+
       const payload = {
+        characterId: characterId,
+        tier: questForm.tier,
         title: questForm.title.trim(),
         description: questForm.description.trim(),
-        character: questForm.character,
-        day: parseInt(questForm.day),
-        pillar: questForm.pillar,
-        tier: questForm.tier,
-        responseOptions: questForm.responseOptions.filter(opt => opt.emoji && opt.text)
+        dayNumber: dayNumber,
+        options: options,
+        responses: responses
       };
 
       await updateQuest({ id: selectedQuest.id, data: payload }, { showSuccessToast: true });
@@ -296,14 +469,7 @@ export const PlotTwists = () => {
       subtitle="Manage daily challenges and character-based quest content"
       headerActions={
         <div className="flex space-x-2">
-          <Button variant="outline" size="sm">
-            <BarChart3 className="h-4 w-4 mr-2" />
-            Analytics
-          </Button>
-          <Button variant="outline" size="sm">
-            <Calendar className="h-4 w-4 mr-2" />
-            Calendar View
-          </Button>
+          {/* Header Analytics and Calendar View hidden for Plot Twists */}
           <Button 
             variant="primary" 
             size="sm"
@@ -348,8 +514,8 @@ export const PlotTwists = () => {
                       <SelectItem value="loading" disabled>Loading...</SelectItem>
                     ) : (
                       characters.map((character) => (
-                        <SelectItem key={character.id || character.name} value={character.name || character.id}>
-                          {character.icon || '👤'} {character.name}
+                        <SelectItem key={character.id || character.name} value={character.name || character.id || ''}>
+                          {character.icon || character.emoji || '👤'} {character.name}
                       </SelectItem>
                       ))
                     )}
@@ -367,6 +533,20 @@ export const PlotTwists = () => {
                     <SelectItem value="2">Tier 2</SelectItem>
                     <SelectItem value="2A">Tier 2A</SelectItem>
                     <SelectItem value="3">Tier 3</SelectItem>
+                  </SelectContent>
+                </Select>
+                
+                <Select value={selectedDay} onValueChange={setSelectedDay}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Day" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Days</SelectItem>
+                    {[1, 2, 3, 4, 5, 6, 7].map((day) => (
+                      <SelectItem key={day} value={day.toString()}>
+                        Day {day}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>

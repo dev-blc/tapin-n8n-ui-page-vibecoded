@@ -55,7 +55,10 @@ export const UserManagement = () => {
   }), [searchQuery, statusFilter]);
 
   const { data: usersResponse, loading, error, refetch } = useUsers(filters);
-  const users = usersResponse?.data || [];
+  const users = useMemo(
+    () => usersResponse?.data || [],
+    [usersResponse]
+  );
 
   // Build option lists for filters from current data
   const availableTiers = useMemo(() => {

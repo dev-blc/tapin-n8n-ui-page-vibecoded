@@ -73,7 +73,10 @@ export const PlotTwists = () => {
 
   // Fetch characters first to build character map for filtering
   const { data: charactersData = [], loading: charactersLoading } = usePlotTwistCharacters({ showErrorToast: false });
-  const characters = Array.isArray(charactersData) ? charactersData : [];
+  const characters = useMemo(
+    () => (Array.isArray(charactersData) ? charactersData : []),
+    [charactersData]
+  );
 
   // Build character map from API data - handle null/undefined safely
   const characterMap = useMemo(() => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -74,12 +74,7 @@ export const AffirmationMeditation = () => {
     isActive: true
   });
 
-  // Fetch affirmation templates
-  useEffect(() => {
-    fetchAffirmationTemplates();
-  }, [searchQuery]);
-
-  const fetchAffirmationTemplates = async () => {
+  const fetchAffirmationTemplates = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -97,7 +92,12 @@ export const AffirmationMeditation = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchQuery]);
+
+  // Fetch affirmation templates
+  useEffect(() => {
+    fetchAffirmationTemplates();
+  }, [fetchAffirmationTemplates]);
 
   const handleCreateTemplate = async () => {
     if (!newTemplate.templateName.trim()) {

@@ -1,0 +1,25 @@
+/**
+ * Simple Node.js server to serve the React build
+ * Used for Railway deployment
+ */
+
+const express = require('express');
+const path = require('path');
+const app = express();
+
+// Serve static files from the React app build directory
+app.use(express.static(path.join(__dirname, 'build')));
+
+// Handle React routing - return all requests to React app
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
+// Get port from environment variable (Railway provides this) or default to 3000
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`🚀 Server is running on port ${PORT}`);
+  console.log(`📦 Serving static files from: ${path.join(__dirname, 'build')}`);
+});
+

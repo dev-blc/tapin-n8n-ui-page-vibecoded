@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Layout } from '@/components/layout/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState, useEffect, useCallback } from "react";
+import { Layout } from "@/components/layout/Layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -12,22 +12,22 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Heart,
   Search,
@@ -40,38 +40,38 @@ import {
   Sparkles,
   Wind,
   Settings,
-  Loader2
-} from 'lucide-react';
+  Loader2,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { toast } from 'sonner';
-import templateService from '@/services/api/templateService';
-import { TableSkeleton } from '@/components/loading/LoadingSpinner';
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import templateService from "@/services/api/templateService";
+import { TableSkeleton } from "@/components/loading/LoadingSpinner";
 
 export const AffirmationMeditation = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('affirmations');
+  const [activeTab, setActiveTab] = useState("affirmations");
   const [affirmationTemplates, setAffirmationTemplates] = useState([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Form state for creating affirmation template
   const [newTemplate, setNewTemplate] = useState({
-    templateName: '',
-    energyType: '',
-    imageryTheme: '',
-    openingPhrase: '',
-    templateStructure: '',
-    sampleOutput: '',
-    characterId: '',
-    adminContext: '',
-    isActive: true
+    templateName: "",
+    energyType: "",
+    imageryTheme: "",
+    openingPhrase: "",
+    templateStructure: "",
+    sampleOutput: "",
+    characterId: "",
+    adminContext: "",
+    isActive: true,
   });
 
   const fetchAffirmationTemplates = useCallback(async () => {
@@ -80,14 +80,16 @@ export const AffirmationMeditation = () => {
       const params = {
         page: 1,
         limit: 100,
-        ...(searchQuery && { search: searchQuery })
+        ...(searchQuery && { search: searchQuery }),
       };
       const response = await templateService.getAffirmationTemplates(params);
-      const templates = Array.isArray(response) ? response : (response.data || []);
+      const templates = Array.isArray(response)
+        ? response
+        : response.data || [];
       setAffirmationTemplates(templates);
     } catch (error) {
-      console.error('Error fetching affirmation templates:', error);
-      toast.error('Failed to load affirmation templates');
+      console.error("Error fetching affirmation templates:", error);
+      toast.error("Failed to load affirmation templates");
       setAffirmationTemplates([]);
     } finally {
       setLoading(false);
@@ -101,35 +103,35 @@ export const AffirmationMeditation = () => {
 
   const handleCreateTemplate = async () => {
     if (!newTemplate.templateName.trim()) {
-      toast.error('Template name is required');
+      toast.error("Template name is required");
       return;
     }
 
-    if (activeTab !== 'affirmations') {
-      toast.error('Meditation template creation not yet implemented');
+    if (activeTab !== "affirmations") {
+      toast.error("Meditation template creation not yet implemented");
       return;
     }
 
     try {
       setSubmitting(true);
       await templateService.createAffirmationTemplate(newTemplate);
-      toast.success('Affirmation template created successfully');
+      toast.success("Affirmation template created successfully");
       setIsCreateModalOpen(false);
       setNewTemplate({
-        templateName: '',
-        energyType: '',
-        imageryTheme: '',
-        openingPhrase: '',
-        templateStructure: '',
-        sampleOutput: '',
-        characterId: '',
-        adminContext: '',
-        isActive: true
+        templateName: "",
+        energyType: "",
+        imageryTheme: "",
+        openingPhrase: "",
+        templateStructure: "",
+        sampleOutput: "",
+        characterId: "",
+        adminContext: "",
+        isActive: true,
       });
       fetchAffirmationTemplates();
     } catch (error) {
-      console.error('Error creating template:', error);
-      toast.error(error.message || 'Failed to create template');
+      console.error("Error creating template:", error);
+      toast.error(error.message || "Failed to create template");
     } finally {
       setSubmitting(false);
     }
@@ -138,71 +140,106 @@ export const AffirmationMeditation = () => {
   // Mock data for meditation templates
   const meditationTemplates = [
     {
-      id: 'MD-001',
-      name: 'Calm Forest Meditation',
-      feeling: 'Calm',
-      setting: 'Forest Clearing',
-      elements: ['Breathing', 'Visualization'],
-      duration: '5 minutes',
-      sampleScript: 'Let this be a moment where you find yourself in a serene forest clearing...',
+      id: "MD-001",
+      name: "Calm Forest Meditation",
+      feeling: "Calm",
+      setting: "Forest Clearing",
+      elements: ["Breathing", "Visualization"],
+      duration: "5 minutes",
+      sampleScript:
+        "Let this be a moment where you find yourself in a serene forest clearing...",
       usageCount: 98,
-      status: 'Active',
-      lastModified: '2024-03-09'
+      status: "Active",
+      lastModified: "2024-03-09",
     },
     {
-      id: 'MD-002',
-      name: 'Grounding Beach Meditation',
-      feeling: 'Grounded',
-      setting: 'Beach Shore',
-      elements: ['Body Scan', 'Presence'],
-      duration: '4 minutes',
-      sampleScript: 'Notice how the gentle rhythm of the waves mirrors your breath...',
+      id: "MD-002",
+      name: "Grounding Beach Meditation",
+      feeling: "Grounded",
+      setting: "Beach Shore",
+      elements: ["Body Scan", "Presence"],
+      duration: "4 minutes",
+      sampleScript:
+        "Notice how the gentle rhythm of the waves mirrors your breath...",
       usageCount: 145,
-      status: 'Active',
-      lastModified: '2024-03-11'
+      status: "Active",
+      lastModified: "2024-03-11",
     },
     {
-      id: 'MD-003',
-      name: 'Energizing Mountain Meditation',
-      feeling: 'Energized',
-      setting: 'Mountain Top',
-      elements: ['Affirmation', 'Visualization'],
-      duration: '3 minutes',
-      sampleScript: 'Feel the expansive energy of the mountain peak filling your entire being...',
+      id: "MD-003",
+      name: "Energizing Mountain Meditation",
+      feeling: "Energized",
+      setting: "Mountain Top",
+      elements: ["Affirmation", "Visualization"],
+      duration: "3 minutes",
+      sampleScript:
+        "Feel the expansive energy of the mountain peak filling your entire being...",
       usageCount: 78,
-      status: 'Draft',
-      lastModified: '2024-03-06'
-    }
+      status: "Draft",
+      lastModified: "2024-03-06",
+    },
   ];
 
   const energyTypes = [
-    { name: 'Empowering', description: 'builds inner strength and confidence', color: 'bg-red-100 text-red-800' },
-    { name: 'Calming', description: 'soothes anxiety and creates peace', color: 'bg-blue-100 text-blue-800' },
-    { name: 'Grounding', description: 'connects to stability and presence', color: 'bg-green-100 text-green-800' },
-    { name: 'Uplifting', description: 'elevates mood and spirit', color: 'bg-yellow-100 text-yellow-800' },
-    { name: 'Healing', description: 'nurtures recovery and wellness', color: 'bg-purple-100 text-purple-800' }
+    {
+      name: "Empowering",
+      description: "builds inner strength and confidence",
+      color: "bg-red-100 text-red-800",
+    },
+    {
+      name: "Calming",
+      description: "soothes anxiety and creates peace",
+      color: "bg-blue-100 text-blue-800",
+    },
+    {
+      name: "Grounding",
+      description: "connects to stability and presence",
+      color: "bg-green-100 text-green-800",
+    },
+    {
+      name: "Uplifting",
+      description: "elevates mood and spirit",
+      color: "bg-yellow-100 text-yellow-800",
+    },
+    {
+      name: "Healing",
+      description: "nurtures recovery and wellness",
+      color: "bg-purple-100 text-purple-800",
+    },
   ];
 
   const imageryThemes = [
-    'Inner Strength', 'Nature', 'Light', 'Water', 'Growth'
+    "Inner Strength",
+    "Nature",
+    "Light",
+    "Water",
+    "Growth",
   ];
 
   const meditationSettings = [
-    'Forest Clearing', 'Beach Shore', 'Mountain Top', 'Flowing River', 'Garden Sanctuary'
+    "Forest Clearing",
+    "Beach Shore",
+    "Mountain Top",
+    "Flowing River",
+    "Garden Sanctuary",
   ];
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Active': return 'success';
-      case 'Draft': return 'secondary';
-      case 'Review': return 'warning';
-      default: return 'outline';
+      case "Active":
+        return "success";
+      case "Draft":
+        return "secondary";
+      case "Review":
+        return "warning";
+      default:
+        return "outline";
     }
   };
 
   const getEnergyColor = (energyType) => {
-    const energy = energyTypes.find(e => e.name === energyType);
-    return energy ? energy.color : 'bg-gray-100 text-gray-800';
+    const energy = energyTypes.find((e) => e.name === energyType);
+    return energy ? energy.color : "bg-gray-100 text-gray-800";
   };
 
   return (
@@ -210,16 +247,17 @@ export const AffirmationMeditation = () => {
       title="Affirmation & Meditation Templates"
       subtitle="Manage AI generation templates for personalized tools"
       headerActions={
-        <div className="flex space-x-2">
-          <Button variant="outline" size="sm">
+        <div className="flex flex-col gap-2 w-full sm:w-auto sm:flex-row sm:items-center sm:justify-end">
+          <Button className="w-full sm:w-auto" variant="outline" size="sm">
             <Settings className="h-4 w-4 mr-2" />
             AI Settings
           </Button>
-          <Button variant="outline" size="sm">
+          <Button className="w-full sm:w-auto" variant="outline" size="sm">
             <Filter className="h-4 w-4 mr-2" />
             Filters
           </Button>
           <Button
+            className="w-full sm:w-auto"
             variant="primary"
             size="sm"
             onClick={() => setIsCreateModalOpen(true)}
@@ -232,34 +270,52 @@ export const AffirmationMeditation = () => {
     >
       <div className="space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="affirmations">Affirmation Templates</TabsTrigger>
-            <TabsTrigger value="meditations">Meditation Templates</TabsTrigger>
-            <TabsTrigger value="analytics">Generation Analytics</TabsTrigger>
+          <TabsList className="w-full h-full flex flex-nowrap overflow-x-auto md:grid md:grid-cols-3 md:overflow-visible">
+            <TabsTrigger
+              className="shrink-0 px-3 text-xs sm:text-sm"
+              value="affirmations"
+            >
+              Affirmation Templates
+            </TabsTrigger>
+            <TabsTrigger
+              className="shrink-0 px-3 text-xs sm:text-sm"
+              value="meditations"
+            >
+              Meditation Templates
+            </TabsTrigger>
+            <TabsTrigger
+              className="shrink-0 px-3 text-xs sm:text-sm"
+              value="analytics"
+            >
+              Generation Analytics
+            </TabsTrigger>
           </TabsList>
 
           {/* Affirmation Templates */}
           <TabsContent value="affirmations" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="relative">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
+                <div className="relative w-full sm:w-auto">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
                     placeholder="Search affirmation templates..."
-                    className="pl-10 w-80"
+                    className="pl-10 w-full sm:w-80"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
 
                 <Select>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-full sm:w-40">
                     <SelectValue placeholder="Energy Type" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Types</SelectItem>
                     {energyTypes.map((energy) => (
-                      <SelectItem key={energy.name} value={energy.name.toLowerCase()}>
+                      <SelectItem
+                        key={energy.name}
+                        value={energy.name.toLowerCase()}
+                      >
                         {energy.name}
                       </SelectItem>
                     ))}
@@ -279,101 +335,138 @@ export const AffirmationMeditation = () => {
                 {loading ? (
                   <TableSkeleton rows={5} columns={6} />
                 ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Template Name</TableHead>
-                      <TableHead>Energy & Imagery</TableHead>
-                      <TableHead>Opening Phrase</TableHead>
-                      <TableHead>Usage</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                      {affirmationTemplates.length > 0 ? affirmationTemplates.map((template) => {
-                        const templateName = template.templateName || template.name || 'Unnamed Template';
-                        const energyType = typeof template.energyType === 'object' ? template.energyType?.name || template.energyType?.value : template.energyType;
-                        const imageryTheme = typeof template.imageryTheme === 'object' ? template.imageryTheme?.name || template.imageryTheme?.value : template.imageryTheme;
-                        const openingPhrase = typeof template.openingPhrase === 'object' ? template.openingPhrase?.name || template.openingPhrase?.value : template.openingPhrase;
-                        const isActive = template.isActive !== undefined ? template.isActive : true;
-
-                        return (
-                          <TableRow key={template.id}>
-                        <TableCell>
-                          <div>
-                              <div className="font-medium">{templateName}</div>
-                            <div className="text-sm text-muted-foreground">
-                                ID: {template.id?.substring(0, 8)}...
-                              </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                              {energyType && (
-                                <Badge className={getEnergyColor(energyType)}>
-                                  {energyType}
-                            </Badge>
-                              )}
-                              {imageryTheme && (
-                            <div className="text-sm text-muted-foreground">
-                                  {imageryTheme}
-                                </div>
-                              )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                            {openingPhrase && (
-                          <Badge variant="outline">
-                                "{openingPhrase}"
-                          </Badge>
-                            )}
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                              <div className="font-medium">-</div>
-                            <div className="text-muted-foreground">generations</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                            <Badge variant={getStatusColor(isActive ? 'Active' : 'Inactive')}>
-                              {isActive ? 'Active' : 'Inactive'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setSelectedTemplate(template)}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit Template
-                              </DropdownMenuItem>
-                              <DropdownMenuItem>
-                                <Copy className="h-4 w-4 mr-2" />
-                                Duplicate
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                          </TableRow>
-                        );
-                      }) : (
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                          No affirmation templates found
-                        </TableCell>
+                        <TableHead>Template Name</TableHead>
+                        <TableHead>Energy & Imagery</TableHead>
+                        <TableHead>Opening Phrase</TableHead>
+                        <TableHead>Usage</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                    </TableHeader>
+                    <TableBody>
+                      {affirmationTemplates.length > 0 ? (
+                        affirmationTemplates.map((template) => {
+                          const templateName =
+                            template.templateName ||
+                            template.name ||
+                            "Unnamed Template";
+                          const energyType =
+                            typeof template.energyType === "object"
+                              ? template.energyType?.name ||
+                                template.energyType?.value
+                              : template.energyType;
+                          const imageryTheme =
+                            typeof template.imageryTheme === "object"
+                              ? template.imageryTheme?.name ||
+                                template.imageryTheme?.value
+                              : template.imageryTheme;
+                          const openingPhrase =
+                            typeof template.openingPhrase === "object"
+                              ? template.openingPhrase?.name ||
+                                template.openingPhrase?.value
+                              : template.openingPhrase;
+                          const isActive =
+                            template.isActive !== undefined
+                              ? template.isActive
+                              : true;
+
+                          return (
+                            <TableRow key={template.id}>
+                              <TableCell>
+                                <div>
+                                  <div className="font-medium">
+                                    {templateName}
+                                  </div>
+                                  <div className="text-sm text-muted-foreground">
+                                    ID: {template.id?.substring(0, 8)}...
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="space-y-1">
+                                  {energyType && (
+                                    <Badge
+                                      className={getEnergyColor(energyType)}
+                                    >
+                                      {energyType}
+                                    </Badge>
+                                  )}
+                                  {imageryTheme && (
+                                    <div className="text-sm text-muted-foreground">
+                                      {imageryTheme}
+                                    </div>
+                                  )}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                {openingPhrase && (
+                                  <Badge variant="outline">
+                                    "{openingPhrase}"
+                                  </Badge>
+                                )}
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-sm">
+                                  <div className="font-medium">-</div>
+                                  <div className="text-muted-foreground">
+                                    generations
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge
+                                  variant={getStatusColor(
+                                    isActive ? "Active" : "Inactive"
+                                  )}
+                                >
+                                  {isActive ? "Active" : "Inactive"}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={() =>
+                                        setSelectedTemplate(template)
+                                      }
+                                    >
+                                      <Eye className="h-4 w-4 mr-2" />
+                                      View Details
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem>
+                                      <Edit className="h-4 w-4 mr-2" />
+                                      Edit Template
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem>
+                                      <Copy className="h-4 w-4 mr-2" />
+                                      Duplicate
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      ) : (
+                        <TableRow>
+                          <TableCell
+                            colSpan={6}
+                            className="text-center py-8 text-muted-foreground"
+                          >
+                            No affirmation templates found
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
                 )}
               </CardContent>
             </Card>
@@ -381,24 +474,27 @@ export const AffirmationMeditation = () => {
 
           {/* Meditation Templates */}
           <TabsContent value="meditations" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
                     placeholder="Search meditation templates..."
-                    className="pl-10 w-80"
+                    className="pl-10 w-full sm:w-80"
                   />
                 </div>
 
                 <Select>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-full sm:w-40">
                     <SelectValue placeholder="Setting" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Settings</SelectItem>
                     {meditationSettings.map((setting) => (
-                      <SelectItem key={setting} value={setting.toLowerCase().replace(' ', '-')}>
+                      <SelectItem
+                        key={setting}
+                        value={setting.toLowerCase().replace(" ", "-")}
+                      >
                         {setting}
                       </SelectItem>
                     ))}
@@ -451,21 +547,27 @@ export const AffirmationMeditation = () => {
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
                             {template.elements.map((element) => (
-                              <Badge key={element} variant="outline" className="text-xs">
+                              <Badge
+                                key={element}
+                                variant="outline"
+                                className="text-xs"
+                              >
                                 {element}
                               </Badge>
                             ))}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="secondary">
-                            {template.duration}
-                          </Badge>
+                          <Badge variant="secondary">{template.duration}</Badge>
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">
-                            <div className="font-medium">{template.usageCount}</div>
-                            <div className="text-muted-foreground">generations</div>
+                            <div className="font-medium">
+                              {template.usageCount}
+                            </div>
+                            <div className="text-muted-foreground">
+                              generations
+                            </div>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -481,7 +583,9 @@ export const AffirmationMeditation = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => setSelectedTemplate(template)}>
+                              <DropdownMenuItem
+                                onClick={() => setSelectedTemplate(template)}
+                              >
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Details
                               </DropdownMenuItem>
@@ -523,7 +627,9 @@ export const AffirmationMeditation = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold">94%</div>
-                  <p className="text-sm text-muted-foreground">Quality threshold met</p>
+                  <p className="text-sm text-muted-foreground">
+                    Quality threshold met
+                  </p>
                 </CardContent>
               </Card>
 
@@ -533,7 +639,9 @@ export const AffirmationMeditation = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="font-semibold">Calming Nature</div>
-                  <p className="text-sm text-muted-foreground">Affirmation template</p>
+                  <p className="text-sm text-muted-foreground">
+                    Affirmation template
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -546,11 +654,12 @@ export const AffirmationMeditation = () => {
                 <CardContent>
                   <div className="space-y-3">
                     {energyTypes.map((energy) => (
-                      <div key={energy.name} className="flex items-center justify-between">
+                      <div
+                        key={energy.name}
+                        className="flex items-center justify-between"
+                      >
                         <div className="flex items-center space-x-2">
-                          <Badge className={energy.color}>
-                            {energy.name}
-                          </Badge>
+                          <Badge className={energy.color}>{energy.name}</Badge>
                           <span className="text-sm text-muted-foreground">
                             {energy.description}
                           </span>
@@ -576,7 +685,10 @@ export const AffirmationMeditation = () => {
                         <span>96%</span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2 mt-1">
-                        <div className="bg-success h-2 rounded-full" style={{ width: '96%' }}></div>
+                        <div
+                          className="bg-success h-2 rounded-full"
+                          style={{ width: "96%" }}
+                        ></div>
                       </div>
                     </div>
 
@@ -586,7 +698,10 @@ export const AffirmationMeditation = () => {
                         <span>91%</span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2 mt-1">
-                        <div className="bg-primary h-2 rounded-full" style={{ width: '91%' }}></div>
+                        <div
+                          className="bg-primary h-2 rounded-full"
+                          style={{ width: "91%" }}
+                        ></div>
                       </div>
                     </div>
 
@@ -596,7 +711,10 @@ export const AffirmationMeditation = () => {
                         <span>88%</span>
                       </div>
                       <div className="w-full bg-muted rounded-full h-2 mt-1">
-                        <div className="bg-accent h-2 rounded-full" style={{ width: '88%' }}></div>
+                        <div
+                          className="bg-accent h-2 rounded-full"
+                          style={{ width: "88%" }}
+                        ></div>
                       </div>
                     </div>
                   </div>
@@ -608,30 +726,39 @@ export const AffirmationMeditation = () => {
 
         {/* Create Template Modal */}
         <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[85vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle>
-                Create New {activeTab === 'affirmations' ? 'Affirmation' : 'Meditation'} Template
+                Create New{" "}
+                {activeTab === "affirmations" ? "Affirmation" : "Meditation"}{" "}
+                Template
               </DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Template Name *</Label>
                   <Input
                     placeholder="e.g., Empowering Strength Template"
                     value={newTemplate.templateName}
-                    onChange={(e) => setNewTemplate({ ...newTemplate, templateName: e.target.value })}
+                    onChange={(e) =>
+                      setNewTemplate({
+                        ...newTemplate,
+                        templateName: e.target.value,
+                      })
+                    }
                   />
                 </div>
 
-                {activeTab === 'affirmations' ? (
+                {activeTab === "affirmations" ? (
                   <div className="space-y-2">
                     <Label htmlFor="energy">Energy Type</Label>
                     <Select
                       value={newTemplate.energyType}
-                      onValueChange={(value) => setNewTemplate({ ...newTemplate, energyType: value })}
+                      onValueChange={(value) =>
+                        setNewTemplate({ ...newTemplate, energyType: value })
+                      }
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select energy type" />
@@ -664,14 +791,19 @@ export const AffirmationMeditation = () => {
                 )}
               </div>
 
-              {activeTab === 'affirmations' ? (
+              {activeTab === "affirmations" ? (
                 <>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="imagery">Imagery Theme</Label>
                       <Select
                         value={newTemplate.imageryTheme}
-                        onValueChange={(value) => setNewTemplate({ ...newTemplate, imageryTheme: value })}
+                        onValueChange={(value) =>
+                          setNewTemplate({
+                            ...newTemplate,
+                            imageryTheme: value,
+                          })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select imagery" />
@@ -690,7 +822,12 @@ export const AffirmationMeditation = () => {
                       <Label htmlFor="opening">Opening Phrase</Label>
                       <Select
                         value={newTemplate.openingPhrase}
-                        onValueChange={(value) => setNewTemplate({ ...newTemplate, openingPhrase: value })}
+                        onValueChange={(value) =>
+                          setNewTemplate({
+                            ...newTemplate,
+                            openingPhrase: value,
+                          })
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select opening" />
@@ -712,7 +849,12 @@ export const AffirmationMeditation = () => {
                       placeholder="Define the affirmation structure with variables and guidelines..."
                       rows={4}
                       value={newTemplate.templateStructure}
-                      onChange={(e) => setNewTemplate({ ...newTemplate, templateStructure: e.target.value })}
+                      onChange={(e) =>
+                        setNewTemplate({
+                          ...newTemplate,
+                          templateStructure: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
@@ -722,7 +864,12 @@ export const AffirmationMeditation = () => {
                       placeholder="Provide an example of what this template would generate..."
                       rows={3}
                       value={newTemplate.sampleOutput}
-                      onChange={(e) => setNewTemplate({ ...newTemplate, sampleOutput: e.target.value })}
+                      onChange={(e) =>
+                        setNewTemplate({
+                          ...newTemplate,
+                          sampleOutput: e.target.value,
+                        })
+                      }
                     />
                   </div>
                 </>
@@ -737,7 +884,10 @@ export const AffirmationMeditation = () => {
                         </SelectTrigger>
                         <SelectContent>
                           {meditationSettings.map((setting) => (
-                            <SelectItem key={setting} value={setting.toLowerCase().replace(' ', '-')}>
+                            <SelectItem
+                              key={setting}
+                              value={setting.toLowerCase().replace(" ", "-")}
+                            >
                               {setting}
                             </SelectItem>
                           ))}
@@ -776,15 +926,15 @@ export const AffirmationMeditation = () => {
                   onClick={() => {
                     setIsCreateModalOpen(false);
                     setNewTemplate({
-                      templateName: '',
-                      energyType: '',
-                      imageryTheme: '',
-                      openingPhrase: '',
-                      templateStructure: '',
-                      sampleOutput: '',
-                      characterId: '',
-                      adminContext: '',
-                      isActive: true
+                      templateName: "",
+                      energyType: "",
+                      imageryTheme: "",
+                      openingPhrase: "",
+                      templateStructure: "",
+                      sampleOutput: "",
+                      characterId: "",
+                      adminContext: "",
+                      isActive: true,
                     });
                   }}
                   disabled={submitting}
@@ -801,7 +951,7 @@ export const AffirmationMeditation = () => {
                       Creating...
                     </>
                   ) : (
-                    'Create Template'
+                    "Create Template"
                   )}
                 </Button>
               </div>
@@ -811,7 +961,10 @@ export const AffirmationMeditation = () => {
 
         {/* Template Detail Modal */}
         {selectedTemplate && (
-          <Dialog open={!!selectedTemplate} onOpenChange={() => setSelectedTemplate(null)}>
+          <Dialog
+            open={!!selectedTemplate}
+            onOpenChange={() => setSelectedTemplate(null)}
+          >
             <DialogContent className="max-w-4xl">
               <DialogHeader>
                 <DialogTitle>{selectedTemplate.name}</DialogTitle>
@@ -821,20 +974,32 @@ export const AffirmationMeditation = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-lg">Template Information</CardTitle>
+                      <CardTitle className="text-lg">
+                        Template Information
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
                       <div>
                         <span className="text-sm font-medium">Type:</span>
-                        <span className="ml-2">{selectedTemplate.energyType || selectedTemplate.feeling}</span>
+                        <span className="ml-2">
+                          {selectedTemplate.energyType ||
+                            selectedTemplate.feeling}
+                        </span>
                       </div>
                       <div>
-                        <span className="text-sm font-medium">Theme/Setting:</span>
-                        <span className="ml-2">{selectedTemplate.imageryTheme || selectedTemplate.setting}</span>
+                        <span className="text-sm font-medium">
+                          Theme/Setting:
+                        </span>
+                        <span className="ml-2">
+                          {selectedTemplate.imageryTheme ||
+                            selectedTemplate.setting}
+                        </span>
                       </div>
                       <div>
                         <span className="text-sm font-medium">Usage:</span>
-                        <span className="ml-2 font-semibold">{selectedTemplate.usageCount} generations</span>
+                        <span className="ml-2 font-semibold">
+                          {selectedTemplate.usageCount} generations
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
@@ -844,7 +1009,10 @@ export const AffirmationMeditation = () => {
                       <CardTitle className="text-lg">Sample Output</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm italic">{selectedTemplate.sampleOutput || selectedTemplate.sampleScript}</p>
+                      <p className="text-sm italic">
+                        {selectedTemplate.sampleOutput ||
+                          selectedTemplate.sampleScript}
+                      </p>
                     </CardContent>
                   </Card>
                 </div>

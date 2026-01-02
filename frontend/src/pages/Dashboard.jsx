@@ -1,13 +1,20 @@
-import React from 'react';
-import { Layout } from '@/components/layout/Layout';
-import { StatsCard } from '@/components/dashboard/StatsCard';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { FullPageLoader, TableSkeleton } from '@/components/loading/LoadingSpinner';
-import { useDashboardStats, useRecentActivity, useContentHealth } from '@/hooks/useDashboard';
+import React from "react";
+import { Layout } from "@/components/layout/Layout";
+import { StatsCard } from "@/components/dashboard/StatsCard";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import {
+  FullPageLoader,
+  TableSkeleton,
+} from "@/components/loading/LoadingSpinner";
+import {
+  useDashboardStats,
+  useRecentActivity,
+  useContentHealth,
+} from "@/hooks/useDashboard";
 import {
   Users,
   FileText,
@@ -20,53 +27,80 @@ import {
   Plus,
   ExternalLink,
   Clock,
-  AlertCircle
-} from 'lucide-react';
+  AlertCircle,
+} from "lucide-react";
 
 export const Dashboard = () => {
   // Fetch data from API
-  const { data: statsData, loading: statsLoading, error: statsError } = useDashboardStats({ showErrorToast: false });
-  const { data: activityData, loading: activityLoading, error: activityError } = useRecentActivity({ limit: 10 }, { showErrorToast: false });
-  const { data: healthData, loading: healthLoading, error: healthError } = useContentHealth({ showErrorToast: false });
+  const {
+    data: statsData,
+    loading: statsLoading,
+    error: statsError,
+  } = useDashboardStats({ showErrorToast: false });
+  const {
+    data: activityData,
+    loading: activityLoading,
+    error: activityError,
+  } = useRecentActivity({ limit: 10 }, { showErrorToast: false });
+  const {
+    data: healthData,
+    loading: healthLoading,
+    error: healthError,
+  } = useContentHealth({ showErrorToast: false });
 
   // Transform stats data
-  const stats = statsData ? {
-    activeUsers: { 
-      value: statsData.activeUsers?.toLocaleString() || '0', 
-      change: statsData.activeUsersChange || '+0%', 
-      changeType: statsData.activeUsersChange?.includes('+') ? 'positive' : 'neutral' 
-    },
-    contentVariations: { 
-      value: statsData.contentVariations?.toLocaleString() || '0', 
-      change: statsData.contentVariationsChange || '+0%', 
-      changeType: statsData.contentVariationsChange?.includes('+') ? 'positive' : 'neutral' 
-    },
-    dailyEngagement: { 
-      value: statsData.dailyEngagement?.toString() || '0', 
-      change: statsData.dailyEngagementChange || 'Steady', 
-      changeType: 'neutral' 
-    },
-    contentHealth: { 
-      value: `${statsData.contentHealth || 0}%`, 
-      change: statsData.contentHealthChange || '', 
-      changeType: (statsData.contentHealth || 0) >= 90 ? 'positive' : (statsData.contentHealth || 0) >= 70 ? 'neutral' : 'warning' 
-    }
-  } : {
-    activeUsers: { value: '0', change: '+0%', changeType: 'neutral' },
-    contentVariations: { value: '0', change: '+0%', changeType: 'neutral' },
-    dailyEngagement: { value: '0', change: 'Steady', changeType: 'neutral' },
-    contentHealth: { value: '0%', change: '', changeType: 'neutral' }
-  };
+  const stats = statsData
+    ? {
+        activeUsers: {
+          value: statsData.activeUsers?.toLocaleString() || "0",
+          change: statsData.activeUsersChange || "+0%",
+          changeType: statsData.activeUsersChange?.includes("+")
+            ? "positive"
+            : "neutral",
+        },
+        contentVariations: {
+          value: statsData.contentVariations?.toLocaleString() || "0",
+          change: statsData.contentVariationsChange || "+0%",
+          changeType: statsData.contentVariationsChange?.includes("+")
+            ? "positive"
+            : "neutral",
+        },
+        dailyEngagement: {
+          value: statsData.dailyEngagement?.toString() || "0",
+          change: statsData.dailyEngagementChange || "Steady",
+          changeType: "neutral",
+        },
+        contentHealth: {
+          value: `${statsData.contentHealth || 0}%`,
+          change: statsData.contentHealthChange || "",
+          changeType:
+            (statsData.contentHealth || 0) >= 90
+              ? "positive"
+              : (statsData.contentHealth || 0) >= 70
+              ? "neutral"
+              : "warning",
+        },
+      }
+    : {
+        activeUsers: { value: "0", change: "+0%", changeType: "neutral" },
+        contentVariations: { value: "0", change: "+0%", changeType: "neutral" },
+        dailyEngagement: {
+          value: "0",
+          change: "Steady",
+          changeType: "neutral",
+        },
+        contentHealth: { value: "0%", change: "", changeType: "neutral" },
+      };
 
   // Use activity data from API or empty array
   const recentActivity = activityData || [];
 
   // Use health data from API or default
   const contentHealth = healthData || [
-    { name: 'Quick Shift Pool Health', value: 0, color: 'muted' },
-    { name: 'Plot Twist Pool Health', value: 0, color: 'muted' },
-    { name: 'Teaching Moments', value: 0, color: 'muted' },
-    { name: 'Templates (Affirmations/Meditations)', value: 0, color: 'muted' }
+    { name: "Quick Shift Pool Health", value: 0, color: "muted" },
+    { name: "Plot Twist Pool Health", value: 0, color: "muted" },
+    { name: "Teaching Moments", value: 0, color: "muted" },
+    { name: "Templates (Affirmations/Meditations)", value: 0, color: "muted" },
   ];
 
   // Show loading state
@@ -125,36 +159,36 @@ export const Dashboard = () => {
   }
 
   const quickActions = [
-    { 
-      title: 'Add Quick Shift Variation',
+    {
+      title: "Add Quick Shift Variation",
       icon: Zap,
-      color: 'bg-primary',
-      href: '/quick-shifts/new'
+      color: "bg-primary",
+      href: "/quick-shifts/new",
     },
-    { 
-      title: 'Add Plot Twist Quest',
+    {
+      title: "Add Plot Twist Quest",
       icon: Shuffle,
-      color: 'bg-accent',
-      href: '/plot-twists/new'
+      color: "bg-accent",
+      href: "/plot-twists/new",
     },
-    { 
-      title: 'Add Teaching Moment',
+    {
+      title: "Add Teaching Moment",
       icon: BookOpen,
-      color: 'bg-secondary',
-      href: '/teaching-moments/new'
+      color: "bg-secondary",
+      href: "/teaching-moments/new",
     },
-    { 
-      title: 'Add Affirmation Template',
+    {
+      title: "Add Affirmation Template",
       icon: Heart,
-      color: 'bg-success',
-      href: '/affirmations/new'
+      color: "bg-success",
+      href: "/affirmations/new",
     },
-    { 
-      title: 'Add Meditation Template',
+    {
+      title: "Add Meditation Template",
       icon: Heart,
-      color: 'bg-info',
-      href: '/meditations/new'
-    }
+      color: "bg-info",
+      href: "/meditations/new",
+    },
   ];
 
   return (
@@ -184,7 +218,7 @@ export const Dashboard = () => {
           />
           <StatsCard
             title="Avg Daily Engagement"
-            value={stats.dailyEngagement.value + ' user'}
+            value={stats.dailyEngagement.value + " user"}
             change={stats.dailyEngagement.change}
             changeType={stats.dailyEngagement.changeType}
             icon={Activity}
@@ -202,15 +236,15 @@ export const Dashboard = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Activity */}
-          <div className="lg:col-span-2">
-            <Card>
+          <div className="lg:col-span-2 h-full">
+            <Card className="h-full flex flex-col">
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Recent Activity</CardTitle>
                 <Button variant="outline" size="sm">
                   View All Activity
                 </Button>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-1">
                 {recentActivity.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-4">
                     No recent activity
@@ -221,11 +255,15 @@ export const Dashboard = () => {
                       <div key={activity.id || index}>
                         <div className="flex items-start space-x-3">
                           <div className="flex-shrink-0">
-                            <div className={`w-2 h-2 rounded-full mt-2 ${
-                              activity.type === 'create' ? 'bg-success' :
-                              activity.type === 'update' ? 'bg-warning' :
-                              'bg-info'
-                            }`} />
+                            <div
+                              className={`w-2 h-2 rounded-full mt-2 ${
+                                activity.type === "create"
+                                  ? "bg-success"
+                                  : activity.type === "update"
+                                  ? "bg-warning"
+                                  : "bg-info"
+                              }`}
+                            />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center justify-between">
@@ -258,29 +296,34 @@ export const Dashboard = () => {
           </div>
 
           {/* Content Health Status */}
-          <div>
-            <Card>
+          <div className="h-full">
+            <Card className="h-full flex flex-col">
               <CardHeader>
                 <CardTitle>Content Health Status</CardTitle>
                 <p className="text-sm text-muted-foreground">
                   Monitor variation freshness and rotation balance.
                 </p>
               </CardHeader>
-              <CardContent>
+              <CardContent className="flex-1">
                 <div className="space-y-6">
                   {contentHealth.map((item, index) => (
                     <div key={index} className="space-y-2">
                       <div className="flex items-center justify-between text-sm">
                         <span className="font-medium">{item.name}</span>
-                        <span className="text-muted-foreground">{item.value}%</span>
+                        <span className="text-muted-foreground">
+                          {item.value}%
+                        </span>
                       </div>
                       <Progress
                         value={item.value}
                         className={`h-2 ${
-                          item.color === 'success' ? 'bg-success/20' :
-                          item.color === 'warning' ? 'bg-warning/20' :
-                          item.color === 'primary' ? 'bg-primary/20' :
-                          'bg-muted'
+                          item.color === "success"
+                            ? "bg-success/20"
+                            : item.color === "warning"
+                            ? "bg-warning/20"
+                            : item.color === "primary"
+                            ? "bg-primary/20"
+                            : "bg-muted"
                         }`}
                       />
                     </div>
@@ -300,15 +343,17 @@ export const Dashboard = () => {
             </p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
               {quickActions.map((action, index) => (
                 <Button
                   key={index}
                   variant="outline"
                   className="h-auto p-6 flex flex-col items-center space-y-3 group hover:shadow-lg transition-all duration-200"
-                  onClick={() => window.location.href = action.href}
+                  onClick={() => (window.location.href = action.href)}
                 >
-                  <div className={`w-12 h-12 rounded-lg ${action.color} flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
+                  <div
+                    className={`w-12 h-12 rounded-lg ${action.color} flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}
+                  >
                     <action.icon className="h-6 w-6 text-white" />
                   </div>
                   <span className="text-sm font-medium text-center">

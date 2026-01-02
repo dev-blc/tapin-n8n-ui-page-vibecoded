@@ -1,10 +1,10 @@
-import React, { useState, useMemo } from 'react';
-import { Layout } from '@/components/layout/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState, useMemo } from "react";
+import { Layout } from "@/components/layout/Layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -12,23 +12,23 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Zap,
   Search,
@@ -42,15 +42,15 @@ import {
   Copy,
   MoreHorizontal,
   BarChart3,
-  Loader2
-} from 'lucide-react';
+  Loader2,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { toast } from 'sonner';
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 import {
   useQuickShiftLoops,
   useQuickShiftReframes,
@@ -58,95 +58,140 @@ import {
   useQuickShiftLoopMutation,
   useQuickShiftReframeMutation,
   useQuickShiftProtectorMutation,
-} from '@/hooks/useQuickShifts';
-import { FullPageLoader, TableSkeleton } from '@/components/loading/LoadingSpinner';
+} from "@/hooks/useQuickShifts";
+import {
+  FullPageLoader,
+  TableSkeleton,
+} from "@/components/loading/LoadingSpinner";
 
 export const QuickShifts = () => {
   const [selectedLoop, setSelectedLoop] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [selectedTier, setSelectedTier] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTier, setSelectedTier] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   // Fetch data from API
   const filterParams = useMemo(() => {
     const params = {};
-    if (selectedTier !== 'all') params.tier = selectedTier;
+    if (selectedTier !== "all") params.tier = selectedTier;
     return params;
   }, [selectedTier]);
 
-  const { data: quickShiftLoopsData = [], loading: loopsLoading, error: loopsError, refetch: refetchLoops } = useQuickShiftLoops({
+  const {
+    data: quickShiftLoopsData = [],
+    loading: loopsLoading,
+    error: loopsError,
+    refetch: refetchLoops,
+  } = useQuickShiftLoops({
     params: filterParams,
-    showErrorToast: false
+    showErrorToast: false,
   });
-  const { data: reframesData = [], loading: reframesLoading, error: reframesError, refetch: refetchReframes } = useQuickShiftReframes({
+  const {
+    data: reframesData = [],
+    loading: reframesLoading,
+    error: reframesError,
+    refetch: refetchReframes,
+  } = useQuickShiftReframes({
     params: filterParams,
-    showErrorToast: false
+    showErrorToast: false,
   });
-  const { data: protectorsData = [], loading: protectorsLoading, error: protectorsError, refetch: refetchProtectors } = useQuickShiftProtectors({
-    showErrorToast: false
+  const {
+    data: protectorsData = [],
+    loading: protectorsLoading,
+    error: protectorsError,
+    refetch: refetchProtectors,
+  } = useQuickShiftProtectors({
+    showErrorToast: false,
   });
 
-  const { createLoop, updateLoop, deleteLoop, loading: loopMutationLoading } = useQuickShiftLoopMutation({
+  const {
+    createLoop,
+    updateLoop,
+    deleteLoop,
+    loading: loopMutationLoading,
+  } = useQuickShiftLoopMutation({
     onSuccess: () => {
       refetchLoops();
-    }
+    },
   });
-  const { createReframe, updateReframe, deleteReframe, loading: reframeMutationLoading } = useQuickShiftReframeMutation({
+  const {
+    createReframe,
+    updateReframe,
+    deleteReframe,
+    loading: reframeMutationLoading,
+  } = useQuickShiftReframeMutation({
     onSuccess: () => {
       refetchReframes();
-    }
+    },
   });
-  const { createProtector, updateProtector, deleteProtector, loading: protectorMutationLoading } = useQuickShiftProtectorMutation({
+  const {
+    createProtector,
+    updateProtector,
+    deleteProtector,
+    loading: protectorMutationLoading,
+  } = useQuickShiftProtectorMutation({
     onSuccess: () => {
       refetchProtectors();
-    }
+    },
   });
 
   // Transform API data to match UI expectations
   const transformLoopData = (loop) => {
     if (!loop) return null;
-    
+
     const transformed = {
-      id: loop.id || loop._id || '',
-      category: loop.category || loop.name || loop.title || 'Untitled',
-      icon: loop.icon || loop.emoji || '',
-      description: loop.description || '',
-      status: loop.status || (loop.isActive !== false ? 'Active' : 'Inactive'),
-      tierAvailability: Array.isArray(loop.tierAvailability) 
-        ? loop.tierAvailability 
-        : Array.isArray(loop.tiers) 
-          ? loop.tiers 
-          : loop.tier 
-            ? [loop.tier] 
-            : [],
+      id: loop.id || loop._id || "",
+      category: loop.category || loop.name || loop.title || "Untitled",
+      icon: loop.icon || loop.emoji || "",
+      description: loop.description || "",
+      status: loop.status || (loop.isActive !== false ? "Active" : "Inactive"),
+      tierAvailability: Array.isArray(loop.tierAvailability)
+        ? loop.tierAvailability
+        : Array.isArray(loop.tiers)
+        ? loop.tiers
+        : loop.tier
+        ? [loop.tier]
+        : [],
       // Preserve all other fields for potential use
-      ...loop
+      ...loop,
     };
-    
+
     // Log in development for debugging
-    if (process.env.NODE_ENV === 'development' && !loop.category && !loop.name && !loop.title) {
-      console.log('[QuickShifts] Transformed loop data:', transformed);
+    if (
+      process.env.NODE_ENV === "development" &&
+      !loop.category &&
+      !loop.name &&
+      !loop.title
+    ) {
+      console.log("[QuickShifts] Transformed loop data:", transformed);
     }
-    
+
     return transformed;
   };
 
   // Ensure arrays and transform data
   const quickShiftLoops = useMemo(() => {
     if (!Array.isArray(quickShiftLoopsData)) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[QuickShifts] Received non-array data:', quickShiftLoopsData);
+      if (process.env.NODE_ENV === "development") {
+        console.log(
+          "[QuickShifts] Received non-array data:",
+          quickShiftLoopsData
+        );
       }
       return [];
     }
-    
-    const transformed = quickShiftLoopsData.map(transformLoopData).filter(Boolean);
-    
-    if (process.env.NODE_ENV === 'development' && transformed.length > 0) {
-      console.log(`[QuickShifts] Loaded ${transformed.length} loop(s) from API`);
+
+    const transformed = quickShiftLoopsData
+      .map(transformLoopData)
+      .filter(Boolean);
+
+    if (process.env.NODE_ENV === "development" && transformed.length > 0) {
+      console.log(
+        `[QuickShifts] Loaded ${transformed.length} loop(s) from API`
+      );
     }
-    
+
     return transformed;
   }, [quickShiftLoopsData]);
   const reframeLibrary = Array.isArray(reframesData) ? reframesData : [];
@@ -154,111 +199,156 @@ export const QuickShifts = () => {
 
   // Form state for new loop
   const [loopForm, setLoopForm] = useState({
-    category: '',
+    category: "",
     tierAvailability: [],
-    icon: '',
-    description: ''
+    icon: "",
+    description: "",
   });
 
   // Mock data for Quick Shift loops and variations (keeping for reference structure)
   const mockQuickShiftLoops = [
     {
-      id: 'QS-001',
-      category: 'Too Much on My Plate',
-      icon: '🍽️',
+      id: "QS-001",
+      category: "Too Much on My Plate",
+      icon: "🍽️",
       emotionCount: 6,
       protectorVariations: 4,
       reframeVariations: 8,
       usageCount: 245,
-      lastModified: '2024-03-10',
-      status: 'Active',
-      tierAvailability: ['User 1', 'User 2', 'User 3'],
+      lastModified: "2024-03-10",
+      status: "Active",
+      tierAvailability: ["User 1", "User 2", "User 3"],
       emotions: [
-        { emotion: 'Anxious', fearStatement: 'If I dont handle everything perfectly, it will all fall apart', tier: ['User 1', 'User 2'], usageCount: 89 },
-        { emotion: 'Overwhelmed', fearStatement: 'There is too much and I cant keep up', tier: ['User 1', 'User 2', 'User 3'], usageCount: 156 },
-        { emotion: 'Pressured', fearStatement: 'Everyone needs something from me right now', tier: ['User 2', 'User 3'], usageCount: 67 }
-      ]
+        {
+          emotion: "Anxious",
+          fearStatement:
+            "If I dont handle everything perfectly, it will all fall apart",
+          tier: ["User 1", "User 2"],
+          usageCount: 89,
+        },
+        {
+          emotion: "Overwhelmed",
+          fearStatement: "There is too much and I cant keep up",
+          tier: ["User 1", "User 2", "User 3"],
+          usageCount: 156,
+        },
+        {
+          emotion: "Pressured",
+          fearStatement: "Everyone needs something from me right now",
+          tier: ["User 2", "User 3"],
+          usageCount: 67,
+        },
+      ],
     },
     {
-      id: 'QS-002',
-      category: 'What Will They Think',
-      icon: '🤔',
+      id: "QS-002",
+      category: "What Will They Think",
+      icon: "🤔",
       emotionCount: 5,
       protectorVariations: 3,
       reframeVariations: 6,
       usageCount: 189,
-      lastModified: '2024-03-08',
-      status: 'Active',
-      tierAvailability: ['User 1', 'User 2'],
+      lastModified: "2024-03-08",
+      status: "Active",
+      tierAvailability: ["User 1", "User 2"],
       emotions: [
-        { emotion: 'Worried', fearStatement: 'What if they judge me or think less of me', tier: ['User 1'], usageCount: 78 },
-        { emotion: 'Self-conscious', fearStatement: 'I might be doing something wrong or embarrassing', tier: ['User 1', 'User 2'], usageCount: 111 }
-      ]
+        {
+          emotion: "Worried",
+          fearStatement: "What if they judge me or think less of me",
+          tier: ["User 1"],
+          usageCount: 78,
+        },
+        {
+          emotion: "Self-conscious",
+          fearStatement: "I might be doing something wrong or embarrassing",
+          tier: ["User 1", "User 2"],
+          usageCount: 111,
+        },
+      ],
     },
     {
-      id: 'QS-003',
-      category: 'Being Hard on Myself',
-      icon: '😤',
+      id: "QS-003",
+      category: "Being Hard on Myself",
+      icon: "😤",
       emotionCount: 7,
       protectorVariations: 5,
       reframeVariations: 10,
       usageCount: 334,
-      lastModified: '2024-03-12',
-      status: 'Active',
-      tierAvailability: ['User 1', 'User 2', 'User 3'],
+      lastModified: "2024-03-12",
+      status: "Active",
+      tierAvailability: ["User 1", "User 2", "User 3"],
       emotions: [
-        { emotion: 'Ashamed', fearStatement: 'I should have known better or done better', tier: ['User 2', 'User 3'], usageCount: 145 },
-        { emotion: 'Guilty', fearStatement: 'I did something wrong and hurt someone', tier: ['User 1', 'User 2'], usageCount: 189 }
-      ]
-    }
+        {
+          emotion: "Ashamed",
+          fearStatement: "I should have known better or done better",
+          tier: ["User 2", "User 3"],
+          usageCount: 145,
+        },
+        {
+          emotion: "Guilty",
+          fearStatement: "I did something wrong and hurt someone",
+          tier: ["User 1", "User 2"],
+          usageCount: 189,
+        },
+      ],
+    },
   ];
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Active': return 'success';
-      case 'Locked': return 'warning';
-      case 'Draft': return 'secondary';
-      default: return 'outline';
+      case "Active":
+        return "success";
+      case "Locked":
+        return "warning";
+      case "Draft":
+        return "secondary";
+      default:
+        return "outline";
     }
   };
 
   // Filter and sort loops
   const filteredLoops = useMemo(() => {
     let filtered = [...quickShiftLoops];
-    
+
     // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(loop => 
-        loop.category?.toLowerCase().includes(query) ||
-        loop.description?.toLowerCase().includes(query) ||
-        loop.name?.toLowerCase().includes(query) ||
-        loop.title?.toLowerCase().includes(query)
+      filtered = filtered.filter(
+        (loop) =>
+          loop.category?.toLowerCase().includes(query) ||
+          loop.description?.toLowerCase().includes(query) ||
+          loop.name?.toLowerCase().includes(query) ||
+          loop.title?.toLowerCase().includes(query)
       );
     }
-    
+
     // Apply tier filter if selected
-    if (selectedTier !== 'all') {
-      filtered = filtered.filter(loop => {
+    if (selectedTier !== "all") {
+      filtered = filtered.filter((loop) => {
         if (!loop.tierAvailability || loop.tierAvailability.length === 0) {
           return false;
         }
-        return loop.tierAvailability.includes(selectedTier) || 
-               loop.tierAvailability.some(tier => tier.toString().includes(selectedTier));
+        return (
+          loop.tierAvailability.includes(selectedTier) ||
+          loop.tierAvailability.some((tier) =>
+            tier.toString().includes(selectedTier)
+          )
+        );
       });
     }
-    
+
     // Sort by category name (alphabetically), with "Untitled" at the end
     filtered.sort((a, b) => {
-      const aCategory = a.category || 'Untitled';
-      const bCategory = b.category || 'Untitled';
-      
-      if (aCategory === 'Untitled' && bCategory !== 'Untitled') return 1;
-      if (bCategory === 'Untitled' && aCategory !== 'Untitled') return -1;
-      
+      const aCategory = a.category || "Untitled";
+      const bCategory = b.category || "Untitled";
+
+      if (aCategory === "Untitled" && bCategory !== "Untitled") return 1;
+      if (bCategory === "Untitled" && aCategory !== "Untitled") return -1;
+
       return aCategory.localeCompare(bCategory);
     });
-    
+
     return filtered;
   }, [quickShiftLoops, searchQuery, selectedTier]);
 
@@ -270,28 +360,28 @@ export const QuickShifts = () => {
       setSubmitting(true);
 
       if (!loopForm.category?.trim()) {
-        toast.error('Category is required');
+        toast.error("Category is required");
         return;
       }
 
       const payload = {
         category: loopForm.category.trim(),
         tierAvailability: loopForm.tierAvailability,
-        icon: loopForm.icon || '',
-        description: loopForm.description || ''
+        icon: loopForm.icon || "",
+        description: loopForm.description || "",
       };
 
       await createLoop(payload, { showSuccessToast: true });
-      
+
       setLoopForm({
-        category: '',
+        category: "",
         tierAvailability: [],
-        icon: '',
-        description: ''
+        icon: "",
+        description: "",
       });
       setIsCreateModalOpen(false);
     } catch (error) {
-      console.error('Error creating loop:', error);
+      console.error("Error creating loop:", error);
     } finally {
       setSubmitting(false);
     }
@@ -299,14 +389,14 @@ export const QuickShifts = () => {
 
   // Handle delete loop
   const handleDeleteLoop = async (loopId) => {
-    if (window.confirm('Are you sure you want to delete this loop?')) {
+    if (window.confirm("Are you sure you want to delete this loop?")) {
       try {
         await deleteLoop(loopId, { showSuccessToast: true });
         if (selectedLoop?.id === loopId) {
           setSelectedLoop(null);
         }
       } catch (error) {
-        console.error('Error deleting loop:', error);
+        console.error("Error deleting loop:", error);
       }
     }
   };
@@ -314,13 +404,17 @@ export const QuickShifts = () => {
   // Handle delete reframe
   const handleDeleteReframe = async (reframeId) => {
     // Reframe deletion is not available - endpoint not in OpenAPI spec
-    toast.error('Reframe deletion is not available in the current API specification');
+    toast.error(
+      "Reframe deletion is not available in the current API specification"
+    );
   };
 
   // Handle delete protector
   const handleDeleteProtector = async (protectorId) => {
     // Protector deletion is not available - endpoint not in OpenAPI spec
-    toast.error('Protector deletion is not available in the current API specification');
+    toast.error(
+      "Protector deletion is not available in the current API specification"
+    );
   };
 
   return (
@@ -328,10 +422,10 @@ export const QuickShifts = () => {
       title="Quick Shift Content Management"
       subtitle="Manage emotional regulation content variations across user tiers"
       headerActions={
-        <div className="flex space-x-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           {/* Header Analytics and Filters hidden for Quick Shifts */}
-          <Button 
-            variant="primary" 
+          <Button
+            variant="primary"
             size="sm"
             onClick={() => setIsCreateModalOpen(true)}
           >
@@ -343,28 +437,36 @@ export const QuickShifts = () => {
     >
       <div className="space-y-6">
         <Tabs defaultValue="loops" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="loops">Loop Categories</TabsTrigger>
-            <TabsTrigger value="reframes">Reframe Library</TabsTrigger>
-            <TabsTrigger value="protectors">Protectors</TabsTrigger>
-            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          <TabsList className="w-full h-full flex overflow-x-auto whitespace-nowrap gap-2">
+            <TabsTrigger value="loops" className="shrink-0">
+              Loop Categories
+            </TabsTrigger>
+            <TabsTrigger value="reframes" className="shrink-0">
+              Reframe Library
+            </TabsTrigger>
+            <TabsTrigger value="protectors" className="shrink-0">
+              Protectors
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="shrink-0">
+              Analytics
+            </TabsTrigger>
           </TabsList>
 
           {/* Loop Categories */}
           <TabsContent value="loops" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="relative">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                <div className="relative ">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
                     placeholder="Search loop categories..."
-                    className="pl-10 w-80"
+                    className="pl-10 w-80 sm:w-80"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
                 <Select value={selectedTier} onValueChange={setSelectedTier}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-40 sm:w-40">
                     <SelectValue placeholder="Tier Level" />
                   </SelectTrigger>
                   <SelectContent>
@@ -389,7 +491,11 @@ export const QuickShifts = () => {
                 ) : loopsError ? (
                   <div className="text-center py-8 text-destructive">
                     <p>Error loading loops: {loopsError}</p>
-                    <Button onClick={refetchLoops} variant="outline" className="mt-4">
+                    <Button
+                      onClick={refetchLoops}
+                      variant="outline"
+                      className="mt-4"
+                    >
                       Retry
                     </Button>
                   </div>
@@ -404,66 +510,94 @@ export const QuickShifts = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredLoops.length > 0 ? filteredLoops.map((loop) => (
-                        <TableRow key={loop.id} className="cursor-pointer hover:bg-muted/50">
-                          <TableCell>
-                            <div className="flex items-center space-x-3">
-                              {loop.icon && <span className="text-2xl">{loop.icon}</span>}
-                              <div>
-                                <div className="font-medium">{loop.category || 'Untitled'}</div>
-                                {loop.description && (
-                                  <div className="text-sm text-muted-foreground">
-                                    {loop.description}
-                                  </div>
+                      {filteredLoops.length > 0 ? (
+                        filteredLoops.map((loop) => (
+                          <TableRow
+                            key={loop.id}
+                            className="cursor-pointer hover:bg-muted/50"
+                          >
+                            <TableCell>
+                              <div className="flex items-center space-x-3">
+                                {loop.icon && (
+                                  <span className="text-2xl">{loop.icon}</span>
                                 )}
+                                <div>
+                                  <div className="font-medium">
+                                    {loop.category || "Untitled"}
+                                  </div>
+                                  {loop.description && (
+                                    <div className="text-sm text-muted-foreground">
+                                      {loop.description}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {loop.tierAvailability && Array.isArray(loop.tierAvailability) && loop.tierAvailability.length > 0 ? (
-                              <div className="flex flex-wrap gap-1">
-                                {loop.tierAvailability.map((tier, idx) => (
-                                  <Badge key={tier || idx} variant="secondary" className="text-xs">
-                                    {tier || 'N/A'}
-                                  </Badge>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">No tiers</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getStatusColor(loop.status || 'Active')}>
-                              {loop.status || 'Active'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setSelectedLoop(loop)}>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => handleDeleteLoop(loop.id)}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      )) : (
+                            </TableCell>
+                            <TableCell>
+                              {loop.tierAvailability &&
+                              Array.isArray(loop.tierAvailability) &&
+                              loop.tierAvailability.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {loop.tierAvailability.map((tier, idx) => (
+                                    <Badge
+                                      key={tier || idx}
+                                      variant="secondary"
+                                      className="text-xs"
+                                    >
+                                      {tier || "N/A"}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-sm text-muted-foreground">
+                                  No tiers
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={getStatusColor(
+                                  loop.status || "Active"
+                                )}
+                              >
+                                {loop.status || "Active"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() => setSelectedLoop(loop)}
+                                  >
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleDeleteLoop(loop.id)}
+                                    className="text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                            {searchQuery ? 'No loops found matching your search' : 'No loops found'}
+                          <TableCell
+                            colSpan={4}
+                            className="text-center py-8 text-muted-foreground"
+                          >
+                            {searchQuery
+                              ? "No loops found matching your search"
+                              : "No loops found"}
                           </TableCell>
                         </TableRow>
                       )}
@@ -480,7 +614,8 @@ export const QuickShifts = () => {
               <CardHeader>
                 <CardTitle>Reframe Statement Library</CardTitle>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Note: Reframe endpoints are not available in the current API specification.
+                  Note: Reframe endpoints are not available in the current API
+                  specification.
                 </p>
               </CardHeader>
               <CardContent>
@@ -503,57 +638,82 @@ export const QuickShifts = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {reframeLibrary.length > 0 ? reframeLibrary.map((reframe) => (
-                        <TableRow key={reframe.id}>
-                          <TableCell>
-                            <Badge variant="outline">{reframe.category || 'N/A'}</Badge>
-                          </TableCell>
-                          <TableCell className="max-w-xs">
-                            <p className="text-sm truncate">{reframe.insteadOf || 'N/A'}</p>
-                          </TableCell>
-                          <TableCell className="max-w-xs">
-                            <p className="text-sm truncate">{reframe.truthBecomes || 'N/A'}</p>
-                          </TableCell>
-                          <TableCell>
-                            {reframe.tierAvailability && Array.isArray(reframe.tierAvailability) && reframe.tierAvailability.length > 0 ? (
-                              <div className="flex flex-wrap gap-1">
-                                {reframe.tierAvailability.map((tier) => (
-                                  <Badge key={tier} variant="secondary" className="text-xs">
-                                    {tier}
-                                  </Badge>
-                                ))}
-                              </div>
-                            ) : (
-                              <span className="text-sm text-muted-foreground">No tiers</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={getStatusColor(reframe.status || 'Active')}>
-                              {reframe.status || 'Active'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => handleDeleteReframe(reframe.id)}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      )) : (
+                      {reframeLibrary.length > 0 ? (
+                        reframeLibrary.map((reframe) => (
+                          <TableRow key={reframe.id}>
+                            <TableCell>
+                              <Badge variant="outline">
+                                {reframe.category || "N/A"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="max-w-xs">
+                              <p className="text-sm truncate">
+                                {reframe.insteadOf || "N/A"}
+                              </p>
+                            </TableCell>
+                            <TableCell className="max-w-xs">
+                              <p className="text-sm truncate">
+                                {reframe.truthBecomes || "N/A"}
+                              </p>
+                            </TableCell>
+                            <TableCell>
+                              {reframe.tierAvailability &&
+                              Array.isArray(reframe.tierAvailability) &&
+                              reframe.tierAvailability.length > 0 ? (
+                                <div className="flex flex-wrap gap-1">
+                                  {reframe.tierAvailability.map((tier) => (
+                                    <Badge
+                                      key={tier}
+                                      variant="secondary"
+                                      className="text-xs"
+                                    >
+                                      {tier}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              ) : (
+                                <span className="text-sm text-muted-foreground">
+                                  No tiers
+                                </span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={getStatusColor(
+                                  reframe.status || "Active"
+                                )}
+                              >
+                                {reframe.status || "Active"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      handleDeleteReframe(reframe.id)
+                                    }
+                                    className="text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                          <TableCell
+                            colSpan={6}
+                            className="text-center py-8 text-muted-foreground"
+                          >
                             No reframes found
                           </TableCell>
                         </TableRow>
@@ -571,7 +731,8 @@ export const QuickShifts = () => {
               <CardHeader>
                 <CardTitle>Protector Archetypes</CardTitle>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Note: Protector endpoints are not available in the current API specification.
+                  Note: Protector endpoints are not available in the current API
+                  specification.
                 </p>
               </CardHeader>
               <CardContent>
@@ -591,34 +752,53 @@ export const QuickShifts = () => {
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {protectors.map((protector) => (
-                      <Card key={protector.id} className="p-4 hover:shadow-lg transition-shadow">
+                      <Card
+                        key={protector.id}
+                        className="p-4 hover:shadow-lg transition-shadow"
+                      >
                         <div className="space-y-3">
-                          <div className="flex items-center justify-between">
-                            <h3 className="font-semibold">{protector.name || 'Unnamed Protector'}</h3>
-                            <Badge variant={getStatusColor(protector.status || 'Active')}>
-                              {protector.status || 'Active'}
+                          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <h3 className="font-semibold">
+                              {protector.name || "Unnamed Protector"}
+                            </h3>
+                            <Badge
+                              variant={getStatusColor(
+                                protector.status || "Active"
+                              )}
+                            >
+                              {protector.status || "Active"}
                             </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground">
-                            {protector.description || 'No description'}
+                            {protector.description || "No description"}
                           </p>
-                          {protector.associatedLoops && Array.isArray(protector.associatedLoops) && protector.associatedLoops.length > 0 && (
-                            <div className="space-y-2">
-                              <div className="text-sm font-medium">Associated Loops:</div>
-                              <div className="flex flex-wrap gap-1">
-                                {protector.associatedLoops.map((loop) => (
-                                  <Badge key={loop} variant="outline" className="text-xs">
-                                    {loop}
-                                  </Badge>
-                                ))}
+                          {protector.associatedLoops &&
+                            Array.isArray(protector.associatedLoops) &&
+                            protector.associatedLoops.length > 0 && (
+                              <div className="space-y-2">
+                                <div className="text-sm font-medium">
+                                  Associated Loops:
+                                </div>
+                                <div className="flex flex-wrap gap-1">
+                                  {protector.associatedLoops.map((loop) => (
+                                    <Badge
+                                      key={loop}
+                                      variant="outline"
+                                      className="text-xs"
+                                    >
+                                      {loop}
+                                    </Badge>
+                                  ))}
+                                </div>
                               </div>
-                            </div>
-                          )}
-                          <div className="flex space-x-2">
+                            )}
+                          <div className="flex flex-col sm:flex-row gap-2">
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleDeleteProtector(protector.id)}
+                              onClick={() =>
+                                handleDeleteProtector(protector.id)
+                              }
                               className="text-destructive"
                             >
                               <Trash2 className="h-4 w-4 mr-1" />
@@ -643,7 +823,9 @@ export const QuickShifts = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold">1,247</div>
-                  <p className="text-sm text-muted-foreground">Completed this month</p>
+                  <p className="text-sm text-muted-foreground">
+                    Completed this month
+                  </p>
                 </CardContent>
               </Card>
               <Card>
@@ -652,7 +834,9 @@ export const QuickShifts = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold">87%</div>
-                  <p className="text-sm text-muted-foreground">Average by step</p>
+                  <p className="text-sm text-muted-foreground">
+                    Average by step
+                  </p>
                 </CardContent>
               </Card>
               <Card>
@@ -661,7 +845,9 @@ export const QuickShifts = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="font-semibold">Being Hard on Myself</div>
-                  <p className="text-sm text-muted-foreground">334 uses this month</p>
+                  <p className="text-sm text-muted-foreground">
+                    334 uses this month
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -670,7 +856,7 @@ export const QuickShifts = () => {
 
         {/* Create Loop Modal */}
         <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="w-[95vw] sm:max-w-3xl max-h-[85vh] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle>Add New Quick Shift Variation</DialogTitle>
             </DialogHeader>
@@ -683,8 +869,12 @@ export const QuickShifts = () => {
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="plate">Too Much on My Plate</SelectItem>
-                      <SelectItem value="think">What Will They Think</SelectItem>
+                      <SelectItem value="plate">
+                        Too Much on My Plate
+                      </SelectItem>
+                      <SelectItem value="think">
+                        What Will They Think
+                      </SelectItem>
                       <SelectItem value="hard">Being Hard on Myself</SelectItem>
                     </SelectContent>
                   </Select>
@@ -703,30 +893,33 @@ export const QuickShifts = () => {
                   </Select>
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="emotion">Emotion</Label>
                 <Input placeholder="e.g., Anxious, Overwhelmed" />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="fear">Fear Statement</Label>
-                <Textarea 
+                <Textarea
                   placeholder="e.g., If I don't handle everything perfectly, it will all fall apart"
                   rows={3}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="reframe">Reframe Statement</Label>
-                <Textarea 
+                <Textarea
                   placeholder="e.g., I can slow down and trust that what matters will get done"
                   rows={3}
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsCreateModalOpen(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCreateModalOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button onClick={() => setIsCreateModalOpen(false)}>
@@ -739,17 +932,24 @@ export const QuickShifts = () => {
 
         {/* Loop Detail Modal */}
         {selectedLoop && (
-          <Dialog open={!!selectedLoop} onOpenChange={() => setSelectedLoop(null)}>
+          <Dialog
+            open={!!selectedLoop}
+            onOpenChange={() => setSelectedLoop(null)}
+          >
             <DialogContent className="max-w-4xl">
               <DialogHeader>
-                <DialogTitle>{selectedLoop.category} - Loop Details</DialogTitle>
+                <DialogTitle>
+                  {selectedLoop.category} - Loop Details
+                </DialogTitle>
               </DialogHeader>
-              
+
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <Card>
                     <CardHeader>
-                      <CardTitle className="text-lg">Loop Information</CardTitle>
+                      <CardTitle className="text-lg">
+                        Loop Information
+                      </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
                       <div>
@@ -757,7 +957,9 @@ export const QuickShifts = () => {
                         <span className="ml-2">{selectedLoop.category}</span>
                       </div>
                       <div>
-                        <span className="text-sm font-medium">Tier Availability:</span>
+                        <span className="text-sm font-medium">
+                          Tier Availability:
+                        </span>
                         <div className="mt-1 flex flex-wrap gap-1">
                           {selectedLoop.tierAvailability.map((tier) => (
                             <Badge key={tier} variant="outline">
@@ -767,12 +969,16 @@ export const QuickShifts = () => {
                         </div>
                       </div>
                       <div>
-                        <span className="text-sm font-medium">Usage Count:</span>
-                        <span className="ml-2 font-semibold">{selectedLoop.usageCount}</span>
+                        <span className="text-sm font-medium">
+                          Usage Count:
+                        </span>
+                        <span className="ml-2 font-semibold">
+                          {selectedLoop.usageCount}
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
-                  
+
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-lg">Variations</CardTitle>
@@ -780,15 +986,21 @@ export const QuickShifts = () => {
                     <CardContent className="space-y-2">
                       <div>
                         <span className="text-sm font-medium">Emotions:</span>
-                        <span className="ml-2">{selectedLoop.emotionCount}</span>
+                        <span className="ml-2">
+                          {selectedLoop.emotionCount}
+                        </span>
                       </div>
                       <div>
                         <span className="text-sm font-medium">Protectors:</span>
-                        <span className="ml-2">{selectedLoop.protectorVariations}</span>
+                        <span className="ml-2">
+                          {selectedLoop.protectorVariations}
+                        </span>
                       </div>
                       <div>
                         <span className="text-sm font-medium">Reframes:</span>
-                        <span className="ml-2">{selectedLoop.reframeVariations}</span>
+                        <span className="ml-2">
+                          {selectedLoop.reframeVariations}
+                        </span>
                       </div>
                     </CardContent>
                   </Card>
@@ -796,7 +1008,9 @@ export const QuickShifts = () => {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Associated Emotions</CardTitle>
+                    <CardTitle className="text-lg">
+                      Associated Emotions
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <Table>
@@ -809,35 +1023,53 @@ export const QuickShifts = () => {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {Array.isArray(selectedLoop.emotions) && selectedLoop.emotions.length > 0 ? (
+                        {Array.isArray(selectedLoop.emotions) &&
+                        selectedLoop.emotions.length > 0 ? (
                           selectedLoop.emotions.map((emotion, index) => {
-                            const tiers = Array.isArray(emotion.tier) ? emotion.tier : [];
+                            const tiers = Array.isArray(emotion.tier)
+                              ? emotion.tier
+                              : [];
                             return (
                               <TableRow key={emotion.id || index}>
-                                <TableCell className="font-medium">{emotion.emotion || 'N/A'}</TableCell>
+                                <TableCell className="font-medium">
+                                  {emotion.emotion || "N/A"}
+                                </TableCell>
                                 <TableCell className="max-w-md">
-                                  <p className="text-sm">{emotion.fearStatement || 'N/A'}</p>
+                                  <p className="text-sm">
+                                    {emotion.fearStatement || "N/A"}
+                                  </p>
                                 </TableCell>
                                 <TableCell>
                                   <div className="flex flex-wrap gap-1">
                                     {tiers.length > 0 ? (
                                       tiers.map((tier) => (
-                                        <Badge key={tier} variant="secondary" className="text-xs">
+                                        <Badge
+                                          key={tier}
+                                          variant="secondary"
+                                          className="text-xs"
+                                        >
                                           {tier}
                                         </Badge>
                                       ))
                                     ) : (
-                                      <span className="text-xs text-muted-foreground">No tiers</span>
+                                      <span className="text-xs text-muted-foreground">
+                                        No tiers
+                                      </span>
                                     )}
                                   </div>
                                 </TableCell>
-                                <TableCell>{emotion.usageCount ?? '—'}</TableCell>
+                                <TableCell>
+                                  {emotion.usageCount ?? "—"}
+                                </TableCell>
                               </TableRow>
                             );
                           })
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={4} className="text-center py-4 text-muted-foreground">
+                            <TableCell
+                              colSpan={4}
+                              className="text-center py-4 text-muted-foreground"
+                            >
                               No associated emotions available
                             </TableCell>
                           </TableRow>

@@ -1,7 +1,7 @@
-import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import React from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,23 +9,124 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Bell, Search, Plus, MessageSquare, Settings, User, LogOut, Zap, Shuffle, Heart } from 'lucide-react';
+} from "@/components/ui/dropdown-menu";
+import {
+  Bell,
+  Search,
+  Plus,
+  MessageSquare,
+  Settings,
+  User,
+  LogOut,
+  Zap,
+  Shuffle,
+  Heart,
+} from "lucide-react";
 
-export const Header = ({ title, subtitle, actions, showQuickActions = true }) => {
+export const Header = ({
+  title,
+  subtitle,
+  actions,
+  showQuickActions = true,
+}) => {
   const notifications = [
-    { id: 1, message: "New user feedback received", time: "2 min ago", type: "info" },
-    { id: 2, message: "Content pool needs attention", time: "1 hour ago", type: "warning" },
-    { id: 3, message: "Daily analytics ready", time: "3 hours ago", type: "success" },
+    {
+      id: 1,
+      message: "New user feedback received",
+      time: "2 min ago",
+      type: "info",
+    },
+    {
+      id: 2,
+      message: "Content pool needs attention",
+      time: "1 hour ago",
+      type: "warning",
+    },
+    {
+      id: 3,
+      message: "Daily analytics ready",
+      time: "3 hours ago",
+      type: "success",
+    },
   ];
 
   return (
-    <header className="bg-card border-b border-border px-6 py-4">
-      <div className="flex items-center justify-between">
+    <header className="bg-card border-b border-border px-3 sm:px-4 md:px-6 py-2.5">
+      {/* Mobile Layout - Stacked */}
+      <div className="flex flex-col space-y-3 lg:hidden">
+        {/* Title Section */}
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg sm:text-xl font-semibold text-foreground truncate">
+              {title}
+            </h1>
+            {subtitle && (
+              <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 line-clamp-2">
+                {subtitle}
+              </p>
+            )}
+          </div>
+
+          {/* Mobile Quick Actions */}
+          {showQuickActions && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="flex-shrink-0">
+                  <Plus className="h-4 w-4" />
+                  <span className="hidden xs:inline ml-1">Add</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Create New</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <Zap className="h-4 w-4 mr-2" />
+                  Quick Shift Variation
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Shuffle className="h-4 w-4 mr-2" />
+                  Plot Twist Quest
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Heart className="h-4 w-4 mr-2" />
+                  Affirmation Template
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Teaching Moment
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+
+        {/* Search Bar - Mobile */}
+        {showQuickActions && (
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Search..."
+              className="pl-10 bg-muted/50 border-border text-sm"
+            />
+          </div>
+        )}
+
+        {/* Actions - Mobile */}
+        {actions && (
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
+            {actions}
+          </div>
+        )}
+      </div>
+
+      {/* Tablet & Desktop Layout - Single Row */}
+      <div className="hidden lg:flex items-center justify-between">
         {/* Left Section - Title & Breadcrumb */}
         <div className="flex items-center space-x-4">
           <div>
-            <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
+            <h1 className="text-xl xl:text-2xl font-semibold text-foreground">
+              {title}
+            </h1>
             {subtitle && (
               <p className="text-sm text-muted-foreground mt-1">{subtitle}</p>
             )}
@@ -36,7 +137,7 @@ export const Header = ({ title, subtitle, actions, showQuickActions = true }) =>
         {showQuickActions && (
           <>
             {/* Center Section - Search */}
-            <div className="flex-1 max-w-md mx-8">
+            <div className="flex-1 max-w-md mx-4 xl:mx-8">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                 <Input
@@ -47,12 +148,10 @@ export const Header = ({ title, subtitle, actions, showQuickActions = true }) =>
             </div>
 
             {/* Right Section - Actions & User */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 xl:space-x-3">
               {/* Action Buttons */}
               {actions && (
-                <div className="flex items-center space-x-2">
-                  {actions}
-                </div>
+                <div className="flex items-center space-x-2">{actions}</div>
               )}
 
               {/* Quick Actions */}
@@ -60,7 +159,7 @@ export const Header = ({ title, subtitle, actions, showQuickActions = true }) =>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm" className="gap-2">
                     <Plus className="h-4 w-4" />
-                    Quick Add
+                    <span className="hidden xl:inline">Quick Add</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -126,8 +225,8 @@ export const Header = ({ title, subtitle, actions, showQuickActions = true }) =>
           </>
         )}
 
-          {/* User Menu */}
-          {/* <DropdownMenu>
+        {/* User Menu */}
+        {/* <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center space-x-2">
                 <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center">
@@ -154,7 +253,7 @@ export const Header = ({ title, subtitle, actions, showQuickActions = true }) =>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu> */}
-        </div>
+      </div>
       {/* </div> */}
     </header>
   );

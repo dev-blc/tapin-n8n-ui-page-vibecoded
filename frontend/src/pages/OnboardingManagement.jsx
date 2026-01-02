@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { Layout } from '@/components/layout/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState } from "react";
+import { Layout } from "@/components/layout/Layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -12,23 +12,23 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   MessageSquare,
   Search,
@@ -43,17 +43,25 @@ import {
   Trash2,
   Loader2,
   Pause,
-  Play
-} from 'lucide-react';
+  Play,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { toast } from 'sonner';
-import { useOnboardingQuestions, useQuestionMutation, useOptionMutation, useCharacterMapping } from '@/hooks/useOnboarding';
-import { FullPageLoader, TableSkeleton } from '@/components/loading/LoadingSpinner';
+} from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
+import {
+  useOnboardingQuestions,
+  useQuestionMutation,
+  useOptionMutation,
+  useCharacterMapping,
+} from "@/hooks/useOnboarding";
+import {
+  FullPageLoader,
+  TableSkeleton,
+} from "@/components/loading/LoadingSpinner";
 
 export const OnboardingManagement = () => {
   const [selectedQuestion, setSelectedQuestion] = useState(null);
@@ -69,25 +77,33 @@ export const OnboardingManagement = () => {
   const [createdOptionIds, setCreatedOptionIds] = useState([]);
 
   // Fetch data using hooks
-  const { data: onboardingQuestionsData, loading, error, refetch } = useOnboardingQuestions({ showErrorToast: false });
-  const { data: characterMappings = [], loading: characterMappingLoading } = useCharacterMapping({ showErrorToast: false });
-  const { 
-    createQuestion: createQuestionMutation, 
+  const {
+    data: onboardingQuestionsData,
+    loading,
+    error,
+    refetch,
+  } = useOnboardingQuestions({ showErrorToast: false });
+  const { data: characterMappings = [], loading: characterMappingLoading } =
+    useCharacterMapping({ showErrorToast: false });
+  const {
+    createQuestion: createQuestionMutation,
     updateQuestion: updateQuestionMutation,
-    deleteQuestion: deleteQuestionMutation 
+    deleteQuestion: deleteQuestionMutation,
   } = useQuestionMutation({
     onSuccess: () => {
       refetch();
     },
   });
-  const { 
-    createOption: createOptionMutation, 
+  const {
+    createOption: createOptionMutation,
     updateOption: updateOptionMutation,
-    deleteOption: deleteOptionMutation 
+    deleteOption: deleteOptionMutation,
   } = useOptionMutation();
 
   // Ensure onboardingQuestions is always an array
-  const onboardingQuestions = Array.isArray(onboardingQuestionsData) ? onboardingQuestionsData : [];
+  const onboardingQuestions = Array.isArray(onboardingQuestionsData)
+    ? onboardingQuestionsData
+    : [];
 
   // Build character map from API data - handle null/undefined safely
   const characterMap = React.useMemo(() => {
@@ -104,23 +120,47 @@ export const OnboardingManagement = () => {
 
   // Form state for new question - Updated to match new API schema
   const [newQuestion, setNewQuestion] = useState({
-    text: '',
+    text: "",
     displayOrder: 1,
     isActive: true,
     options: [
-      { optionText: '', displayOrder: 1, assignsTier: '', characterName: '', assignsCharacterId: '' },
-      { optionText: '', displayOrder: 2, assignsTier: '', characterName: '', assignsCharacterId: '' },
-      { optionText: '', displayOrder: 3, assignsTier: '', characterName: '', assignsCharacterId: '' },
-      { optionText: '', displayOrder: 4, assignsTier: '', characterName: '', assignsCharacterId: '' }
-    ]
+      {
+        optionText: "",
+        displayOrder: 1,
+        assignsTier: "",
+        characterName: "",
+        assignsCharacterId: "",
+      },
+      {
+        optionText: "",
+        displayOrder: 2,
+        assignsTier: "",
+        characterName: "",
+        assignsCharacterId: "",
+      },
+      {
+        optionText: "",
+        displayOrder: 3,
+        assignsTier: "",
+        characterName: "",
+        assignsCharacterId: "",
+      },
+      {
+        optionText: "",
+        displayOrder: 4,
+        assignsTier: "",
+        characterName: "",
+        assignsCharacterId: "",
+      },
+    ],
   });
 
   // Form state for editing question
   const [editQuestion, setEditQuestion] = useState({
-    text: '',
+    text: "",
     displayOrder: 1,
     isActive: true,
-    options: []
+    options: [],
   });
 
   // Create new onboarding question - Using service layer
@@ -139,36 +179,45 @@ export const OnboardingManagement = () => {
 
       // VALIDATION PHASE - Check all requirements before making ANY API calls
       if (!newQuestion.text.trim()) {
-        toast.error('Question text is required');
+        toast.error("Question text is required");
         return;
       }
 
-      const validOptions = newQuestion.options.filter(opt => opt.optionText.trim());
+      const validOptions = newQuestion.options.filter((opt) =>
+        opt.optionText.trim()
+      );
       if (validOptions.length < 2) {
-        toast.error('At least 2 options are required');
+        toast.error("At least 2 options are required");
         return;
       }
 
       // Validate tier assignments
-      const invalidTiers = validOptions.filter(opt => !opt.assignsTier);
+      const invalidTiers = validOptions.filter((opt) => !opt.assignsTier);
       if (invalidTiers.length > 0) {
-        toast.error('All options must have a tier assignment');
+        toast.error("All options must have a tier assignment");
         return;
       }
 
       // STEP 1: Create the question
       const questionPayload = {
         text: newQuestion.text.trim(),
-        displayOrder: Math.max(...onboardingQuestions.map(q => q.displayOrder || 0), 0) + 1,
-        isActive: newQuestion.isActive
+        displayOrder:
+          Math.max(...onboardingQuestions.map((q) => q.displayOrder || 0), 0) +
+          1,
+        isActive: newQuestion.isActive,
       };
 
-      const questionResponse = await createQuestionMutation(questionPayload, { showSuccessToast: false });
+      const questionResponse = await createQuestionMutation(questionPayload, {
+        showSuccessToast: false,
+      });
       // Extract question ID from response (handle both transformed and raw responses)
-      const questionId = questionResponse?.id || questionResponse?.data?.id || questionResponse?.data?.data?.id;
+      const questionId =
+        questionResponse?.id ||
+        questionResponse?.data?.id ||
+        questionResponse?.data?.data?.id;
 
       if (!questionId) {
-        throw new Error('Question created but no ID returned');
+        throw new Error("Question created but no ID returned");
       }
 
       // Track created question ID
@@ -177,38 +226,56 @@ export const OnboardingManagement = () => {
       // STEP 2: Create options
       const optionPromises = validOptions.map(async (option, index) => {
         // Use assignsCharacterId directly from state, or fallback to characterMap lookup
-        let characterId = option.assignsCharacterId || '';
-        
+        let characterId = option.assignsCharacterId || "";
+
         // Fallback: if assignsCharacterId is not set but characterName is, look it up
-        if (!characterId && option.characterName && option.characterName !== "none" && characterMap[option.characterName]) {
+        if (
+          !characterId &&
+          option.characterName &&
+          option.characterName !== "none" &&
+          characterMap[option.characterName]
+        ) {
           characterId = characterMap[option.characterName];
-          console.log('Fallback lookup - Character name:', option.characterName, 'Found UUID:', characterId);
+          console.log(
+            "Fallback lookup - Character name:",
+            option.characterName,
+            "Found UUID:",
+            characterId
+          );
         }
 
         const payload = {
           questionId: questionId,
           optionText: option.optionText.trim(),
           assignsTier: option.assignsTier,
-          displayOrder: index + 1
+          displayOrder: index + 1,
         };
 
         // Only include assignsCharacterId if we have a valid UUID
-        if (characterId && characterId.trim() !== '') {
+        if (characterId && characterId.trim() !== "") {
           payload.assignsCharacterId = characterId;
-          console.log('Including characterId in payload:', characterId);
+          console.log("Including characterId in payload:", characterId);
         } else {
-          console.log('No characterId to include for option:', option.optionText);
+          console.log(
+            "No characterId to include for option:",
+            option.optionText
+          );
         }
 
-        const optionResponse = await createOptionMutation(payload, { showSuccessToast: false });
+        const optionResponse = await createOptionMutation(payload, {
+          showSuccessToast: false,
+        });
         // Extract option ID from response (handle both transformed and raw responses)
-        const optionId = optionResponse?.id || optionResponse?.data?.id || optionResponse?.data?.data?.id;
+        const optionId =
+          optionResponse?.id ||
+          optionResponse?.data?.id ||
+          optionResponse?.data?.data?.id;
 
         // Track created option ID for cleanup
         if (optionId) {
-          setCreatedOptionIds(prev => [...prev, optionId]);
+          setCreatedOptionIds((prev) => [...prev, optionId]);
         } else {
-          console.warn('Option created but no ID returned:', optionResponse);
+          console.warn("Option created but no ID returned:", optionResponse);
         }
 
         return optionResponse;
@@ -222,15 +289,14 @@ export const OnboardingManagement = () => {
       setCreatedQuestionId(null);
       setCreatedOptionIds([]);
 
-      toast.success('Question and options created successfully');
-
+      toast.success("Question and options created successfully");
     } catch (error) {
-      console.error('Error in createQuestion:', error);
+      console.error("Error in createQuestion:", error);
 
       // Cleanup: Delete created question and options on error
       await cleanupCreatedItems();
 
-      toast.error(error.message || 'Failed to create question');
+      toast.error(error.message || "Failed to create question");
     } finally {
       setSubmitting(false);
     }
@@ -241,8 +307,8 @@ export const OnboardingManagement = () => {
     try {
       // Delete all created options first (in reverse order to handle dependencies)
       if (createdOptionIds.length > 0) {
-        const deleteOptionPromises = createdOptionIds.map(optionId =>
-          deleteOptionMutation(optionId).catch(err => {
+        const deleteOptionPromises = createdOptionIds.map((optionId) =>
+          deleteOptionMutation(optionId).catch((err) => {
             console.error(`Failed to delete option ${optionId}:`, err);
             // Don't throw - continue with other deletions
             return null;
@@ -253,30 +319,54 @@ export const OnboardingManagement = () => {
 
       // Delete the created question
       if (createdQuestionId) {
-        await deleteQuestionMutation(createdQuestionId).catch(err => {
+        await deleteQuestionMutation(createdQuestionId).catch((err) => {
           console.error(`Failed to delete question ${createdQuestionId}:`, err);
           // Don't throw - log error but continue
         });
       }
     } catch (error) {
-      console.error('Error during cleanup:', error);
+      console.error("Error during cleanup:", error);
       // Don't throw - cleanup errors shouldn't break the UI
     }
   };
 
   // Reset form to initial state
   const resetForm = () => {
-      setNewQuestion({
-        text: '',
-        displayOrder: 1,
-        isActive: true,
-        options: [
-          { optionText: '', displayOrder: 1, assignsTier: '', characterName: '', assignsCharacterId: '' },
-          { optionText: '', displayOrder: 2, assignsTier: '', characterName: '', assignsCharacterId: '' },
-          { optionText: '', displayOrder: 3, assignsTier: '', characterName: '', assignsCharacterId: '' },
-          { optionText: '', displayOrder: 4, assignsTier: '', characterName: '', assignsCharacterId: '' }
-        ]
-      });
+    setNewQuestion({
+      text: "",
+      displayOrder: 1,
+      isActive: true,
+      options: [
+        {
+          optionText: "",
+          displayOrder: 1,
+          assignsTier: "",
+          characterName: "",
+          assignsCharacterId: "",
+        },
+        {
+          optionText: "",
+          displayOrder: 2,
+          assignsTier: "",
+          characterName: "",
+          assignsCharacterId: "",
+        },
+        {
+          optionText: "",
+          displayOrder: 3,
+          assignsTier: "",
+          characterName: "",
+          assignsCharacterId: "",
+        },
+        {
+          optionText: "",
+          displayOrder: 4,
+          assignsTier: "",
+          characterName: "",
+          assignsCharacterId: "",
+        },
+      ],
+    });
   };
 
   // Handle modal close/cancel
@@ -298,44 +388,57 @@ export const OnboardingManagement = () => {
     try {
       await deleteQuestionMutation(questionId);
     } catch (error) {
-      console.error('Error deleting question:', error);
+      console.error("Error deleting question:", error);
     }
   };
 
   // Open edit modal with question data
   const openEditModal = (question) => {
     // Find character name for each option
-    const optionsWithCharacterNames = (question.options || []).map(option => {
-      let characterName = '';
+    const optionsWithCharacterNames = (question.options || []).map((option) => {
+      let characterName = "";
       if (option.assignsCharacterId) {
         // Find character name from characterMappings
         const character = characterMappings.find(
-          char => char && char.id === option.assignsCharacterId
+          (char) => char && char.id === option.assignsCharacterId
         );
-        characterName = character?.name || '';
+        characterName = character?.name || "";
       }
-      
+
       return {
         id: option.id,
-        optionText: option.optionText || option.text || '',
+        optionText: option.optionText || option.text || "",
         displayOrder: option.displayOrder || 1,
-        assignsTier: option.assignsTier || '',
+        assignsTier: option.assignsTier || "",
         characterName: characterName,
-        assignsCharacterId: option.assignsCharacterId || ''
+        assignsCharacterId: option.assignsCharacterId || "",
       };
     });
 
     setEditQuestion({
       id: question.id,
-      text: question.text || '',
+      text: question.text || "",
       displayOrder: question.displayOrder || 1,
       isActive: question.isActive !== undefined ? question.isActive : true,
-      options: optionsWithCharacterNames.length > 0 
-        ? optionsWithCharacterNames 
-        : [
-            { optionText: '', displayOrder: 1, assignsTier: '', characterName: '', assignsCharacterId: '' },
-            { optionText: '', displayOrder: 2, assignsTier: '', characterName: '', assignsCharacterId: '' }
-          ]
+      options:
+        optionsWithCharacterNames.length > 0
+          ? optionsWithCharacterNames
+          : [
+              {
+                optionText: "",
+                displayOrder: 1,
+                assignsTier: "",
+                characterName: "",
+                assignsCharacterId: "",
+              },
+              {
+                optionText: "",
+                displayOrder: 2,
+                assignsTier: "",
+                characterName: "",
+                assignsCharacterId: "",
+              },
+            ],
     });
     setEditingQuestion(question);
     setIsEditModalOpen(true);
@@ -352,20 +455,22 @@ export const OnboardingManagement = () => {
 
       // Validation
       if (!editQuestion.text.trim()) {
-        toast.error('Question text is required');
+        toast.error("Question text is required");
         return;
       }
 
-      const validOptions = editQuestion.options.filter(opt => opt.optionText.trim());
+      const validOptions = editQuestion.options.filter((opt) =>
+        opt.optionText.trim()
+      );
       if (validOptions.length < 2) {
-        toast.error('At least 2 options are required');
+        toast.error("At least 2 options are required");
         return;
       }
 
       // Validate tier assignments
-      const invalidTiers = validOptions.filter(opt => !opt.assignsTier);
+      const invalidTiers = validOptions.filter((opt) => !opt.assignsTier);
       if (invalidTiers.length > 0) {
-        toast.error('All options must have a tier assignment');
+        toast.error("All options must have a tier assignment");
         return;
       }
 
@@ -373,7 +478,7 @@ export const OnboardingManagement = () => {
       const questionPayload = {
         text: editQuestion.text.trim(),
         displayOrder: editQuestion.displayOrder,
-        isActive: editQuestion.isActive
+        isActive: editQuestion.isActive,
       };
 
       await updateQuestionMutation(
@@ -383,20 +488,16 @@ export const OnboardingManagement = () => {
 
       // STEP 2: Handle options - update existing, create new, delete removed
       const existingOptionIds = new Set(
-        (editingQuestion?.options || [])
-          .map(opt => opt.id)
-          .filter(Boolean)
+        (editingQuestion?.options || []).map((opt) => opt.id).filter(Boolean)
       );
 
       const currentOptionIds = new Set(
-        validOptions
-          .map(opt => opt.id)
-          .filter(Boolean)
+        validOptions.map((opt) => opt.id).filter(Boolean)
       );
 
       // Delete options that were removed
       const optionsToDelete = Array.from(existingOptionIds).filter(
-        id => !currentOptionIds.has(id)
+        (id) => !currentOptionIds.has(id)
       );
       for (const optionId of optionsToDelete) {
         await deleteOptionMutation(optionId, { showSuccessToast: false });
@@ -404,14 +505,22 @@ export const OnboardingManagement = () => {
 
       // Update or create options
       const optionPromises = validOptions.map(async (option, index) => {
-        let characterId = option.assignsCharacterId || '';
-        
+        let characterId = option.assignsCharacterId || "";
+
         // Fallback: if assignsCharacterId is not set but characterName is, look it up
-        if (!characterId && option.characterName && option.characterName !== "none") {
-          characterId = characterMap[option.characterName] || '';
-          if (!characterId && characterMappings && characterMappings.length > 0) {
+        if (
+          !characterId &&
+          option.characterName &&
+          option.characterName !== "none"
+        ) {
+          characterId = characterMap[option.characterName] || "";
+          if (
+            !characterId &&
+            characterMappings &&
+            characterMappings.length > 0
+          ) {
             const foundChar = characterMappings.find(
-              char => char && char.name && char.name === option.characterName
+              (char) => char && char.name && char.name === option.characterName
             );
             if (foundChar && foundChar.id) {
               characterId = foundChar.id;
@@ -422,11 +531,11 @@ export const OnboardingManagement = () => {
         const payload = {
           optionText: option.optionText.trim(),
           assignsTier: option.assignsTier,
-          displayOrder: index + 1
+          displayOrder: index + 1,
         };
 
         // Only include assignsCharacterId if we have a valid UUID
-        if (characterId && characterId.trim() !== '') {
+        if (characterId && characterId.trim() !== "") {
           payload.assignsCharacterId = characterId;
         }
 
@@ -441,7 +550,7 @@ export const OnboardingManagement = () => {
           await createOptionMutation(
             {
               questionId: editQuestion.id,
-              ...payload
+              ...payload,
             },
             { showSuccessToast: false }
           );
@@ -453,11 +562,10 @@ export const OnboardingManagement = () => {
       // Success
       setIsEditModalOpen(false);
       setEditingQuestion(null);
-      toast.success('Question and options updated successfully');
-
+      toast.success("Question and options updated successfully");
     } catch (error) {
-      console.error('Error in updateQuestion:', error);
-      toast.error(error.message || 'Failed to update question');
+      console.error("Error in updateQuestion:", error);
+      toast.error(error.message || "Failed to update question");
     } finally {
       setUpdating(false);
     }
@@ -468,73 +576,91 @@ export const OnboardingManagement = () => {
     try {
       const newStatus = !question.isActive;
       await updateQuestionMutation(
-        { 
-          id: question.id, 
-          data: { 
+        {
+          id: question.id,
+          data: {
             text: question.text,
             displayOrder: question.displayOrder,
-            isActive: newStatus 
-          } 
+            isActive: newStatus,
+          },
         },
         { showSuccessToast: false }
       );
-      toast.success(`Question ${newStatus ? 'activated' : 'paused'} successfully`);
+      toast.success(
+        `Question ${newStatus ? "activated" : "paused"} successfully`
+      );
     } catch (error) {
-      console.error('Error toggling question status:', error);
-      toast.error('Failed to update question status');
+      console.error("Error toggling question status:", error);
+      toast.error("Failed to update question status");
     }
   };
 
   // Handle option text change - Updated for new schema
   const updateOptionText = (optionIndex, field, value) => {
     const updatedOptions = [...newQuestion.options];
-    updatedOptions[optionIndex] = { ...updatedOptions[optionIndex], [field]: value };
+    updatedOptions[optionIndex] = {
+      ...updatedOptions[optionIndex],
+      [field]: value,
+    };
     setNewQuestion({ ...newQuestion, options: updatedOptions });
   };
 
   // Handle edit option text change
   const updateEditOptionText = (optionIndex, field, value) => {
     const updatedOptions = [...editQuestion.options];
-    updatedOptions[optionIndex] = { ...updatedOptions[optionIndex], [field]: value };
+    updatedOptions[optionIndex] = {
+      ...updatedOptions[optionIndex],
+      [field]: value,
+    };
     setEditQuestion({ ...editQuestion, options: updatedOptions });
   };
 
   // Add new option to edit form
   const addEditOption = () => {
-    const newOptions = [...editQuestion.options, {
-      optionText: '',
-      displayOrder: editQuestion.options.length + 1,
-      assignsTier: '',
-      characterName: '',
-      assignsCharacterId: ''
-    }];
+    const newOptions = [
+      ...editQuestion.options,
+      {
+        optionText: "",
+        displayOrder: editQuestion.options.length + 1,
+        assignsTier: "",
+        characterName: "",
+        assignsCharacterId: "",
+      },
+    ];
     setEditQuestion({ ...editQuestion, options: newOptions });
   };
 
   // Remove option from edit form
   const removeEditOption = (optionIndex) => {
     if (editQuestion.options.length > 2) {
-      const updatedOptions = editQuestion.options.filter((_, index) => index !== optionIndex);
+      const updatedOptions = editQuestion.options.filter(
+        (_, index) => index !== optionIndex
+      );
       setEditQuestion({ ...editQuestion, options: updatedOptions });
     }
   };
 
   // Add new option
   const addOption = () => {
-    const newOptions = [...newQuestion.options, {
-      optionText: '',
-      displayOrder: newQuestion.options.length + 1,
-      assignsTier: '',
-      characterName: '',
-      assignsCharacterId: ''
-    }];
+    const newOptions = [
+      ...newQuestion.options,
+      {
+        optionText: "",
+        displayOrder: newQuestion.options.length + 1,
+        assignsTier: "",
+        characterName: "",
+        assignsCharacterId: "",
+      },
+    ];
     setNewQuestion({ ...newQuestion, options: newOptions });
   };
 
   // Remove option
   const removeOption = (optionIndex) => {
     if (newQuestion.options.length > 2) {
-      const updatedOptions = newQuestion.options.filter((_, index) => index !== optionIndex);
+      const updatedOptions = newQuestion.options.filter(
+        (_, index) => index !== optionIndex
+      );
       setNewQuestion({ ...newQuestion, options: updatedOptions });
     }
   };
@@ -542,131 +668,162 @@ export const OnboardingManagement = () => {
   // Mock data for other sections (keeping existing mock data for other features)
   const mockOnboardingQuestions = [
     {
-      id: 'OB-001',
-      text: 'When you feel overwhelmed, what do you typically do first?',
-      type: 'Multiple Choice',
+      id: "OB-001",
+      text: "When you feel overwhelmed, what do you typically do first?",
+      type: "Multiple Choice",
       options: [
-        { text: 'Take deep breaths and try to calm down', displayOrder: 1 },
-        { text: 'Make a list to organize my thoughts', displayOrder: 2 },
-        { text: 'Talk to someone I trust', displayOrder: 3 },
-        { text: 'Take a break or step away from the situation', displayOrder: 4 }
+        { text: "Take deep breaths and try to calm down", displayOrder: 1 },
+        { text: "Make a list to organize my thoughts", displayOrder: 2 },
+        { text: "Talk to someone I trust", displayOrder: 3 },
+        {
+          text: "Take a break or step away from the situation",
+          displayOrder: 4,
+        },
       ],
       tierAssignments: {
-        'Take deep breaths and try to calm down': 'User 1',
-        'Make a list to organize my thoughts': 'User 2',
-        'Talk to someone I trust': 'User 1',
-        'Take a break or step away from the situation': 'User 3'
+        "Take deep breaths and try to calm down": "User 1",
+        "Make a list to organize my thoughts": "User 2",
+        "Talk to someone I trust": "User 1",
+        "Take a break or step away from the situation": "User 3",
       },
       characterAssignments: {
-        'Take deep breaths and try to calm down': 'The Grounded One',
-        'Make a list to organize my thoughts': 'The Capable One',
-        'Talk to someone I trust': 'The Deserving One',
-        'Take a break or step away from the situation': 'The Intuitive One'
+        "Take deep breaths and try to calm down": "The Grounded One",
+        "Make a list to organize my thoughts": "The Capable One",
+        "Talk to someone I trust": "The Deserving One",
+        "Take a break or step away from the situation": "The Intuitive One",
       },
       usageCount: 1247,
-      status: 'Active',
-      lastModified: '2024-03-10'
+      status: "Active",
+      lastModified: "2024-03-10",
     },
     {
-      id: 'OB-002',
-      question: 'How do you prefer to receive support when going through challenges?',
-      type: 'Multiple Choice',
+      id: "OB-002",
+      question:
+        "How do you prefer to receive support when going through challenges?",
+      type: "Multiple Choice",
       options: [
-        'Gentle encouragement and validation',
-        'Practical advice and action steps',
-        'Space to figure it out on my own',
-        'Reminders of my strengths and capabilities'
+        "Gentle encouragement and validation",
+        "Practical advice and action steps",
+        "Space to figure it out on my own",
+        "Reminders of my strengths and capabilities",
       ],
       tierAssignments: {
-        'Gentle encouragement and validation': 'User 1',
-        'Practical advice and action steps': 'User 2',
-        'Space to figure it out on my own': 'User 3',
-        'Reminders of my strengths and capabilities': 'User 2'
+        "Gentle encouragement and validation": "User 1",
+        "Practical advice and action steps": "User 2",
+        "Space to figure it out on my own": "User 3",
+        "Reminders of my strengths and capabilities": "User 2",
       },
       characterAssignments: {
-        'Gentle encouragement and validation': 'The Deserving One',
-        'Practical advice and action steps': 'The Capable One',
-        'Space to figure it out on my own': 'The Intuitive One',
-        'Reminders of my strengths and capabilities': 'The Magnetic One'
+        "Gentle encouragement and validation": "The Deserving One",
+        "Practical advice and action steps": "The Capable One",
+        "Space to figure it out on my own": "The Intuitive One",
+        "Reminders of my strengths and capabilities": "The Magnetic One",
       },
       usageCount: 1156,
-      status: 'Active',
-      lastModified: '2024-03-08'
+      status: "Active",
+      lastModified: "2024-03-08",
     },
     {
-      id: 'OB-003',
-      question: 'What time of day do you feel most like yourself?',
-      type: 'Multiple Choice',
+      id: "OB-003",
+      question: "What time of day do you feel most like yourself?",
+      type: "Multiple Choice",
       options: [
-        'Early morning when everything is quiet',
-        'Afternoon when I have momentum',
-        'Evening when I can wind down',
-        'Late night when I can reflect'
+        "Early morning when everything is quiet",
+        "Afternoon when I have momentum",
+        "Evening when I can wind down",
+        "Late night when I can reflect",
       ],
       tierAssignments: {
-        'Early morning when everything is quiet': 'User 1',
-        'Afternoon when I have momentum': 'User 2',
-        'Evening when I can wind down': 'User 1',
-        'Late night when I can reflect': 'User 3'
+        "Early morning when everything is quiet": "User 1",
+        "Afternoon when I have momentum": "User 2",
+        "Evening when I can wind down": "User 1",
+        "Late night when I can reflect": "User 3",
       },
       characterAssignments: {
-        'Early morning when everything is quiet': 'The Grounded One',
-        'Afternoon when I have momentum': 'The Capable One',
-        'Evening when I can wind down': 'The Deserving One',
-        'Late night when I can reflect': 'The Intuitive One'
+        "Early morning when everything is quiet": "The Grounded One",
+        "Afternoon when I have momentum": "The Capable One",
+        "Evening when I can wind down": "The Deserving One",
+        "Late night when I can reflect": "The Intuitive One",
       },
       usageCount: 987,
-      status: 'Active',
-      lastModified: '2024-03-12'
+      status: "Active",
+      lastModified: "2024-03-12",
     },
     {
-      id: 'OB-004',
-      question: 'When setting goals, what motivates you most?',
-      type: 'Multiple Choice',
+      id: "OB-004",
+      question: "When setting goals, what motivates you most?",
+      type: "Multiple Choice",
       options: [
-        'The feeling of accomplishment',
-        'Making a positive impact on others',
-        'Personal growth and learning',
-        'Creating something meaningful'
+        "The feeling of accomplishment",
+        "Making a positive impact on others",
+        "Personal growth and learning",
+        "Creating something meaningful",
       ],
       tierAssignments: {
-        'The feeling of accomplishment': 'User 2',
-        'Making a positive impact on others': 'User 1',
-        'Personal growth and learning': 'User 3',
-        'Creating something meaningful': 'User 2'
+        "The feeling of accomplishment": "User 2",
+        "Making a positive impact on others": "User 1",
+        "Personal growth and learning": "User 3",
+        "Creating something meaningful": "User 2",
       },
       characterAssignments: {
-        'The feeling of accomplishment': 'The Capable One',
-        'Making a positive impact on others': 'The Deserving One',
-        'Personal growth and learning': 'The Intuitive One',
-        'Creating something meaningful': 'The Magnetic One'
+        "The feeling of accomplishment": "The Capable One",
+        "Making a positive impact on others": "The Deserving One",
+        "Personal growth and learning": "The Intuitive One",
+        "Creating something meaningful": "The Magnetic One",
       },
       usageCount: 856,
-      status: 'Draft',
-      lastModified: '2024-03-05'
-    }
+      status: "Draft",
+      lastModified: "2024-03-05",
+    },
   ];
 
   // Mock user segments for affirmation sending
   const userSegments = [
-    { name: 'New Users (Last 7 days)', count: 45, description: 'Recently joined users' },
-    { name: 'Tier 1 Users', count: 234, description: 'Beginning their journey' },
-    { name: 'Inactive Users (30+ days)', count: 67, description: 'Haven\'t engaged recently' },
-    { name: 'High Engagement Users', count: 156, description: 'Very active users' }
+    {
+      name: "New Users (Last 7 days)",
+      count: 45,
+      description: "Recently joined users",
+    },
+    {
+      name: "Tier 1 Users",
+      count: 234,
+      description: "Beginning their journey",
+    },
+    {
+      name: "Inactive Users (30+ days)",
+      count: 67,
+      description: "Haven't engaged recently",
+    },
+    {
+      name: "High Engagement Users",
+      count: 156,
+      description: "Very active users",
+    },
   ];
 
   const characterTypes = [
-    'The Deserving One', 'The Capable One', 'The Magnetic One', 'The Grounded One',
-    'The Expressed One', 'The Soft One', 'The Intuitive One', 'The Liberated One',
-    'The Powerful One', 'The Surrendered One'
+    "The Deserving One",
+    "The Capable One",
+    "The Magnetic One",
+    "The Grounded One",
+    "The Expressed One",
+    "The Soft One",
+    "The Intuitive One",
+    "The Liberated One",
+    "The Powerful One",
+    "The Surrendered One",
   ];
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Active': return 'success';
-      case 'Draft': return 'secondary';
-      case 'Review': return 'warning';
-      default: return 'outline';
+      case "Active":
+        return "success";
+      case "Draft":
+        return "secondary";
+      case "Review":
+        return "warning";
+      default:
+        return "outline";
     }
   };
 
@@ -710,27 +867,47 @@ export const OnboardingManagement = () => {
     >
       <div className="space-y-6">
         <Tabs defaultValue="questions" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="questions">Assessment Questions</TabsTrigger>
-            <TabsTrigger value="assignments">Tier & Character Logic</TabsTrigger>
-            <TabsTrigger value="affirmations">Positive Affirmations</TabsTrigger>
-            <TabsTrigger value="analytics">Onboarding Analytics</TabsTrigger>
+          <TabsList className="w-full h-full flex flex-nowrap overflow-x-auto md:grid md:grid-cols-4 md:overflow-visible">
+            <TabsTrigger
+              className="shrink-0 px-3 text-xs sm:text-sm"
+              value="questions"
+            >
+              Assessment Questions
+            </TabsTrigger>
+            <TabsTrigger
+              className="shrink-0 px-3 text-xs sm:text-sm"
+              value="assignments"
+            >
+              Tier & Character Logic
+            </TabsTrigger>
+            <TabsTrigger
+              className="shrink-0 px-3 text-xs sm:text-sm"
+              value="affirmations"
+            >
+              Positive Affirmations
+            </TabsTrigger>
+            <TabsTrigger
+              className="shrink-0 px-3 text-xs sm:text-sm"
+              value="analytics"
+            >
+              Onboarding Analytics
+            </TabsTrigger>
           </TabsList>
 
           {/* Assessment Questions */}
           <TabsContent value="questions" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4 w-full">
+                <div className="relative w-full sm:w-80 min-w-0">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
                     placeholder="Search questions..."
-                    className="pl-10 w-80"
+                    className="pl-10 w-full"
                   />
                 </div>
 
                 <Select>
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-full sm:w-32">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -752,7 +929,11 @@ export const OnboardingManagement = () => {
                 ) : error ? (
                   <div className="text-center py-8 text-destructive">
                     <p>Error loading questions: {error}</p>
-                    <Button onClick={refetch} variant="outline" className="mt-4">
+                    <Button
+                      onClick={refetch}
+                      variant="outline"
+                      className="mt-4"
+                    >
                       Retry
                     </Button>
                   </div>
@@ -769,84 +950,111 @@ export const OnboardingManagement = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {onboardingQuestions && onboardingQuestions.length > 0 ? onboardingQuestions.map((question) => (
-                        <TableRow key={question.id}>
-                          <TableCell>
-                            <div className="max-w-md">
-                              <p className="font-medium text-sm">{question.text}</p>
-                              <p className="text-xs text-muted-foreground">
-                                ID: {question.id?.substring(0, 8)}...
-                              </p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">#{question.displayOrder}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              {question.options?.length || 0} options
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm text-muted-foreground">
-                              From API
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={question.isActive ? "success" : "secondary"}>
-                              {question.isActive ? 'Active' : 'Paused'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setSelectedQuestion(question)}>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => openEditModal(question)}>
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Edit Question
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => toggleQuestionStatus(question)}
-                                >
-                                  {question.isActive ? (
-                                    <>
-                                      <Pause className="h-4 w-4 mr-2" />
-                                      Pause Question
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Play className="h-4 w-4 mr-2" />
-                                      Resume Question
-                                    </>
-                                  )}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    if (window.confirm('Are you sure you want to delete this question?')) {
-                                      deleteQuestion(question.id);
+                      {onboardingQuestions && onboardingQuestions.length > 0 ? (
+                        onboardingQuestions.map((question) => (
+                          <TableRow key={question.id}>
+                            <TableCell>
+                              <div className="max-w-md">
+                                <p className="font-medium text-sm">
+                                  {question.text}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  ID: {question.id?.substring(0, 8)}...
+                                </p>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">
+                                #{question.displayOrder}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm">
+                                {question.options?.length || 0} options
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-sm text-muted-foreground">
+                                From API
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  question.isActive ? "success" : "secondary"
+                                }
+                              >
+                                {question.isActive ? "Active" : "Paused"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      setSelectedQuestion(question)
                                     }
-                                  }}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete Question
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      )) : (
+                                  >
+                                    <Eye className="h-4 w-4 mr-2" />
+                                    View Details
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => openEditModal(question)}
+                                  >
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    Edit Question
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      toggleQuestionStatus(question)
+                                    }
+                                  >
+                                    {question.isActive ? (
+                                      <>
+                                        <Pause className="h-4 w-4 mr-2" />
+                                        Pause Question
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Play className="h-4 w-4 mr-2" />
+                                        Resume Question
+                                      </>
+                                    )}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      if (
+                                        window.confirm(
+                                          "Are you sure you want to delete this question?"
+                                        )
+                                      ) {
+                                        deleteQuestion(question.id);
+                                      }
+                                    }}
+                                    className="text-destructive"
+                                  >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Delete Question
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                            {loading ? 'Loading questions...' : 'No questions found'}
+                          <TableCell
+                            colSpan={6}
+                            className="text-center py-8 text-muted-foreground"
+                          >
+                            {loading
+                              ? "Loading questions..."
+                              : "No questions found"}
                           </TableCell>
                         </TableRow>
                       )}
@@ -870,32 +1078,47 @@ export const OnboardingManagement = () => {
                 <CardContent>
                   <div className="space-y-4">
                     <div className="p-3 border rounded-lg">
-                      <div className="font-semibold text-sm">User 1 (Beginner)</div>
+                      <div className="font-semibold text-sm">
+                        User 1 (Beginner)
+                      </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        New to emotional awareness, needs gentle guidance and validation
+                        New to emotional awareness, needs gentle guidance and
+                        validation
                       </p>
                       <div className="mt-2">
-                        <Badge variant="secondary" className="text-xs">67% of new users</Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          67% of new users
+                        </Badge>
                       </div>
                     </div>
 
                     <div className="p-3 border rounded-lg">
-                      <div className="font-semibold text-sm">User 2 (Developing)</div>
+                      <div className="font-semibold text-sm">
+                        User 2 (Developing)
+                      </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        Some self-awareness, ready for structured approaches and tools
+                        Some self-awareness, ready for structured approaches and
+                        tools
                       </p>
                       <div className="mt-2">
-                        <Badge variant="secondary" className="text-xs">25% of new users</Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          25% of new users
+                        </Badge>
                       </div>
                     </div>
 
                     <div className="p-3 border rounded-lg">
-                      <div className="font-semibold text-sm">User 3 (Advanced)</div>
+                      <div className="font-semibold text-sm">
+                        User 3 (Advanced)
+                      </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        High self-awareness, can handle complex concepts and independence
+                        High self-awareness, can handle complex concepts and
+                        independence
                       </p>
                       <div className="mt-2">
-                        <Badge variant="secondary" className="text-xs">8% of new users</Badge>
+                        <Badge variant="secondary" className="text-xs">
+                          8% of new users
+                        </Badge>
                       </div>
                     </div>
                   </div>
@@ -912,7 +1135,10 @@ export const OnboardingManagement = () => {
                 <CardContent>
                   <div className="space-y-2 max-h-64 overflow-y-auto">
                     {characterTypes.map((character) => (
-                      <div key={character} className="flex items-center justify-between p-2 border rounded">
+                      <div
+                        key={character}
+                        className="flex items-center justify-between p-2 border rounded"
+                      >
                         <span className="text-sm font-medium">{character}</span>
                         <Badge variant="outline" className="text-xs">
                           {Math.floor(Math.random() * 15) + 5}%
@@ -929,13 +1155,18 @@ export const OnboardingManagement = () => {
           <TabsContent value="affirmations" className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {userSegments.map((segment) => (
-                <Card key={segment.name} className="cursor-pointer hover:shadow-lg transition-shadow">
+                <Card
+                  key={segment.name}
+                  className="cursor-pointer hover:shadow-lg transition-shadow"
+                >
                   <CardHeader>
                     <CardTitle className="text-lg">{segment.name}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
                     <div className="text-2xl font-bold">{segment.count}</div>
-                    <p className="text-sm text-muted-foreground">{segment.description}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {segment.description}
+                    </p>
                     <Button variant="outline" size="sm" className="w-full">
                       <Heart className="h-4 w-4 mr-2" />
                       Send Affirmation
@@ -983,8 +1214,12 @@ export const OnboardingManagement = () => {
                   <CardTitle className="text-lg">Total Questions</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-3xl font-bold">{onboardingQuestions.length}</div>
-                  <p className="text-sm text-muted-foreground">Active questions</p>
+                  <div className="text-3xl font-bold">
+                    {onboardingQuestions.length}
+                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    Active questions
+                  </p>
                 </CardContent>
               </Card>
 
@@ -994,24 +1229,37 @@ export const OnboardingManagement = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold">
-                    {onboardingQuestions.reduce((total, q) => total + (q.options?.length || 0), 0)}
+                    {onboardingQuestions.reduce(
+                      (total, q) => total + (q.options?.length || 0),
+                      0
+                    )}
                   </div>
-                  <p className="text-sm text-muted-foreground">Answer choices</p>
+                  <p className="text-sm text-muted-foreground">
+                    Answer choices
+                  </p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-lg">Avg Options per Question</CardTitle>
+                  <CardTitle className="text-lg">
+                    Avg Options per Question
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="text-3xl font-bold">
                     {onboardingQuestions.length > 0
-                      ? (onboardingQuestions.reduce((total, q) => total + (q.options?.length || 0), 0) / onboardingQuestions.length).toFixed(1)
-                      : '0'
-                    }
+                      ? (
+                          onboardingQuestions.reduce(
+                            (total, q) => total + (q.options?.length || 0),
+                            0
+                          ) / onboardingQuestions.length
+                        ).toFixed(1)
+                      : "0"}
                   </div>
-                  <p className="text-sm text-muted-foreground">Options per question</p>
+                  <p className="text-sm text-muted-foreground">
+                    Options per question
+                  </p>
                 </CardContent>
               </Card>
 
@@ -1021,7 +1269,9 @@ export const OnboardingManagement = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="font-semibold">Live Data</div>
-                  <p className="text-sm text-muted-foreground">From API source</p>
+                  <p className="text-sm text-muted-foreground">
+                    From API source
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -1047,29 +1297,40 @@ export const OnboardingManagement = () => {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {onboardingQuestions && onboardingQuestions.length > 0 ? onboardingQuestions.map((question) => (
-                        <TableRow key={question.id}>
-                          <TableCell className="max-w-md">
-                            <p className="text-sm truncate">{question.text}</p>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">#{question.displayOrder}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">
-                              {question.options?.length || 0} options
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <span className="font-mono text-xs text-muted-foreground">
-                              {question.id?.substring(0, 8)}...
-                            </span>
-                          </TableCell>
-                        </TableRow>
-                      )) : (
+                      {onboardingQuestions && onboardingQuestions.length > 0 ? (
+                        onboardingQuestions.map((question) => (
+                          <TableRow key={question.id}>
+                            <TableCell className="max-w-md">
+                              <p className="text-sm truncate">
+                                {question.text}
+                              </p>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">
+                                #{question.displayOrder}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">
+                                {question.options?.length || 0} options
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-mono text-xs text-muted-foreground">
+                                {question.id?.substring(0, 8)}...
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                            {loading ? 'Loading questions...' : 'No questions found'}
+                          <TableCell
+                            colSpan={4}
+                            className="text-center py-8 text-muted-foreground"
+                          >
+                            {loading
+                              ? "Loading questions..."
+                              : "No questions found"}
                           </TableCell>
                         </TableRow>
                       )}
@@ -1083,7 +1344,7 @@ export const OnboardingManagement = () => {
 
         {/* Create Question Modal */}
         <Dialog open={isCreateModalOpen} onOpenChange={handleModalClose}>
-          <DialogContent className="max-w-3xl">
+          <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full max-w-3xl max-h-[calc(100vh-2rem)] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle>Create New Onboarding Question</DialogTitle>
             </DialogHeader>
@@ -1093,7 +1354,9 @@ export const OnboardingManagement = () => {
                 <Label htmlFor="question">Question Text *</Label>
                 <Textarea
                   value={newQuestion.text}
-                  onChange={(e) => setNewQuestion({ ...newQuestion, text: e.target.value })}
+                  onChange={(e) =>
+                    setNewQuestion({ ...newQuestion, text: e.target.value })
+                  }
                   placeholder="What question will help determine the user's tier and character?"
                   rows={3}
                 />
@@ -1115,20 +1378,41 @@ export const OnboardingManagement = () => {
                 </div>
 
                 {newQuestion.options.map((option, index) => (
-                  <div key={index} className="grid grid-cols-4 gap-2 p-3 border rounded-lg">
+                  <div
+                    key={index}
+                    className="grid grid-cols-1 sm:grid-cols-4 gap-2 p-3 border rounded-lg"
+                  >
                     <div className="space-y-1">
                       <Label className="text-xs">Option {index + 1} *</Label>
                       <Input
                         value={option.optionText}
-                        onChange={(e) => updateOptionText(index, 'optionText', e.target.value)}
+                        onChange={(e) =>
+                          updateOptionText(index, "optionText", e.target.value)
+                        }
                         placeholder="Enter answer option"
-                        className={!option.optionText.trim() && newQuestion.options.filter(opt => opt.optionText.trim()).length < 2 ? 'border-destructive' : ''}
+                        className={
+                          !option.optionText.trim() &&
+                          newQuestion.options.filter((opt) =>
+                            opt.optionText.trim()
+                          ).length < 2
+                            ? "border-destructive"
+                            : ""
+                        }
                       />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Assigns Tier *</Label>
-                      <Select value={option.assignsTier} onValueChange={(value) => updateOptionText(index, 'assignsTier', value)}>
-                        <SelectTrigger className={!option.assignsTier ? 'border-destructive' : ''}>
+                      <Select
+                        value={option.assignsTier}
+                        onValueChange={(value) =>
+                          updateOptionText(index, "assignsTier", value)
+                        }
+                      >
+                        <SelectTrigger
+                          className={
+                            !option.assignsTier ? "border-destructive" : ""
+                          }
+                        >
                           <SelectValue placeholder="Select tier" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1143,44 +1427,59 @@ export const OnboardingManagement = () => {
                     <div className="space-y-1">
                       <Label className="text-xs">Character (Optional)</Label>
                       <Select
-                        value={option.characterName ? option.characterName : "none"}
+                        value={
+                          option.characterName ? option.characterName : "none"
+                        }
                         onValueChange={(value) => {
                           const characterName = value === "none" ? "" : value;
-                          
+
                           // Get the UUID from characterMap or characterMappings
-                          let characterUUID = '';
+                          let characterUUID = "";
                           if (characterName) {
                             // First try direct lookup in characterMap
-                            characterUUID = characterMap[characterName] || '';
-                            
+                            characterUUID = characterMap[characterName] || "";
+
                             // If not found in characterMap, search characterMappings directly
-                            if (!characterUUID && characterMappings && characterMappings.length > 0) {
+                            if (
+                              !characterUUID &&
+                              characterMappings &&
+                              characterMappings.length > 0
+                            ) {
                               const foundChar = characterMappings.find(
-                                char => char && char.name && char.name === characterName
+                                (char) =>
+                                  char &&
+                                  char.name &&
+                                  char.name === characterName
                               );
                               if (foundChar && foundChar.id) {
                                 characterUUID = foundChar.id;
                               }
                             }
                           }
-                          
-                          console.log('Character selection:', {
+
+                          console.log("Character selection:", {
                             selectedValue: value,
                             characterName,
                             characterUUID,
                             characterMapKeys: Object.keys(characterMap || {}),
-                            characterMappingsCount: characterMappings?.length || 0,
-                            characterMapHasKey: characterName ? characterName in (characterMap || {}) : false
+                            characterMappingsCount:
+                              characterMappings?.length || 0,
+                            characterMapHasKey: characterName
+                              ? characterName in (characterMap || {})
+                              : false,
                           });
-                          
+
                           // Update both characterName and assignsCharacterId in a single state update
                           const updatedOptions = [...newQuestion.options];
-                          updatedOptions[index] = { 
-                            ...updatedOptions[index], 
+                          updatedOptions[index] = {
+                            ...updatedOptions[index],
                             characterName: characterName,
-                            assignsCharacterId: characterUUID
+                            assignsCharacterId: characterUUID,
                           };
-                          setNewQuestion({ ...newQuestion, options: updatedOptions });
+                          setNewQuestion({
+                            ...newQuestion,
+                            options: updatedOptions,
+                          });
                         }}
                       >
                         <SelectTrigger>
@@ -1189,18 +1488,26 @@ export const OnboardingManagement = () => {
                         <SelectContent>
                           <SelectItem value="none">None</SelectItem>
                           {characterMappingLoading ? (
-                            <SelectItem value="loading" disabled>Loading characters...</SelectItem>
-                          ) : characterMappings && characterMappings.length > 0 ? (
-                            characterMappings
-                              .filter(char => char && char.name && char.id)
-                              .map((character) => (
-                                <SelectItem key={character.id} value={character.name}>
-                                  {character.name}
-                                  {character.emoji ? ` ${character.emoji}` : ''}
+                            <SelectItem value="loading" disabled>
+                              Loading characters...
                             </SelectItem>
+                          ) : characterMappings &&
+                            characterMappings.length > 0 ? (
+                            characterMappings
+                              .filter((char) => char && char.name && char.id)
+                              .map((character) => (
+                                <SelectItem
+                                  key={character.id}
+                                  value={character.name}
+                                >
+                                  {character.name}
+                                  {character.emoji ? ` ${character.emoji}` : ""}
+                                </SelectItem>
                               ))
                           ) : (
-                            <SelectItem value="no-characters" disabled>No characters available</SelectItem>
+                            <SelectItem value="no-characters" disabled>
+                              No characters available
+                            </SelectItem>
                           )}
                         </SelectContent>
                       </Select>
@@ -1223,10 +1530,12 @@ export const OnboardingManagement = () => {
 
               <div className="bg-muted/50 p-3 rounded-lg">
                 <p className="text-sm text-muted-foreground">
-                  <strong>Note:</strong> This will create a new question with associated options.
-                  The display order will be automatically set to appear after existing questions.
-                  Each option <strong>must</strong> have a tier assignment. Character assignment is optional.
-                  If creation fails, any partial changes will be automatically rolled back.
+                  <strong>Note:</strong> This will create a new question with
+                  associated options. The display order will be automatically
+                  set to appear after existing questions. Each option{" "}
+                  <strong>must</strong> have a tier assignment. Character
+                  assignment is optional. If creation fails, any partial changes
+                  will be automatically rolled back.
                 </p>
               </div>
 
@@ -1251,8 +1560,11 @@ export const OnboardingManagement = () => {
                   disabled={
                     submitting ||
                     !newQuestion.text.trim() ||
-                    newQuestion.options.filter(opt => opt.optionText.trim()).length < 2 ||
-                    newQuestion.options.filter(opt => opt.optionText.trim() && !opt.assignsTier).length > 0
+                    newQuestion.options.filter((opt) => opt.optionText.trim())
+                      .length < 2 ||
+                    newQuestion.options.filter(
+                      (opt) => opt.optionText.trim() && !opt.assignsTier
+                    ).length > 0
                   }
                 >
                   {submitting ? (
@@ -1261,7 +1573,7 @@ export const OnboardingManagement = () => {
                       Creating...
                     </>
                   ) : (
-                    'Create Question'
+                    "Create Question"
                   )}
                 </Button>
               </div>
@@ -1270,19 +1582,22 @@ export const OnboardingManagement = () => {
         </Dialog>
 
         {/* Edit Question Modal */}
-        <Dialog open={isEditModalOpen} onOpenChange={(open) => {
-          setIsEditModalOpen(open);
-          if (!open) {
-            setEditingQuestion(null);
-            setEditQuestion({
-              text: '',
-              displayOrder: 1,
-              isActive: true,
-              options: []
-            });
-          }
-        }}>
-          <DialogContent className="max-w-3xl">
+        <Dialog
+          open={isEditModalOpen}
+          onOpenChange={(open) => {
+            setIsEditModalOpen(open);
+            if (!open) {
+              setEditingQuestion(null);
+              setEditQuestion({
+                text: "",
+                displayOrder: 1,
+                isActive: true,
+                options: [],
+              });
+            }
+          }}
+        >
+          <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full max-w-3xl max-h-[calc(100vh-2rem)] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle>Edit Onboarding Question</DialogTitle>
             </DialogHeader>
@@ -1292,7 +1607,9 @@ export const OnboardingManagement = () => {
                 <Label htmlFor="edit-question">Question Text *</Label>
                 <Textarea
                   value={editQuestion.text}
-                  onChange={(e) => setEditQuestion({ ...editQuestion, text: e.target.value })}
+                  onChange={(e) =>
+                    setEditQuestion({ ...editQuestion, text: e.target.value })
+                  }
                   placeholder="What question will help determine the user's tier and character?"
                   rows={3}
                 />
@@ -1314,23 +1631,45 @@ export const OnboardingManagement = () => {
                 </div>
 
                 {editQuestion.options.map((option, index) => (
-                  <div key={option.id || index} className="grid grid-cols-4 gap-2 p-3 border rounded-lg">
+                  <div
+                    key={option.id || index}
+                    className="grid grid-cols-1 sm:grid-cols-4 gap-2 p-3 border rounded-lg"
+                  >
                     <div className="space-y-1">
                       <Label className="text-xs">Option {index + 1} *</Label>
                       <Input
                         value={option.optionText}
-                        onChange={(e) => updateEditOptionText(index, 'optionText', e.target.value)}
+                        onChange={(e) =>
+                          updateEditOptionText(
+                            index,
+                            "optionText",
+                            e.target.value
+                          )
+                        }
                         placeholder="Enter answer option"
-                        className={!option.optionText.trim() && editQuestion.options.filter(opt => opt.optionText.trim()).length < 2 ? 'border-destructive' : ''}
+                        className={
+                          !option.optionText.trim() &&
+                          editQuestion.options.filter((opt) =>
+                            opt.optionText.trim()
+                          ).length < 2
+                            ? "border-destructive"
+                            : ""
+                        }
                       />
                     </div>
                     <div className="space-y-1">
                       <Label className="text-xs">Assigns Tier *</Label>
-                      <Select 
-                        value={option.assignsTier} 
-                        onValueChange={(value) => updateEditOptionText(index, 'assignsTier', value)}
+                      <Select
+                        value={option.assignsTier}
+                        onValueChange={(value) =>
+                          updateEditOptionText(index, "assignsTier", value)
+                        }
                       >
-                        <SelectTrigger className={!option.assignsTier ? 'border-destructive' : ''}>
+                        <SelectTrigger
+                          className={
+                            !option.assignsTier ? "border-destructive" : ""
+                          }
+                        >
                           <SelectValue placeholder="Select tier" />
                         </SelectTrigger>
                         <SelectContent>
@@ -1345,32 +1684,44 @@ export const OnboardingManagement = () => {
                     <div className="space-y-1">
                       <Label className="text-xs">Character (Optional)</Label>
                       <Select
-                        value={option.characterName ? option.characterName : "none"}
+                        value={
+                          option.characterName ? option.characterName : "none"
+                        }
                         onValueChange={(value) => {
                           const characterName = value === "none" ? "" : value;
-                          
+
                           // Get the UUID from characterMap or characterMappings
-                          let characterUUID = '';
+                          let characterUUID = "";
                           if (characterName) {
-                            characterUUID = characterMap[characterName] || '';
-                            
-                            if (!characterUUID && characterMappings && characterMappings.length > 0) {
+                            characterUUID = characterMap[characterName] || "";
+
+                            if (
+                              !characterUUID &&
+                              characterMappings &&
+                              characterMappings.length > 0
+                            ) {
                               const foundChar = characterMappings.find(
-                                char => char && char.name && char.name === characterName
+                                (char) =>
+                                  char &&
+                                  char.name &&
+                                  char.name === characterName
                               );
                               if (foundChar && foundChar.id) {
                                 characterUUID = foundChar.id;
                               }
                             }
                           }
-                          
+
                           const updatedOptions = [...editQuestion.options];
-                          updatedOptions[index] = { 
-                            ...updatedOptions[index], 
+                          updatedOptions[index] = {
+                            ...updatedOptions[index],
                             characterName: characterName,
-                            assignsCharacterId: characterUUID
+                            assignsCharacterId: characterUUID,
                           };
-                          setEditQuestion({ ...editQuestion, options: updatedOptions });
+                          setEditQuestion({
+                            ...editQuestion,
+                            options: updatedOptions,
+                          });
                         }}
                       >
                         <SelectTrigger>
@@ -1379,18 +1730,26 @@ export const OnboardingManagement = () => {
                         <SelectContent>
                           <SelectItem value="none">None</SelectItem>
                           {characterMappingLoading ? (
-                            <SelectItem value="loading" disabled>Loading characters...</SelectItem>
-                          ) : characterMappings && characterMappings.length > 0 ? (
+                            <SelectItem value="loading" disabled>
+                              Loading characters...
+                            </SelectItem>
+                          ) : characterMappings &&
+                            characterMappings.length > 0 ? (
                             characterMappings
-                              .filter(char => char && char.name && char.id)
+                              .filter((char) => char && char.name && char.id)
                               .map((character) => (
-                                <SelectItem key={character.id} value={character.name}>
+                                <SelectItem
+                                  key={character.id}
+                                  value={character.name}
+                                >
                                   {character.name}
-                                  {character.emoji ? ` ${character.emoji}` : ''}
+                                  {character.emoji ? ` ${character.emoji}` : ""}
                                 </SelectItem>
                               ))
                           ) : (
-                            <SelectItem value="no-characters" disabled>No characters available</SelectItem>
+                            <SelectItem value="no-characters" disabled>
+                              No characters available
+                            </SelectItem>
                           )}
                         </SelectContent>
                       </Select>
@@ -1413,9 +1772,11 @@ export const OnboardingManagement = () => {
 
               <div className="bg-muted/50 p-3 rounded-lg">
                 <p className="text-sm text-muted-foreground">
-                  <strong>Note:</strong> This will update the question and its options.
-                  Existing options will be updated, new options will be created, and removed options will be deleted.
-                  Each option <strong>must</strong> have a tier assignment. Character assignment is optional.
+                  <strong>Note:</strong> This will update the question and its
+                  options. Existing options will be updated, new options will be
+                  created, and removed options will be deleted. Each option{" "}
+                  <strong>must</strong> have a tier assignment. Character
+                  assignment is optional.
                 </p>
               </div>
 
@@ -1426,10 +1787,10 @@ export const OnboardingManagement = () => {
                     setIsEditModalOpen(false);
                     setEditingQuestion(null);
                     setEditQuestion({
-                      text: '',
+                      text: "",
                       displayOrder: 1,
                       isActive: true,
-                      options: []
+                      options: [],
                     });
                   }}
                   disabled={updating}
@@ -1441,8 +1802,11 @@ export const OnboardingManagement = () => {
                   disabled={
                     updating ||
                     !editQuestion.text.trim() ||
-                    editQuestion.options.filter(opt => opt.optionText.trim()).length < 2 ||
-                    editQuestion.options.filter(opt => opt.optionText.trim() && !opt.assignsTier).length > 0
+                    editQuestion.options.filter((opt) => opt.optionText.trim())
+                      .length < 2 ||
+                    editQuestion.options.filter(
+                      (opt) => opt.optionText.trim() && !opt.assignsTier
+                    ).length > 0
                   }
                 >
                   {updating ? (
@@ -1451,7 +1815,7 @@ export const OnboardingManagement = () => {
                       Updating...
                     </>
                   ) : (
-                    'Update Question'
+                    "Update Question"
                   )}
                 </Button>
               </div>
@@ -1460,14 +1824,17 @@ export const OnboardingManagement = () => {
         </Dialog>
 
         {/* Send Affirmation Modal */}
-        <Dialog open={isSendAffirmationOpen} onOpenChange={setIsSendAffirmationOpen}>
-          <DialogContent className="max-w-2xl">
+        <Dialog
+          open={isSendAffirmationOpen}
+          onOpenChange={setIsSendAffirmationOpen}
+        >
+          <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-y-auto p-4 sm:p-6">
             <DialogHeader>
               <DialogTitle>Send Positive Affirmation</DialogTitle>
             </DialogHeader>
 
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="segment">Target Segment</Label>
                   <Select>
@@ -1476,7 +1843,12 @@ export const OnboardingManagement = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {userSegments.map((segment) => (
-                        <SelectItem key={segment.name} value={segment.name.toLowerCase().replace(/\s+/g, '-')}>
+                        <SelectItem
+                          key={segment.name}
+                          value={segment.name
+                            .toLowerCase()
+                            .replace(/\s+/g, "-")}
+                        >
                           {segment.name} ({segment.count} users)
                         </SelectItem>
                       ))}
@@ -1493,7 +1865,10 @@ export const OnboardingManagement = () => {
                     <SelectContent>
                       <SelectItem value="all">All Characters</SelectItem>
                       {characterTypes.slice(0, 4).map((character) => (
-                        <SelectItem key={character} value={character.toLowerCase().replace(/\s+/g, '-')}>
+                        <SelectItem
+                          key={character}
+                          value={character.toLowerCase().replace(/\s+/g, "-")}
+                        >
                           {character}
                         </SelectItem>
                       ))}
@@ -1518,7 +1893,10 @@ export const OnboardingManagement = () => {
               </div>
 
               <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setIsSendAffirmationOpen(false)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsSendAffirmationOpen(false)}
+                >
                   Cancel
                 </Button>
                 <Button onClick={() => setIsSendAffirmationOpen(false)}>
@@ -1532,8 +1910,11 @@ export const OnboardingManagement = () => {
 
         {/* Question Detail Modal */}
         {selectedQuestion && (
-          <Dialog open={!!selectedQuestion} onOpenChange={() => setSelectedQuestion(null)}>
-            <DialogContent className="max-w-4xl">
+          <Dialog
+            open={!!selectedQuestion}
+            onOpenChange={() => setSelectedQuestion(null)}
+          >
+            <DialogContent className="w-[calc(100vw-1.5rem)] sm:w-full max-w-4xl max-h-[calc(100vh-2rem)] overflow-y-auto p-4 sm:p-6">
               <DialogHeader>
                 <DialogTitle>Question Details</DialogTitle>
               </DialogHeader>
@@ -1545,18 +1926,24 @@ export const OnboardingManagement = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div>
-                      <Label className="text-sm font-medium">Question Text:</Label>
+                      <Label className="text-sm font-medium">
+                        Question Text:
+                      </Label>
                       <p className="text-lg mt-1">{selectedQuestion.text}</p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
                       <div>
                         <Label className="font-medium">Question ID:</Label>
-                        <p className="text-muted-foreground font-mono">{selectedQuestion.id}</p>
+                        <p className="text-muted-foreground font-mono">
+                          {selectedQuestion.id}
+                        </p>
                       </div>
                       <div>
                         <Label className="font-medium">Display Order:</Label>
-                        <p className="text-muted-foreground">#{selectedQuestion.displayOrder}</p>
+                        <p className="text-muted-foreground">
+                          #{selectedQuestion.displayOrder}
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -1564,31 +1951,47 @@ export const OnboardingManagement = () => {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle className="text-lg">Answer Options ({selectedQuestion.options?.length || 0})</CardTitle>
+                    <CardTitle className="text-lg">
+                      Answer Options ({selectedQuestion.options?.length || 0})
+                    </CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
                       {selectedQuestion.options?.map((option, index) => (
-                        <div key={option.id || index} className="grid grid-cols-4 gap-4 p-3 border rounded-lg">
+                        <div
+                          key={option.id || index}
+                          className="grid grid-cols-1 sm:grid-cols-4 gap-4 p-3 border rounded-lg"
+                        >
                           <div>
                             <div className="flex items-center space-x-2">
                               <Badge variant="outline" className="text-xs">
                                 #{option.displayOrder}
                               </Badge>
-                              <p className="text-sm font-medium">{option.optionText || option.text}</p>
+                              <p className="text-sm font-medium">
+                                {option.optionText || option.text}
+                              </p>
                             </div>
                           </div>
                           <div>
-                            <Label className="text-xs text-muted-foreground">Tier:</Label>
-                            <p className="text-sm">{option.assignsTier || 'Not assigned'}</p>
+                            <Label className="text-xs text-muted-foreground">
+                              Tier:
+                            </Label>
+                            <p className="text-sm">
+                              {option.assignsTier || "Not assigned"}
+                            </p>
                           </div>
                           <div>
-                            <Label className="text-xs text-muted-foreground">Character:</Label>
+                            <Label className="text-xs text-muted-foreground">
+                              Character:
+                            </Label>
                             <p className="text-sm">
-                              {option.assignsCharacterId ?
-                                (Object.keys(characterMap).find(name => characterMap[name] === option.assignsCharacterId) || `ID: ${option.assignsCharacterId}`) :
-                                'Not assigned'
-                              }
+                              {option.assignsCharacterId
+                                ? Object.keys(characterMap).find(
+                                    (name) =>
+                                      characterMap[name] ===
+                                      option.assignsCharacterId
+                                  ) || `ID: ${option.assignsCharacterId}`
+                                : "Not assigned"}
                             </p>
                           </div>
                           <div className="text-xs text-muted-foreground font-mono">
@@ -1596,7 +1999,9 @@ export const OnboardingManagement = () => {
                           </div>
                         </div>
                       )) || (
-                        <p className="text-muted-foreground text-sm">No options available</p>
+                        <p className="text-muted-foreground text-sm">
+                          No options available
+                        </p>
                       )}
                     </div>
                   </CardContent>

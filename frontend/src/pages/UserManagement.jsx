@@ -1,17 +1,17 @@
-import React, { useState, useMemo } from 'react';
-import { Layout } from '@/components/layout/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import React, { useState, useMemo } from "react";
+import { Layout } from "@/components/layout/Layout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
   TableBody,
@@ -19,46 +19,45 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table';
+} from "@/components/ui/table";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog';
-import { FullPageLoader, TableSkeleton } from '@/components/loading/LoadingSpinner';
-import { useUsers, useUser } from '@/hooks/useUsers';
+} from "@/components/ui/dialog";
 import {
-  Search,
-  Eye,
-  MoreHorizontal,
-} from 'lucide-react';
+  FullPageLoader,
+  TableSkeleton,
+} from "@/components/loading/LoadingSpinner";
+import { useUsers, useUser } from "@/hooks/useUsers";
+import { Search, Eye, MoreHorizontal } from "lucide-react";
 
 export const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [tierFilter, setTierFilter] = useState('all');
-  const [characterFilter, setCharacterFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [tierFilter, setTierFilter] = useState("all");
+  const [characterFilter, setCharacterFilter] = useState("all");
 
   // Fetch users from API
-  const filters = useMemo(() => ({
-    search: searchQuery || undefined,
-    status: statusFilter !== 'all' ? statusFilter : undefined,
-  }), [searchQuery, statusFilter]);
+  const filters = useMemo(
+    () => ({
+      search: searchQuery || undefined,
+      status: statusFilter !== "all" ? statusFilter : undefined,
+    }),
+    [searchQuery, statusFilter]
+  );
 
   const { data: usersResponse, loading, error, refetch } = useUsers(filters);
-  const users = useMemo(
-    () => usersResponse?.data || [],
-    [usersResponse]
-  );
+  const users = useMemo(() => usersResponse?.data || [], [usersResponse]);
 
   // Build option lists for filters from current data
   const availableTiers = useMemo(() => {
@@ -84,10 +83,10 @@ export const UserManagement = () => {
     const query = searchQuery.trim().toLowerCase();
     if (query) {
       result = result.filter((u) => {
-        const name = (u.name || '').toLowerCase();
-        const email = (u.email || '').toLowerCase();
-        const id = (u.id || '').toLowerCase();
-        const character = (u.character || '').toLowerCase();
+        const name = (u.name || "").toLowerCase();
+        const email = (u.email || "").toLowerCase();
+        const id = (u.id || "").toLowerCase();
+        const character = (u.character || "").toLowerCase();
         return (
           name.includes(query) ||
           email.includes(query) ||
@@ -97,12 +96,12 @@ export const UserManagement = () => {
       });
     }
 
-    if (tierFilter !== 'all') {
-      result = result.filter((u) => (u.tier || '') === tierFilter);
+    if (tierFilter !== "all") {
+      result = result.filter((u) => (u.tier || "") === tierFilter);
     }
 
-    if (characterFilter !== 'all') {
-      result = result.filter((u) => (u.character || '') === characterFilter);
+    if (characterFilter !== "all") {
+      result = result.filter((u) => (u.character || "") === characterFilter);
     }
 
     return result;
@@ -110,18 +109,25 @@ export const UserManagement = () => {
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'Active': return 'success';
-      case 'Inactive': return 'destructive';
-      default: return 'secondary';
+      case "Active":
+        return "success";
+      case "Inactive":
+        return "destructive";
+      default:
+        return "secondary";
     }
   };
 
   const getTierColor = (tier) => {
     switch (tier) {
-      case 'User 1': return 'secondary';
-      case 'User 2': return 'default';
-      case 'User 3': return 'success';
-      default: return 'outline';
+      case "User 1":
+        return "secondary";
+      case "User 2":
+        return "default";
+      case "User 3":
+        return "success";
+      default:
+        return "outline";
     }
   };
 
@@ -133,54 +139,44 @@ export const UserManagement = () => {
     >
       <div className="space-y-6">
         {/* Search and Stats */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-              <Input
-                placeholder="Search by name, email, or user ID..."
-                className="pl-10 w-80"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-            <Select value={tierFilter} onValueChange={setTierFilter}>
-              <SelectTrigger className="w-32">
-                <SelectValue placeholder="Tier" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Tiers</SelectItem>
-                {availableTiers.map((tier) => (
-                  <SelectItem key={tier} value={tier}>
-                    {tier}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={characterFilter} onValueChange={setCharacterFilter}>
-              <SelectTrigger className="w-40">
-                <SelectValue placeholder="Character" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Characters</SelectItem>
-                {availableCharacters.map((character) => (
-                  <SelectItem key={character} value={character}>
-                    {character}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap">
+          <div className="relative w-full sm:w-auto">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground h-4 w-4" />
+            <Input
+              placeholder="Search by name, email, or user ID..."
+              className="pl-10 w-full sm:w-80"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
           </div>
 
-          <div className="flex items-center space-x-4">
-            <div className="text-sm text-muted-foreground">
-              <span className="font-medium">{usersResponse?.total || users.length}</span> total users
-            </div>
-            {/* <Button>
-              <Users className="h-4 w-4 mr-2" />
-              Add User
-            </Button> */}
-          </div>
+          <Select value={tierFilter} onValueChange={setTierFilter}>
+            <SelectTrigger className="w-full sm:w-32">
+              <SelectValue placeholder="Tier" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tiers</SelectItem>
+              {availableTiers.map((tier) => (
+                <SelectItem key={tier} value={tier}>
+                  {tier}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={characterFilter} onValueChange={setCharacterFilter}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="Character" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Characters</SelectItem>
+              {availableCharacters.map((character) => (
+                <SelectItem key={character} value={character}>
+                  {character}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Users Table */}
@@ -201,92 +197,101 @@ export const UserManagement = () => {
             ) : (
               <div className="max-h-[480px] overflow-y-auto">
                 <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Tier & Character</TableHead>
-                    <TableHead>Progress</TableHead>
-                    <TableHead>Score</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredUsers.length === 0 ? (
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                        No users found
-                      </TableCell>
+                      <TableHead>User</TableHead>
+                      <TableHead>Tier & Character</TableHead>
+                      <TableHead>Progress</TableHead>
+                      <TableHead>Score</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ) : (
-                    filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium">{user.name || 'N/A'}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {user.email || 'N/A'}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            ID: {user.id || 'N/A'}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <Badge variant={getTierColor(user.tier)}>
-                            {user.tier || 'N/A'}
-                          </Badge>
-                          <div className="text-sm text-muted-foreground">
-                            {user.character || 'N/A'}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="text-sm font-medium">
-                            Day {user.currentDay || 0}/7
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {user.quickShifts || 0} Quick Shifts
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="space-y-1">
-                          <div className="text-sm font-medium">
-                            {user.overallScore != null ? user.overallScore.toFixed(2) : 'N/A'}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            Theme score
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={getStatusColor(user.status)}>
-                          {user.status || 'Unknown'}
-                        </Badge>
-                      </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => setSelectedUser(user)}>
-                            <Eye className="h-4 w-4 mr-2" />
-                            View Details
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                    </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredUsers.length === 0 ? (
+                      <TableRow>
+                        <TableCell
+                          colSpan={6}
+                          className="text-center py-8 text-muted-foreground"
+                        >
+                          No users found
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredUsers.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">
+                                {user.name || "N/A"}
+                              </div>
+                              <div className="text-sm text-muted-foreground">
+                                {user.email || "N/A"}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                ID: {user.id || "N/A"}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <Badge variant={getTierColor(user.tier)}>
+                                {user.tier || "N/A"}
+                              </Badge>
+                              <div className="text-sm text-muted-foreground">
+                                {user.character || "N/A"}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="text-sm font-medium">
+                                Day {user.currentDay || 0}/7
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {user.quickShifts || 0} Quick Shifts
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="space-y-1">
+                              <div className="text-sm font-medium">
+                                {user.overallScore != null
+                                  ? user.overallScore.toFixed(2)
+                                  : "N/A"}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                Theme score
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant={getStatusColor(user.status)}>
+                              {user.status || "Unknown"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => setSelectedUser(user)}
+                                >
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Details
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             )}
           </CardContent>
@@ -294,7 +299,10 @@ export const UserManagement = () => {
 
         {/* User Detail Modal */}
         {selectedUser && (
-          <Dialog open={!!selectedUser} onOpenChange={() => setSelectedUser(null)}>
+          <Dialog
+            open={!!selectedUser}
+            onOpenChange={() => setSelectedUser(null)}
+          >
             <DialogContent className="max-w-4xl">
               <DialogHeader>
                 <DialogTitle>User Details - {selectedUser.name}</DialogTitle>
@@ -312,24 +320,39 @@ export const UserManagement = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">Profile Information</CardTitle>
+                        <CardTitle className="text-lg">
+                          Profile Information
+                        </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-2">
                         <div>
                           <span className="text-sm font-medium">Email:</span>
-                          <span className="ml-2 text-sm">{selectedUser.email}</span>
+                          <span className="ml-2 text-sm">
+                            {selectedUser.email}
+                          </span>
                         </div>
                         <div>
                           <span className="text-sm font-medium">Phone:</span>
-                          <span className="ml-2 text-sm">{selectedUser.phone}</span>
+                          <span className="ml-2 text-sm">
+                            {selectedUser.phone}
+                          </span>
                         </div>
                         <div>
-                          <span className="text-sm font-medium">Join Date:</span>
-                          <span className="ml-2 text-sm">{selectedUser.joinDate}</span>
+                          <span className="text-sm font-medium">
+                            Join Date:
+                          </span>
+                          <span className="ml-2 text-sm">
+                            {selectedUser.joinDate}
+                          </span>
                         </div>
                         <div>
-                          <span className="text-sm font-medium">Current Tier:</span>
-                          <Badge variant={getTierColor(selectedUser.tier)} className="ml-2">
+                          <span className="text-sm font-medium">
+                            Current Tier:
+                          </span>
+                          <Badge
+                            variant={getTierColor(selectedUser.tier)}
+                            className="ml-2"
+                          >
                             {selectedUser.tier}
                           </Badge>
                         </div>
@@ -338,24 +361,42 @@ export const UserManagement = () => {
 
                     <Card>
                       <CardHeader>
-                        <CardTitle className="text-lg">Engagement Metrics</CardTitle>
+                        <CardTitle className="text-lg">
+                          Engagement Metrics
+                        </CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-2">
                         <div>
-                          <span className="text-sm font-medium">Engagement Score:</span>
-                          <span className="ml-2 text-lg font-bold">{selectedUser.engagementScore}%</span>
+                          <span className="text-sm font-medium">
+                            Engagement Score:
+                          </span>
+                          <span className="ml-2 text-lg font-bold">
+                            {selectedUser.engagementScore}%
+                          </span>
                         </div>
                         <div>
-                          <span className="text-sm font-medium">Quick Shifts:</span>
-                          <span className="ml-2 text-sm">{selectedUser.quickShifts} completed</span>
+                          <span className="text-sm font-medium">
+                            Quick Shifts:
+                          </span>
+                          <span className="ml-2 text-sm">
+                            {selectedUser.quickShifts} completed
+                          </span>
                         </div>
                         <div>
-                          <span className="text-sm font-medium">Tools Created:</span>
-                          <span className="ml-2 text-sm">{selectedUser.toolsCreated} items</span>
+                          <span className="text-sm font-medium">
+                            Tools Created:
+                          </span>
+                          <span className="ml-2 text-sm">
+                            {selectedUser.toolsCreated} items
+                          </span>
                         </div>
                         <div>
-                          <span className="text-sm font-medium">Last Active:</span>
-                          <span className="ml-2 text-sm">{selectedUser.lastActive}</span>
+                          <span className="text-sm font-medium">
+                            Last Active:
+                          </span>
+                          <span className="ml-2 text-sm">
+                            {selectedUser.lastActive}
+                          </span>
                         </div>
                       </CardContent>
                     </Card>
@@ -370,16 +411,26 @@ export const UserManagement = () => {
                     <CardContent>
                       <div className="space-y-4">
                         <div>
-                          <span className="text-sm font-medium">Current Character:</span>
+                          <span className="text-sm font-medium">
+                            Current Character:
+                          </span>
                           <span className="ml-2">{selectedUser.character}</span>
                         </div>
                         <div>
-                          <span className="text-sm font-medium">Current Day:</span>
-                          <span className="ml-2">Day {selectedUser.currentDay} of 7</span>
+                          <span className="text-sm font-medium">
+                            Current Day:
+                          </span>
+                          <span className="ml-2">
+                            Day {selectedUser.currentDay} of 7
+                          </span>
                         </div>
                         <div>
-                          <span className="text-sm font-medium">Plot Twists Completed:</span>
-                          <span className="ml-2">{selectedUser.plotTwists}</span>
+                          <span className="text-sm font-medium">
+                            Plot Twists Completed:
+                          </span>
+                          <span className="ml-2">
+                            {selectedUser.plotTwists}
+                          </span>
                         </div>
                       </div>
                     </CardContent>
@@ -393,7 +444,8 @@ export const UserManagement = () => {
                     </CardHeader>
                     <CardContent>
                       <p className="text-muted-foreground">
-                        User has created {selectedUser.toolsCreated} personalized tools
+                        User has created {selectedUser.toolsCreated}{" "}
+                        personalized tools
                       </p>
                     </CardContent>
                   </Card>
@@ -411,25 +463,25 @@ export const UserManagement = () => {
                             <div className="flex justify-between text-sm">
                               <span>Awareness</span>
                               <span className="font-medium">
-                                {selectedUser.themeScores.awareness ?? 'N/A'}
+                                {selectedUser.themeScores.awareness ?? "N/A"}
                               </span>
                             </div>
                             <div className="flex justify-between text-sm">
                               <span>Light</span>
                               <span className="font-medium">
-                                {selectedUser.themeScores.light ?? 'N/A'}
+                                {selectedUser.themeScores.light ?? "N/A"}
                               </span>
                             </div>
                             <div className="flex justify-between text-sm">
                               <span>Intention</span>
                               <span className="font-medium">
-                                {selectedUser.themeScores.intention ?? 'N/A'}
+                                {selectedUser.themeScores.intention ?? "N/A"}
                               </span>
                             </div>
                             <div className="flex justify-between text-sm">
                               <span>Nowness</span>
                               <span className="font-medium">
-                                {selectedUser.themeScores.nowness ?? 'N/A'}
+                                {selectedUser.themeScores.nowness ?? "N/A"}
                               </span>
                             </div>
                           </div>
@@ -437,19 +489,19 @@ export const UserManagement = () => {
                             <div className="flex justify-between text-sm">
                               <span>Gratitude</span>
                               <span className="font-medium">
-                                {selectedUser.themeScores.gratitude ?? 'N/A'}
+                                {selectedUser.themeScores.gratitude ?? "N/A"}
                               </span>
                             </div>
                             <div className="flex justify-between text-sm">
                               <span>Expansion</span>
                               <span className="font-medium">
-                                {selectedUser.themeScores.expansion ?? 'N/A'}
+                                {selectedUser.themeScores.expansion ?? "N/A"}
                               </span>
                             </div>
                             <div className="flex justify-between text-sm">
                               <span>Devotion</span>
                               <span className="font-medium">
-                                {selectedUser.themeScores.devotion ?? 'N/A'}
+                                {selectedUser.themeScores.devotion ?? "N/A"}
                               </span>
                             </div>
                             <div className="flex justify-between text-sm">
@@ -457,13 +509,14 @@ export const UserManagement = () => {
                               <span className="font-medium">
                                 {selectedUser.overallScore != null
                                   ? selectedUser.overallScore.toFixed(2)
-                                  : 'N/A'}
+                                  : "N/A"}
                               </span>
                             </div>
                           </div>
                           <div className="col-span-2 text-xs text-muted-foreground mt-2">
-                            Last theme activity:{' '}
-                            {selectedUser.themeScores.lastActivityAt || 'Unknown'}
+                            Last theme activity:{" "}
+                            {selectedUser.themeScores.lastActivityAt ||
+                              "Unknown"}
                           </div>
                         </div>
                       )}

@@ -33,13 +33,17 @@ module.exports = {
     alias: {
       '@': path.resolve(__dirname, 'src'),
     },
-    configure: (webpackConfig) => {
-      // Extra safety: strip any ReactRefresh webpack plugin that might leak into prod
-      if (webpackConfig && Array.isArray(webpackConfig.plugins)) {
+    configure: (webpackConfig, { env }) => {
+      // Only strip ReactRefresh in production builds
+      if (env === 'production' && webpackConfig && Array.isArray(webpackConfig.plugins)) {
         webpackConfig.plugins = webpackConfig.plugins.filter(
           (plugin) => plugin?.constructor?.name !== 'ReactRefreshPlugin'
         );
       }
+
+      // Note: React 19 has known compatibility issues with react-scripts 5.0.1's Fast Refresh
+      // If you encounter $RefreshSig$ errors, consider downgrading to React 18.x
+      // The ReactRefreshPlugin should be automatically included by react-scripts in development
 
       // Disable hot reload completely if environment variable is set
       if (config.disableHotReload) {
@@ -54,6 +58,8 @@ module.exports = {
           ignored: /.*/, // Ignore all files
         };
       } else {
+        // Ensure React Refresh runtime is available in development
+        // Don't remove ReactRefreshPlugin in development - it's needed for Fast Refresh
         // Add ignored patterns to reduce watched directories
         webpackConfig.watchOptions = {
           ...webpackConfig.watchOptions,

@@ -1,10 +1,30 @@
-import React, { useState, useMemo } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { TableSkeleton } from '@/components/loading/LoadingSpinner';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import {
   Table,
   TableBody,
@@ -13,60 +33,39 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { useAutoOpenModal } from '@/hooks/useAutoOpenModal';
 import {
-  Zap,
-  Search,
-  Filter,
-  Plus,
-  Edit,
-  Lock,
-  Unlock,
-  Trash2,
-  Eye,
-  Copy,
-  MoreHorizontal,
-  BarChart3,
-  Loader2
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { toast } from 'sonner';
-import {
-  useQuickShiftLoops,
-  useQuickShiftReframes,
-  useQuickShiftProtectors,
   useQuickShiftLoopMutation,
-  useQuickShiftReframeMutation,
+  useQuickShiftLoops,
   useQuickShiftProtectorMutation,
+  useQuickShiftProtectors,
+  useQuickShiftReframeMutation,
+  useQuickShiftReframes,
 } from '@/hooks/useQuickShifts';
-import { FullPageLoader, TableSkeleton } from '@/components/loading/LoadingSpinner';
+import {
+  Eye,
+  Loader2,
+  MoreHorizontal,
+  Plus,
+  Search,
+  Trash2
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export const QuickShifts = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedLoop, setSelectedLoop] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTier, setSelectedTier] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Use custom hook to handle auto-opening modal
+  useAutoOpenModal(setIsCreateModalOpen);
 
   // Fetch data from API
   const filterParams = useMemo(() => {
@@ -162,65 +161,8 @@ export const QuickShifts = () => {
 
   // Mock data for Quick Shift loops and variations (keeping for reference structure)
   const mockQuickShiftLoops = [
-    {
-      id: 'QS-001',
-      category: 'Too Much on My Plate',
-      icon: '🍽️',
-      emotionCount: 6,
-      protectorVariations: 4,
-      reframeVariations: 8,
-      usageCount: 245,
-      lastModified: '2024-03-10',
-      status: 'Active',
-      tierAvailability: ['User 1', 'User 2', 'User 3'],
-      emotions: [
-        { emotion: 'Anxious', fearStatement: 'If I dont handle everything perfectly, it will all fall apart', tier: ['User 1', 'User 2'], usageCount: 89 },
-        { emotion: 'Overwhelmed', fearStatement: 'There is too much and I cant keep up', tier: ['User 1', 'User 2', 'User 3'], usageCount: 156 },
-        { emotion: 'Pressured', fearStatement: 'Everyone needs something from me right now', tier: ['User 2', 'User 3'], usageCount: 67 }
-      ]
-    },
-    {
-      id: 'QS-002',
-      category: 'What Will They Think',
-      icon: '🤔',
-      emotionCount: 5,
-      protectorVariations: 3,
-      reframeVariations: 6,
-      usageCount: 189,
-      lastModified: '2024-03-08',
-      status: 'Active',
-      tierAvailability: ['User 1', 'User 2'],
-      emotions: [
-        { emotion: 'Worried', fearStatement: 'What if they judge me or think less of me', tier: ['User 1'], usageCount: 78 },
-        { emotion: 'Self-conscious', fearStatement: 'I might be doing something wrong or embarrassing', tier: ['User 1', 'User 2'], usageCount: 111 }
-      ]
-    },
-    {
-      id: 'QS-003',
-      category: 'Being Hard on Myself',
-      icon: '😤',
-      emotionCount: 7,
-      protectorVariations: 5,
-      reframeVariations: 10,
-      usageCount: 334,
-      lastModified: '2024-03-12',
-      status: 'Active',
-      tierAvailability: ['User 1', 'User 2', 'User 3'],
-      emotions: [
-        { emotion: 'Ashamed', fearStatement: 'I should have known better or done better', tier: ['User 2', 'User 3'], usageCount: 145 },
-        { emotion: 'Guilty', fearStatement: 'I did something wrong and hurt someone', tier: ['User 1', 'User 2'], usageCount: 189 }
-      ]
-    }
+    // ... data omitted for space ...
   ];
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Active': return 'success';
-      case 'Locked': return 'warning';
-      case 'Draft': return 'secondary';
-      default: return 'outline';
-    }
-  };
 
   // Filter and sort loops
   const filteredLoops = useMemo(() => {
@@ -433,9 +375,7 @@ export const QuickShifts = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getStatusColor(loop.status || 'Active')}>
-                              {loop.status || 'Active'}
-                            </Badge>
+                            <StatusBadge status={loop.status || 'Active'} />
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -528,9 +468,7 @@ export const QuickShifts = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getStatusColor(reframe.status || 'Active')}>
-                              {reframe.status || 'Active'}
-                            </Badge>
+                            <StatusBadge status={reframe.status || 'Active'} />
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -595,9 +533,7 @@ export const QuickShifts = () => {
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <h3 className="font-semibold">{protector.name || 'Unnamed Protector'}</h3>
-                            <Badge variant={getStatusColor(protector.status || 'Active')}>
-                              {protector.status || 'Active'}
-                            </Badge>
+                                                        <StatusBadge status={protector.status || 'Active'} />
                           </div>
                           <p className="text-sm text-muted-foreground">
                             {protector.description || 'No description'}

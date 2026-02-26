@@ -1,10 +1,30 @@
-import React, { useState, useEffect, useCallback } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { TableSkeleton } from '@/components/loading/LoadingSpinner';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import {
   Table,
   TableBody,
@@ -13,46 +33,29 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { useAutoOpenModal } from '@/hooks/useAutoOpenModal';
+import templateService from '@/services/api/templateService';
 import {
-  Heart,
-  Search,
-  Filter,
-  Plus,
+  Copy,
   Edit,
   Eye,
-  Copy,
+  Filter,
+  Loader2,
   MoreHorizontal,
-  Sparkles,
-  Wind,
+  Plus,
+  Search,
   Settings,
-  Loader2
+  Sparkles,
+  Wind
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { useCallback, useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-import templateService from '@/services/api/templateService';
-import { TableSkeleton } from '@/components/loading/LoadingSpinner';
 
 export const AffirmationMeditation = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('affirmations');
@@ -60,6 +63,9 @@ export const AffirmationMeditation = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Use custom hook to handle auto-opening modal
+  useAutoOpenModal(setIsCreateModalOpen);
 
   // Form state for creating affirmation template
   const [newTemplate, setNewTemplate] = useState({
@@ -192,12 +198,8 @@ export const AffirmationMeditation = () => {
   ];
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'Active': return 'success';
-      case 'Draft': return 'secondary';
-      case 'Review': return 'warning';
-      default: return 'outline';
-    }
+    // Handled by StatusBadge
+    return status;
   };
 
   const getEnergyColor = (energyType) => {
@@ -336,9 +338,7 @@ export const AffirmationMeditation = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                            <Badge variant={getStatusColor(isActive ? 'Active' : 'Inactive')}>
-                              {isActive ? 'Active' : 'Inactive'}
-                          </Badge>
+                          <StatusBadge status={isActive ? 'Active' : 'Inactive'} />
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
@@ -469,9 +469,7 @@ export const AffirmationMeditation = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={getStatusColor(template.status)}>
-                            {template.status}
-                          </Badge>
+                          <StatusBadge status={template.status} />
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>

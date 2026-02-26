@@ -1,9 +1,21 @@
-import React, { useState, useMemo } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { TableSkeleton } from '@/components/loading/LoadingSpinner';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -11,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import {
   Table,
   TableBody,
@@ -20,26 +32,14 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useUsers } from '@/hooks/useUsers';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { FullPageLoader, TableSkeleton } from '@/components/loading/LoadingSpinner';
-import { useUsers, useUser } from '@/hooks/useUsers';
-import {
-  Search,
   Eye,
   MoreHorizontal,
+  Search,
 } from 'lucide-react';
+import { useMemo, useState } from 'react';
 
 export const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
@@ -263,9 +263,7 @@ export const UserManagement = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getStatusColor(user.status)}>
-                          {user.status || 'Unknown'}
-                        </Badge>
+                        <StatusBadge status={user.status} />
                       </TableCell>
                     <TableCell>
                       <DropdownMenu>

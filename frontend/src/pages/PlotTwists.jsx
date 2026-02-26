@@ -1,10 +1,30 @@
-import React, { useState, useMemo } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { TableSkeleton } from '@/components/loading/LoadingSpinner';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import {
   Table,
   TableBody,
@@ -13,53 +33,27 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { useAutoOpenModal } from '@/hooks/useAutoOpenModal';
 import {
-  Shuffle,
-  Search,
-  Filter,
-  Plus,
-  Edit,
-  Calendar,
-  Users,
-  BarChart3,
-  Eye,
-  Copy,
-  MoreHorizontal,
-  Star,
-  Target,
-  Trash2,
-  Loader2
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { toast } from 'sonner';
-import {
-  usePlotTwistQuests,
   usePlotTwistCharacters,
-  usePlotTwistResponseOptions,
   usePlotTwistQuestMutation,
+  usePlotTwistQuests,
+  usePlotTwistResponseOptions,
 } from '@/hooks/usePlotTwists';
-import { FullPageLoader, TableSkeleton } from '@/components/loading/LoadingSpinner';
+import {
+  Edit,
+  Eye,
+  Loader2,
+  MoreHorizontal,
+  Plus,
+  Search,
+  Trash2
+} from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export const PlotTwists = () => {
   const [selectedQuest, setSelectedQuest] = useState(null);
@@ -70,6 +64,11 @@ export const PlotTwists = () => {
   const [selectedDay, setSelectedDay] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Use custom hook to handle auto-opening modal
+  useAutoOpenModal(setIsCreateModalOpen);
+
 
   // Fetch characters first to build character map for filtering
   const { data: charactersData = [], loading: charactersLoading } = usePlotTwistCharacters({ showErrorToast: false });
@@ -191,12 +190,8 @@ export const PlotTwists = () => {
   ];
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'Active': return 'success';
-      case 'Draft': return 'secondary';
-      case 'Locked': return 'warning';
-      default: return 'outline';
-    }
+    // This is now handled by StatusBadge component
+    return status;
   };
 
   const getPillarColor = (pillar) => {
@@ -615,9 +610,7 @@ export const PlotTwists = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                            <Badge variant={getStatusColor(quest.status || 'Active')}>
-                              {quest.status || 'Active'}
-                          </Badge>
+                          <StatusBadge status={quest.status || 'Active'} />
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
@@ -1257,9 +1250,7 @@ export const PlotTwists = () => {
                     <CardContent className="space-y-3">
                       <div>
                         <span className="text-sm font-medium">Status:</span>
-                        <Badge variant={getStatusColor(selectedQuest.status || 'Active')} className="ml-2">
-                          {selectedQuest.status || 'Active'}
-                        </Badge>
+                        <StatusBadge status={selectedQuest.status || 'Active'} className="ml-2" />
                       </div>
                       <div>
                         <span className="text-sm font-medium">Response Options:</span>

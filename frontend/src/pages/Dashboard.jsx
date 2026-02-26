@@ -1,34 +1,40 @@
-import React from 'react';
-import { Layout } from '@/components/layout/Layout';
+import { QuickActionCard } from '@/components/dashboard/QuickActionCard';
 import { StatsCard } from '@/components/dashboard/StatsCard';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Layout } from '@/components/layout/Layout';
+import { FullPageLoader } from '@/components/loading/LoadingSpinner';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { FullPageLoader, TableSkeleton } from '@/components/loading/LoadingSpinner';
-import { useDashboardStats, useRecentActivity, useContentHealth } from '@/hooks/useDashboard';
+import { useContentHealth, useDashboardStats, useRecentActivity } from '@/hooks/useDashboard';
+import { useUsers } from '@/hooks/useUsers';
 import {
-  Users,
-  FileText,
   Activity,
-  CheckCircle,
-  Zap,
-  Shuffle,
-  Heart,
+  AlertCircle,
   BookOpen,
-  Plus,
-  ExternalLink,
-  Clock,
-  AlertCircle
+  CheckCircle,
+  FileText,
+  Heart,
+  Shuffle,
+  Users,
+  Zap
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const Dashboard = () => {
+  const navigate = useNavigate();
   // Fetch data from API
   const { data: statsData, loading: statsLoading, error: statsError } = useDashboardStats({ showErrorToast: false });
   const { data: activityData, loading: activityLoading, error: activityError } = useRecentActivity({ limit: 10 }, { showErrorToast: false });
   const { data: healthData, loading: healthLoading, error: healthError } = useContentHealth({ showErrorToast: false });
 
+ // Get users data
+  const { data: usersResponse } = useUsers({});
+
+  // Get total users
+  const totalUsers = usersResponse?.total || usersResponse?.data?.length || 0;
+  
   // Transform stats data
   const stats = statsData ? {
     activeUsers: { 
@@ -57,6 +63,8 @@ export const Dashboard = () => {
     dailyEngagement: { value: '0', change: 'Steady', changeType: 'neutral' },
     contentHealth: { value: '0%', change: '', changeType: 'neutral' }
   };
+
+
 
   // Use activity data from API or empty array
   const recentActivity = activityData || [];
@@ -129,31 +137,33 @@ export const Dashboard = () => {
       title: 'Add Quick Shift Variation',
       icon: Zap,
       color: 'bg-primary',
-      href: '/quick-shifts/new'
+      href: '/quick-shifts?add=true'
     },
     { 
       title: 'Add Plot Twist Quest',
       icon: Shuffle,
       color: 'bg-accent',
-      href: '/plot-twists/new'
+      href: '/plot-twists?add=true'
     },
     { 
       title: 'Add Teaching Moment',
       icon: BookOpen,
       color: 'bg-secondary',
-      href: '/teaching-moments/new'
+      href: '/teaching-moments?add=true'
     },
     { 
       title: 'Add Affirmation Template',
       icon: Heart,
       color: 'bg-success',
-      href: '/affirmations/new'
+      href: '/affirmations?add=true'
     },
-    { 
+
+
+   { 
       title: 'Add Meditation Template',
       icon: Heart,
       color: 'bg-info',
-      href: '/meditations/new'
+      href: '/meditations?add=true'
     }
   ];
 
@@ -168,7 +178,9 @@ export const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
             title="Active Users"
-            value={stats.activeUsers.value}
+            // value={stats.activeUsers.value}
+
+            value={(usersResponse?.total || usersResponse?.data?.length || 0).toLocaleString()}
             change={stats.activeUsers.change}
             changeType={stats.activeUsers.changeType}
             icon={Users}
@@ -302,19 +314,13 @@ export const Dashboard = () => {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               {quickActions.map((action, index) => (
-                <Button
+                <QuickActionCard
                   key={index}
-                  variant="outline"
-                  className="h-auto p-6 flex flex-col items-center space-y-3 group hover:shadow-lg transition-all duration-200"
-                  onClick={() => window.location.href = action.href}
-                >
-                  <div className={`w-12 h-12 rounded-lg ${action.color} flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
-                    <action.icon className="h-6 w-6 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-center">
-                    {action.title}
-                  </span>
-                </Button>
+                  title={action.title}
+                  icon={action.icon}
+                  color={action.color}
+                  onClick={() => navigate(action.href)}
+                />
               ))}
             </div>
           </CardContent>

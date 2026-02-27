@@ -1,4 +1,5 @@
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 /**
  * Standardized badge component to handle status coloring consistently
@@ -37,7 +38,13 @@ export const StatusBadge = ({ status, className = "" }) => {
   };
 
   return (
-    <Badge variant={getVariant(status)} className={className}>
+    <Badge 
+      variant={getVariant(status)} 
+      className={cn(
+        "shadow-[0_0_10px_rgba(0,0,0,0.05)] border-opacity-40 transition-all duration-300 hover:shadow-md",
+        className
+      )}
+    >
       {status || 'Unknown'}
     </Badge>
   );

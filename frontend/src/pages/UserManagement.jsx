@@ -17,6 +17,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 import {
+  Pagination
+} from '@/components/ui/pagination';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -39,7 +42,7 @@ import {
   MoreHorizontal,
   Search,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export const UserManagement = () => {
   const [selectedUser, setSelectedUser] = useState(null);
@@ -47,6 +50,13 @@ export const UserManagement = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [tierFilter, setTierFilter] = useState('all');
   const [characterFilter, setCharacterFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, tierFilter, characterFilter]);
 
   // Fetch users from API
   const filters = useMemo(() => ({
@@ -108,6 +118,12 @@ export const UserManagement = () => {
     return result;
   }, [users, searchQuery, tierFilter, characterFilter]);
 
+  // Paginate filtered users
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredUsers.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredUsers, currentPage, itemsPerPage]);
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Active': return 'success';
@@ -133,7 +149,7 @@ export const UserManagement = () => {
     >
       <div className="space-y-6">
         {/* Search and Stats */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
+        <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0">
           <div className="flex items-center space-x-4">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -171,22 +187,18 @@ export const UserManagement = () => {
               </SelectContent>
             </Select>
           </div>
-
-          <div className="flex items-center space-x-4">
-            <div className="text-sm text-muted-foreground">
-              <span className="font-medium">{usersResponse?.total || users.length}</span> total users
-            </div>
-            {/* <Button>
-              <Users className="h-4 w-4 mr-2" />
-              Add User
-            </Button> */}
-          </div>
         </div>
 
         {/* Users Table */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
             <CardTitle>All Users</CardTitle>
+            <div className="text-sm font-medium text-muted-foreground animate-in fade-in slide-in-from-right-2 duration-300 bg-muted/50 px-3 py-1 rounded-full border border-border/50">
+              {searchQuery || tierFilter !== 'all' || characterFilter !== 'all'
+                ? `Showing ${filteredUsers.length} results` 
+                : `${filteredUsers.length} Users`
+              }
+            </div>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -211,16 +223,19 @@ export const UserManagement = () => {
                     <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
-                <TableBody>
-                  {filteredUsers.length === 0 ? (
+                <TableBody key={currentPage} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                  {paginatedUsers.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                         No users found
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredUsers.map((user) => (
-                  <TableRow key={user.id}>
+                    paginatedUsers.map((user) => (
+                      <TableRow 
+                        key={user.id} 
+                        className="transition-all duration-200 hover:bg-muted/50 hover:translate-x-1 border-l-2 border-l-transparent hover:border-l-primary"
+                      >
                       <TableCell>
                         <div>
                           <div className="font-medium">{user.name || 'N/A'}</div>
@@ -234,7 +249,10 @@ export const UserManagement = () => {
                       </TableCell>
                       <TableCell>
                         <div className="space-y-1">
-                          <Badge variant={getTierColor(user.tier)}>
+                          <Badge 
+                            variant={getTierColor(user.tier)}
+                            className="text-[10px] uppercase tracking-wider bg-primary/10 text-primary border-primary/20 shadow-[0_0_8px_rgba(var(--primary),0.1)] px-2"
+                          >
                             {user.tier || 'N/A'}
                           </Badge>
                           <div className="text-sm text-muted-foreground">
@@ -263,7 +281,10 @@ export const UserManagement = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <StatusBadge status={user.status} />
+                        <StatusBadge 
+                          status={user.status || 'Active'} 
+                          className="shadow-sm border-opacity-50"
+                        />
                       </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -286,6 +307,16 @@ export const UserManagement = () => {
                 </TableBody>
               </Table>
               </div>
+            )}
+            
+            {filteredUsers.length > 0 && !loading && (
+              <Pagination
+                currentPage={currentPage}
+                totalItems={filteredUsers.length}
+                itemsPerPage={itemsPerPage}
+                onPageChange={setCurrentPage}
+                className="mt-4"
+              />
             )}
           </CardContent>
         </Card>

@@ -18,6 +18,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+  Pagination
+} from '@/components/ui/pagination';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -42,20 +45,26 @@ import {
   usePlotTwistQuests,
   usePlotTwistResponseOptions,
 } from '@/hooks/usePlotTwists';
+import { useTiers } from '@/hooks/useTiers';
 import {
   Edit,
   Eye,
+  Info,
+  Layers,
   Loader2,
   MoreHorizontal,
-  Plus,
-  Search,
-  Trash2
+  Plus, Search,
+  Sparkles,
+  Target,
+  Trash2,
+  TrendingUp
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
 export const PlotTwists = () => {
+  const navigate = useNavigate();
   const [selectedQuest, setSelectedQuest] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -64,6 +73,13 @@ export const PlotTwists = () => {
   const [selectedDay, setSelectedDay] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCharacter, selectedTier, selectedDay]);
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Use custom hook to handle auto-opening modal
@@ -107,7 +123,11 @@ export const PlotTwists = () => {
 
   // Fetch data from API
   const filterParams = useMemo(() => {
-    const params = {};
+    const params = {
+      page: currentPage,
+      limit: itemsPerPage,
+      search: searchQuery || undefined
+    };
     // Convert character name to UUID if not 'all'
     if (selectedCharacter !== 'all' && characterMap[selectedCharacter]) {
       params.characterId = characterMap[selectedCharacter];
@@ -123,7 +143,7 @@ export const PlotTwists = () => {
       }
     }
     return params;
-  }, [selectedCharacter, selectedTier, selectedDay, characterMap]);
+  }, [selectedCharacter, selectedTier, selectedDay, characterMap, currentPage, itemsPerPage, searchQuery]);
 
   const { data: plotTwistQuestsResponse, loading: questsLoading, error: questsError, refetch: refetchQuests } = usePlotTwistQuests({
     params: filterParams,
@@ -135,6 +155,28 @@ export const PlotTwists = () => {
       refetchQuests();
     }
   });
+
+  // Fetch Tiers data for the new tab
+  const { data: tiersData, loading: tiersLoading, error: tiersError } = useTiers();
+  const tiers = useMemo(() => Array.isArray(tiersData) ? tiersData : (tiersData?.data || []), [tiersData]);
+
+  const getTierAccentColor = (tierUser) => {
+    switch (tierUser?.toString()) {
+      case '1': return 'border-l-blue-500 bg-blue-50/30';
+      case '2': return 'border-l-purple-500 bg-purple-50/30';
+      case '3': return 'border-l-pink-500 bg-pink-50/30';
+      default: return 'border-l-primary bg-primary/5';
+    }
+  };
+
+  const getTierBadgeColor = (tierUser) => {
+    switch (tierUser?.toString()) {
+      case '1': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case '2': return 'bg-purple-100 text-purple-700 border-purple-200';
+      case '3': return 'bg-pink-100 text-pink-700 border-pink-200';
+      default: return 'bg-primary/10 text-primary border-primary/20';
+    }
+  };
 
   // Extract plotTwists from paginated response and transform for UI
   const plotTwistQuests = useMemo(() => {
@@ -154,7 +196,7 @@ export const PlotTwists = () => {
     return questsArray.map(quest => ({
       ...quest,
       // Map characterId to character name for display
-      character: characterNameMap[quest.characterId] || quest.character || 'N/A',
+      character: characterNameMap[quest.characterId] || (typeof quest.character === 'object' ? quest.character?.name : quest.character) || 'N/A',
       // Map dayNumber to day for display
       day: quest.dayNumber || quest.day,
       // Map isActive to status
@@ -199,21 +241,22 @@ export const PlotTwists = () => {
     return pillarObj ? pillarObj.color : 'bg-gray-100 text-gray-800';
   };
 
-  // Filter quests by search query
+  // Since we're using server-side filtering, filteredQuests is mostly just plotTwistQuests
   const filteredQuests = useMemo(() => {
-    let filtered = plotTwistQuests;
-    
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(quest => 
-        quest.title?.toLowerCase().includes(query) ||
-        quest.description?.toLowerCase().includes(query) ||
-        quest.character?.toLowerCase().includes(query)
-      );
+    return plotTwistQuests;
+  }, [plotTwistQuests]);
+
+  const totalQuestsCount = useMemo(() => {
+    if (plotTwistQuestsResponse?.pagination?.total !== undefined) {
+      return plotTwistQuestsResponse.pagination.total;
     }
-    
-    return filtered;
-  }, [plotTwistQuests, searchQuery]);
+    return plotTwistQuests.length;
+  }, [plotTwistQuestsResponse, plotTwistQuests]);
+
+  const paginatedQuests = useMemo(() => {
+    // With server-side pagination, we don't slice locally
+    return plotTwistQuests;
+  }, [plotTwistQuests]);
 
   // Handle create quest
   const handleCreateQuest = async () => {
@@ -294,29 +337,34 @@ export const PlotTwists = () => {
         title: questForm.title.trim(),
         description: questForm.description.trim(),
         dayNumber: dayNumber,
+        pillar: questForm.pillar, // Add missing pillar field
         options: options,
         responses: responses
       };
 
-      await createQuest(payload, { showSuccessToast: true });
-      
-      // Reset form
-      setQuestForm({
-        character: '',
-        day: '',
-        pillar: '',
-        title: '',
-        description: '',
-        tier: '',
-        responseOptions: [
-          { emoji: '', text: '', level: 'High' },
-          { emoji: '', text: '', level: 'Medium' },
-          { emoji: '', text: '', level: 'Low' }
-        ]
+      await createQuest(payload, { 
+        showSuccessToast: true,
+        onSuccess: () => {
+          refetchQuests();
+          setIsCreateModalOpen(false);
+          setQuestForm({
+            character: '',
+            day: '',
+            pillar: '',
+            title: '',
+            description: '',
+            tier: '',
+            responseOptions: [
+              { emoji: '', text: '', level: 'High' },
+              { emoji: '', text: '', level: 'Medium' },
+              { emoji: '', text: '', level: 'Low' }
+            ]
+          });
+        }
       });
-      setIsCreateModalOpen(false);
     } catch (error) {
       console.error('Error creating quest:', error);
+      toast.error(error.message || 'Failed to create quest. Please check your connection and try again.');
     } finally {
       setSubmitting(false);
     }
@@ -326,10 +374,15 @@ export const PlotTwists = () => {
   const handleDeleteQuest = async (questId) => {
     if (window.confirm('Are you sure you want to delete this quest?')) {
       try {
-        await deleteQuest(questId, { showSuccessToast: true });
-        if (selectedQuest?.id === questId) {
-          setSelectedQuest(null);
-        }
+        await deleteQuest(questId, { 
+          showSuccessToast: true,
+          onSuccess: () => {
+            refetchQuests();
+            if (selectedQuest?.id === questId) {
+              setSelectedQuest(null);
+            }
+          }
+        });
       } catch (error) {
         console.error('Error deleting quest:', error);
       }
@@ -433,26 +486,31 @@ export const PlotTwists = () => {
         title: questForm.title.trim(),
         description: questForm.description.trim(),
         dayNumber: dayNumber,
+        pillar: questForm.pillar, // Add missing pillar field
         options: options,
         responses: responses
       };
 
-      await updateQuest({ id: selectedQuest.id, data: payload }, { showSuccessToast: true });
-      
-      setIsEditModalOpen(false);
-      setSelectedQuest(null);
-      setQuestForm({
-        character: '',
-        day: '',
-        pillar: '',
-        title: '',
-        description: '',
-        tier: '',
-        responseOptions: [
-          { emoji: '', text: '', level: 'High' },
-          { emoji: '', text: '', level: 'Medium' },
-          { emoji: '', text: '', level: 'Low' }
-        ]
+      await updateQuest({ id: selectedQuest.id, data: payload }, { 
+        showSuccessToast: true,
+        onSuccess: () => {
+          refetchQuests();
+          setIsEditModalOpen(false);
+          setSelectedQuest(null);
+          setQuestForm({
+            character: '',
+            day: '',
+            pillar: '',
+            title: '',
+            description: '',
+            tier: '',
+            responseOptions: [
+              { emoji: '', text: '', level: 'High' },
+              { emoji: '', text: '', level: 'Medium' },
+              { emoji: '', text: '', level: 'Low' }
+            ]
+          });
+        }
       });
     } catch (error) {
       console.error('Error updating quest:', error);
@@ -481,16 +539,17 @@ export const PlotTwists = () => {
     >
       <div className="space-y-6">
         <Tabs defaultValue="quests" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="quests">Quest Management</TabsTrigger>
             <TabsTrigger value="characters">Character Arcs</TabsTrigger>
+            <TabsTrigger value="tiers">Tier Path</TabsTrigger>
             <TabsTrigger value="responses">Response Library</TabsTrigger>
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
           </TabsList>
 
           {/* Quest Management */}
-          <TabsContent value="quests" className="space-y-4">
-            <div className="flex items-center justify-between">
+          <TabsContent value="quests" className="space-y-6">
+            <div className="flex items-center space-x-4 mb-2">
               <div className="flex items-center space-x-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -548,11 +607,18 @@ export const PlotTwists = () => {
                   </SelectContent>
                 </Select>
               </div>
+
             </div>
 
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                 <CardTitle>Plot Twist Quests</CardTitle>
+                <div className="text-sm font-medium text-muted-foreground animate-in fade-in slide-in-from-right-2 duration-300 bg-muted/50 px-3 py-1 rounded-full border border-border/50">
+                  {searchQuery || selectedCharacter !== 'all' || selectedTier !== 'all' || selectedDay !== 'all'
+                    ? `Showing ${filteredQuests.length} of ${totalQuestsCount} results` 
+                    : `${totalQuestsCount} Quests`
+                  }
+                </div>
               </CardHeader>
               <CardContent>
                 {questsLoading ? (
@@ -577,9 +643,12 @@ export const PlotTwists = () => {
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                      {filteredQuests.length > 0 ? filteredQuests.map((quest) => (
-                      <TableRow key={quest.id}>
+                  <TableBody key={currentPage} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                      {paginatedQuests.length > 0 ? paginatedQuests.map((quest) => (
+                        <TableRow 
+                          key={quest.id} 
+                          className="transition-all duration-200 hover:bg-muted/50 hover:translate-x-1 border-l-2 border-l-transparent hover:border-l-primary"
+                        >
                         <TableCell>
                           <div className="space-y-1">
                               <div className="font-medium">{quest.character || 'N/A'}</div>
@@ -609,9 +678,12 @@ export const PlotTwists = () => {
                               {quest.responseOptions?.length || 0} options
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <StatusBadge status={quest.status || 'Active'} />
-                        </TableCell>
+                          <TableCell>
+                            <StatusBadge 
+                              status={quest.status || 'Active'} 
+                              className="shadow-sm border-opacity-50"
+                            />
+                          </TableCell>
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -647,7 +719,17 @@ export const PlotTwists = () => {
                         </TableRow>
                       )}
                   </TableBody>
-                </Table>
+                  </Table>
+                )}
+
+                {filteredQuests.length > 0 && !questsLoading && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalItems={totalQuestsCount}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                    className="mt-4"
+                  />
                 )}
               </CardContent>
             </Card>
@@ -724,6 +806,119 @@ export const PlotTwists = () => {
                   );
                 })}
             </div>
+            )}
+          </TabsContent>
+
+          {/* Tier Path */}
+          <TabsContent value="tiers" className="space-y-6">
+            <Card className="bg-gradient-to-br from-primary/5 to-accent/5 border-none shadow-sm">
+              <CardContent className="pt-6">
+                <div className="flex items-start space-x-4">
+                  <div className="p-3 bg-white rounded-xl shadow-sm text-primary">
+                    <Layers className="h-6 w-6" />
+                  </div>
+                  <div className="space-y-1">
+                    <h2 className="text-xl font-semibold">The Growth Journey</h2>
+                    <p className="text-muted-foreground max-w-3xl text-sm">
+                      TAP IN uses a dynamic scoring system to guide users through 6 awareness tiers. 
+                      As a user's score increases, the tone of Plot Twists and Quick Shifts evolves 
+                      from gentle guidance to expanded empowerment.
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {tiersLoading ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                  <Card key={i} className="h-48 animate-pulse bg-muted/20" />
+                ))}
+              </div>
+            ) : tiersError ? (
+              <div className="text-center py-12">
+                <div className="bg-destructive/10 text-destructive p-4 rounded-lg inline-block mb-4">
+                  {tiersError}
+                </div>
+                <p className="text-muted-foreground">Unable to load tier data. Please try again later.</p>
+              </div>
+            ) : tiers.length === 0 ? (
+              <div className="text-center py-12 border-2 border-dashed rounded-xl">
+                <Info className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                <h3 className="text-lg font-medium">No Tier Data Found</h3>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {tiers.map((tier) => (
+                  <Card 
+                    key={tier.code || tier.id} 
+                    className={`group transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-l-4 ${getTierAccentColor(tier.tierUser)}`}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                          <div className="flex items-center space-x-2">
+                             <span className="text-2xl font-bold text-foreground">{tier.code || 'N/A'}</span>
+                             <Badge variant="outline" className={getTierBadgeColor(tier.tierUser)}>
+                               User {tier.tierUser || '?'}
+                             </Badge>
+                          </div>
+                          <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
+                            {tier.name || 'Unnamed Tier'}
+                          </CardTitle>
+                        </div>
+                        <div className="h-10 w-10 rounded-full bg-white shadow-sm flex items-center justify-center text-primary border border-border/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                           <Sparkles className="h-5 w-5" />
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="flex items-center justify-between p-2 bg-white/50 rounded-lg border border-border/40">
+                        <div className="flex items-center text-sm font-medium">
+                          <Target className="h-4 w-4 mr-2 text-muted-foreground" />
+                          Score Range
+                        </div>
+                        <span className="text-sm font-bold text-primary">
+                          {tier.scoreRange || `${tier.minScore}-${tier.maxScore}`}
+                        </span>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div>
+                          <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Tone Tag</div>
+                          <Badge variant="secondary" className="font-medium text-[10px]">
+                            {tier.toneTag || 'Empowerment'}
+                          </Badge>
+                        </div>
+
+                        <div>
+                          <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Tone Essence</div>
+                          <p className="text-xs text-foreground/80 leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all">
+                            {tier.toneEssence || 'No essence description available.'}
+                          </p>
+                        </div>
+
+                        <div className="pt-2 border-t border-border/50">
+                           <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1 flex items-center">
+                             <TrendingUp className="h-3 w-3 mr-1" />
+                             Initial Cycle
+                           </div>
+                           <p className="text-xs italic text-muted-foreground">
+                             {tier.initialCycle || 'Default mapping'}
+                           </p>
+                        </div>
+
+                        <div className="p-3 bg-muted/30 rounded-lg border border-border/30 mt-4">
+                          <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Voice Anchor</div>
+                          <p className="text-xs italic text-muted-foreground/90 font-serif">
+                            "{tier.voiceAnchor || 'The voice of growth and clarity.'}"
+                          </p>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             )}
           </TabsContent>
 
@@ -832,7 +1027,7 @@ export const PlotTwists = () => {
             <DialogHeader>
               <DialogTitle>Create New Plot Twist Quest</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="character">Character *</Label>
@@ -1019,7 +1214,7 @@ export const PlotTwists = () => {
             <DialogHeader>
               <DialogTitle>Edit Plot Twist Quest</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="character">Character *</Label>
@@ -1209,7 +1404,7 @@ export const PlotTwists = () => {
                 </DialogTitle>
               </DialogHeader>
               
-              <div className="space-y-6">
+              <div className="space-y-6 max-h-[75vh] overflow-y-auto pr-2 custom-scrollbar">
                 <div className="grid grid-cols-2 gap-6">
                   <Card>
                     <CardHeader>

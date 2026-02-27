@@ -4,11 +4,10 @@
  * Uses admin-service for basic CRUD, local backend for extended features
  */
 
-import BaseService from './baseService';
-import { ADMIN_SERVICE_ENDPOINTS } from '@/lib/api/adminServiceConfig';
 import adminServiceClient from '@/lib/api/adminServiceClient';
+import { ADMIN_SERVICE_ENDPOINTS } from '@/lib/api/adminServiceConfig';
 import { handleApiError } from '@/utils/apiHelpers';
-import { buildFilterParams } from '@/utils/queryBuilder';
+import BaseService from './baseService';
 
 class PlotTwistService extends BaseService {
   constructor() {
@@ -145,6 +144,83 @@ class PlotTwistService extends BaseService {
       return Array.isArray(response.data) ? response.data : (response.data.data || response.data.items || []);
     } catch (error) {
       throw handleApiError(error);
+    }
+  }
+
+  /**
+   * Get all awareness tiers
+   * @returns {Promise<any[]>}
+   */
+  async getTiers() {
+    try {
+      // Fetch from the tiers endpoint
+      const response = await adminServiceClient.get('/admin/tiers');
+      return Array.isArray(response.data) ? response.data : (response.data?.data || response.data?.items || []);
+    } catch (error) {
+      // If endpoint doesn't exist, return descriptive local data as fallback
+      console.warn('Failed to fetch tiers from API, using fallback data:', error);
+      return [
+        {
+          code: '1A',
+          name: 'Reactive Awareness - Stage 1',
+          scoreRange: '0 - 150',
+          toneTag: 'Gentle Guidance',
+          toneEssence: 'Focuses on safety, grounding, and simple recognition of emotions without judgment.',
+          voiceAnchor: 'You are safe to feel exactly what you are feeling right now.',
+          tierUser: '1',
+          initialCycle: 'Default Baseline'
+        },
+        {
+          code: '1B',
+          name: 'Reactive Awareness - Stage 2',
+          scoreRange: '151 - 300',
+          toneTag: 'Compassionate Inquiry',
+          toneEssence: 'Encourages curiosity about triggers and physical sensations in the body.',
+          voiceAnchor: 'Where do you feel this sensation in your body? Let it breathe.',
+          tierUser: '1',
+          initialCycle: 'Body Scan Focus'
+        },
+        {
+          code: '2A',
+          name: 'Proactive Growth - Stage 3',
+          scoreRange: '301 - 450',
+          toneTag: 'Empowered Action',
+          toneEssence: 'Shifts focus toward intentional choice and small, meaningful response shifts.',
+          voiceAnchor: 'You have the power to choose your next breath and your next thought.',
+          tierUser: '2',
+          initialCycle: 'Intention Setting'
+        },
+        {
+          code: '2B',
+          name: 'Proactive Growth - Stage 4',
+          scoreRange: '451 - 600',
+          toneTag: 'Strategic Resilience',
+          toneEssence: 'Building tools for navigating complex emotional landscapes with agency.',
+          voiceAnchor: 'Challenges are the training ground for your expanding inner strength.',
+          tierUser: '2',
+          initialCycle: 'Resilience Mapping'
+        },
+        {
+          code: '3A',
+          name: 'Creative Expansion - Stage 5',
+          scoreRange: '601 - 750',
+          toneTag: 'Inspired Flow',
+          toneEssence: 'Emphasizes creativity, intuition, and the ability to find meaning in all states.',
+          voiceAnchor: 'Your awareness is a vast ocean; every wave is part of your depth.',
+          tierUser: '3',
+          initialCycle: 'Intuitive Alignment'
+        },
+        {
+          code: '3B',
+          name: 'Unified Presence - Stage 6',
+          scoreRange: '751 - 1000',
+          toneTag: 'Radiant Being',
+          toneEssence: 'Full integration of awareness and action. Content is direct, expansive, and subtle.',
+          voiceAnchor: 'There is no separation between your growth and the world around you.',
+          tierUser: '3',
+          initialCycle: 'Unified Field'
+        }
+      ];
     }
   }
 

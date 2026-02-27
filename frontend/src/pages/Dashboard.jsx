@@ -1,7 +1,6 @@
 import { QuickActionCard } from '@/components/dashboard/QuickActionCard';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { Layout } from '@/components/layout/Layout';
-import { FullPageLoader } from '@/components/loading/LoadingSpinner';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +21,25 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
+const DashboardSkeleton = () => (
+  <div className="space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {[1, 2, 3, 4].map((i) => (
+        <Card key={i} className="h-32 animate-pulse bg-muted/20" />
+      ))}
+    </div>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <Card className="lg:col-span-2 h-[400px] animate-pulse bg-muted/20" />
+      <Card className="h-[400px] animate-pulse bg-muted/20" />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Card key={i} className="h-24 animate-pulse bg-muted/20" />
+      ))}
+    </div>
+  </div>
+);
+
 export const Dashboard = () => {
   const navigate = useNavigate();
   // Fetch data from API
@@ -29,11 +47,11 @@ export const Dashboard = () => {
   const { data: activityData, loading: activityLoading, error: activityError } = useRecentActivity({ limit: 10 }, { showErrorToast: false });
   const { data: healthData, loading: healthLoading, error: healthError } = useContentHealth({ showErrorToast: false });
 
- // Get users data
-  const { data: usersResponse } = useUsers({});
+  // Get users data - optimized to just get the total count
+  const { data: usersResponse, loading: usersLoading, error: usersError } = useUsers({ limit: 1 });
 
-  // Get total users
-  const totalUsers = usersResponse?.total || usersResponse?.data?.length || 0;
+  // Get total users from usersResponse (Admin Edge Function)
+  const totalUsers = usersResponse?.total || 0;
   
   // Transform stats data
   const stats = statsData ? {
@@ -77,22 +95,22 @@ export const Dashboard = () => {
     { name: 'Templates (Affirmations/Meditations)', value: 0, color: 'muted' }
   ];
 
-  // Show loading state
-  if (statsLoading || activityLoading || healthLoading) {
+  // Show loading state - wait for all data including user count
+  if (statsLoading || activityLoading || healthLoading || usersLoading) {
     return (
       <Layout
         title="Dashboard Overview"
         subtitle="Track engagement, content health, and user activity across TAP IN"
         hideHeaderQuickActions
       >
-        <FullPageLoader message="Loading dashboard data..." />
+        <DashboardSkeleton />
       </Layout>
     );
   }
 
   // Show error state if all requests failed
-  const hasErrors = statsError || activityError || healthError;
-  if (hasErrors && !statsData && !activityData && !healthData) {
+  const hasErrors = statsError || activityError || healthError || usersError;
+  if (hasErrors && !statsData && !activityData && !healthData && !usersResponse) {
     return (
       <Layout
         title="Dashboard Overview"
@@ -270,7 +288,7 @@ export const Dashboard = () => {
           </div>
 
           {/* Content Health Status */}
-          <div>
+          {/* <div>
             <Card>
               <CardHeader>
                 <CardTitle>Content Health Status</CardTitle>
@@ -300,7 +318,7 @@ export const Dashboard = () => {
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </div> */}
         </div>
 
         {/* Quick Actions */}

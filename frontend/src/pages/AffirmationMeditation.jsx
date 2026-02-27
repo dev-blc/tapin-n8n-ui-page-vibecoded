@@ -18,6 +18,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+  Pagination
+} from '@/components/ui/pagination';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -50,10 +53,9 @@ import {
   Sparkles,
   Wind
 } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-
 export const AffirmationMeditation = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [selectedTemplate, setSelectedTemplate] = useState(null);
@@ -63,6 +65,13 @@ export const AffirmationMeditation = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, activeTab]);
 
   // Use custom hook to handle auto-opening modal
   useAutoOpenModal(setIsCreateModalOpen);
@@ -99,6 +108,12 @@ export const AffirmationMeditation = () => {
       setLoading(false);
     }
   }, [searchQuery]);
+
+  // Paginate affirmation templates
+  const paginatedAffirmations = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return affirmationTemplates.slice(startIndex, startIndex + itemsPerPage);
+  }, [affirmationTemplates, currentPage, itemsPerPage]);
 
   // Fetch affirmation templates
   useEffect(() => {
@@ -241,41 +256,45 @@ export const AffirmationMeditation = () => {
           </TabsList>
 
           {/* Affirmation Templates */}
-          <TabsContent value="affirmations" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Search affirmation templates..."
-                    className="pl-10 w-80"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-
-                <Select>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Energy Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    {energyTypes.map((energy) => (
-                      <SelectItem key={energy.name} value={energy.name.toLowerCase()}>
-                        {energy.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+          <TabsContent value="affirmations" className="space-y-6">
+            <div className="flex items-center space-x-4 mb-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search affirmation templates..."
+                  className="pl-10 w-80"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
+
+              <Select>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Energy Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  {energyTypes.map((energy) => (
+                    <SelectItem key={energy.name} value={energy.name.toLowerCase()}>
+                      {energy.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                 <CardTitle className="flex items-center space-x-2">
                   <Sparkles className="h-5 w-5" />
                   <span>Affirmation Templates</span>
                 </CardTitle>
+                <div className="text-sm font-medium text-muted-foreground animate-in fade-in slide-in-from-right-2 duration-300 bg-muted/50 px-3 py-1 rounded-full border border-border/50">
+                  {searchQuery 
+                    ? `Showing ${affirmationTemplates.length} results` 
+                    : `${affirmationTemplates.length} Templates`
+                  }
+                </div>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -292,8 +311,8 @@ export const AffirmationMeditation = () => {
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
-                  <TableBody>
-                      {affirmationTemplates.length > 0 ? affirmationTemplates.map((template) => {
+                  <TableBody key={currentPage} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                      {paginatedAffirmations.length > 0 ? paginatedAffirmations.map((template) => {
                         const templateName = template.templateName || template.name || 'Unnamed Template';
                         const energyType = typeof template.energyType === 'object' ? template.energyType?.name || template.energyType?.value : template.energyType;
                         const imageryTheme = typeof template.imageryTheme === 'object' ? template.imageryTheme?.name || template.imageryTheme?.value : template.imageryTheme;
@@ -301,7 +320,10 @@ export const AffirmationMeditation = () => {
                         const isActive = template.isActive !== undefined ? template.isActive : true;
 
                         return (
-                          <TableRow key={template.id}>
+                          <TableRow 
+                            key={template.id} 
+                            className="cursor-pointer transition-all duration-200 hover:bg-muted/50 hover:translate-x-1 border-l-2 border-l-transparent hover:border-l-primary"
+                          >
                         <TableCell>
                           <div>
                               <div className="font-medium">{templateName}</div>
@@ -338,7 +360,10 @@ export const AffirmationMeditation = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <StatusBadge status={isActive ? 'Active' : 'Inactive'} />
+                          <StatusBadge 
+                            status={isActive ? 'Active' : 'Inactive'} 
+                            className="shadow-sm border-opacity-50"
+                          />
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
@@ -374,6 +399,16 @@ export const AffirmationMeditation = () => {
                     )}
                   </TableBody>
                 </Table>
+                )}
+
+                {affirmationTemplates.length > 0 && !loading && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalItems={affirmationTemplates.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                    className="mt-4"
+                  />
                 )}
               </CardContent>
             </Card>

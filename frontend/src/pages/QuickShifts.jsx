@@ -18,6 +18,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+  Pagination
+} from '@/components/ui/pagination';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -52,7 +55,7 @@ import {
   Search,
   Trash2
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -63,6 +66,13 @@ export const QuickShifts = () => {
   const [selectedTier, setSelectedTier] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedTier]);
 
   // Use custom hook to handle auto-opening modal
   useAutoOpenModal(setIsCreateModalOpen);
@@ -204,6 +214,12 @@ export const QuickShifts = () => {
     return filtered;
   }, [quickShiftLoops, searchQuery, selectedTier]);
 
+  // Paginate filtered loops
+  const paginatedLoops = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredLoops.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredLoops, currentPage, itemsPerPage]);
+
   // Handle create loop
   const handleCreateLoop = async () => {
     if (submitting) return;
@@ -293,37 +309,41 @@ export const QuickShifts = () => {
           </TabsList>
 
           {/* Loop Categories */}
-          <TabsContent value="loops" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Search loop categories..."
-                    className="pl-10 w-80"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                <Select value={selectedTier} onValueChange={setSelectedTier}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Tier Level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Tiers</SelectItem>
-                    <SelectItem value="1">Tier 1</SelectItem>
-                    <SelectItem value="1A">Tier 1A</SelectItem>
-                    <SelectItem value="2">Tier 2</SelectItem>
-                    <SelectItem value="2A">Tier 2A</SelectItem>
-                    <SelectItem value="3">Tier 3</SelectItem>
-                  </SelectContent>
-                </Select>
+          <TabsContent value="loops" className="space-y-6">
+            <div className="flex items-center space-x-4 mb-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search loop categories..."
+                  className="pl-10 w-80"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
+              <Select value={selectedTier} onValueChange={setSelectedTier}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Tier Level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Tiers</SelectItem>
+                  <SelectItem value="1">Tier 1</SelectItem>
+                  <SelectItem value="1A">Tier 1A</SelectItem>
+                  <SelectItem value="2">Tier 2</SelectItem>
+                  <SelectItem value="2A">Tier 2A</SelectItem>
+                  <SelectItem value="3">Tier 3</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                 <CardTitle>Quick Shift Loop Categories</CardTitle>
+                <div className="text-sm font-medium text-muted-foreground animate-in fade-in slide-in-from-right-2 duration-300 bg-muted/50 px-3 py-1 rounded-full border border-border/50">
+                  {searchQuery || selectedTier !== 'all' 
+                    ? `Showing ${filteredLoops.length} results` 
+                    : `${filteredLoops.length} Variations`
+                  }
+                </div>
               </CardHeader>
               <CardContent>
                 {loopsLoading ? (
@@ -345,9 +365,12 @@ export const QuickShifts = () => {
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
-                    <TableBody>
-                      {filteredLoops.length > 0 ? filteredLoops.map((loop) => (
-                        <TableRow key={loop.id} className="cursor-pointer hover:bg-muted/50">
+                    <TableBody key={currentPage} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                      {paginatedLoops.length > 0 ? paginatedLoops.map((loop) => (
+                        <TableRow 
+                          key={loop.id} 
+                          className="cursor-pointer transition-all duration-200 hover:bg-muted/50 hover:translate-x-1 border-l-2 border-l-transparent hover:border-l-primary"
+                        >
                           <TableCell>
                             <div className="flex items-center space-x-3">
                               {loop.icon && <span className="text-2xl">{loop.icon}</span>}
@@ -365,7 +388,11 @@ export const QuickShifts = () => {
                             {loop.tierAvailability && Array.isArray(loop.tierAvailability) && loop.tierAvailability.length > 0 ? (
                               <div className="flex flex-wrap gap-1">
                                 {loop.tierAvailability.map((tier, idx) => (
-                                  <Badge key={tier || idx} variant="secondary" className="text-xs">
+                                  <Badge 
+                                    key={tier || idx} 
+                                    variant="secondary" 
+                                    className="text-[10px] uppercase tracking-wider bg-primary/10 text-primary border-primary/20 shadow-[0_0_8px_rgba(var(--primary),0.1)] px-2"
+                                  >
                                     {tier || 'N/A'}
                                   </Badge>
                                 ))}
@@ -375,7 +402,10 @@ export const QuickShifts = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <StatusBadge status={loop.status || 'Active'} />
+                            <StatusBadge 
+                              status={loop.status || 'Active'} 
+                              className="shadow-sm border-opacity-50"
+                            />
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -409,6 +439,15 @@ export const QuickShifts = () => {
                       )}
                     </TableBody>
                   </Table>
+                )}
+
+                {filteredLoops.length > 0 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalItems={filteredLoops.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                  />
                 )}
               </CardContent>
             </Card>

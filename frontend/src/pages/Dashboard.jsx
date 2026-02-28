@@ -46,6 +46,9 @@ export const Dashboard = () => {
   const { data: statsData, loading: statsLoading, error: statsError } = useDashboardStats({ showErrorToast: false });
   const { data: activityData, loading: activityLoading, error: activityError } = useRecentActivity({ limit: 10 }, { showErrorToast: false });
   const { data: healthData, loading: healthLoading, error: healthError } = useContentHealth({ showErrorToast: false });
+  
+  // Set this to true to show the Content Health Status card next to Recent Activity
+  const showHealthStatus = false;
 
   // Get users data - optimized to just get the total count
   const { data: usersResponse, loading: usersLoading, error: usersError } = useUsers({ limit: 1 });
@@ -232,7 +235,7 @@ export const Dashboard = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Activity */}
-          <div className="lg:col-span-2">
+          <div className={showHealthStatus ? "lg:col-span-2" : "lg:col-span-3"}>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Recent Activity</CardTitle>
@@ -288,37 +291,39 @@ export const Dashboard = () => {
           </div>
 
           {/* Content Health Status */}
-          {/* <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Content Health Status</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Monitor variation freshness and rotation balance.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {contentHealth.map((item, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{item.name}</span>
-                        <span className="text-muted-foreground">{item.value}%</span>
+          {showHealthStatus && (
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Content Health Status</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Monitor variation freshness and rotation balance.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {contentHealth.map((item, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium">{item.name}</span>
+                          <span className="text-muted-foreground">{item.value}%</span>
+                        </div>
+                        <Progress
+                          value={item.value}
+                          className={`h-2 ${
+                            item.color === 'success' ? 'bg-success/20' :
+                            item.color === 'warning' ? 'bg-warning/20' :
+                            item.color === 'primary' ? 'bg-primary/20' :
+                            'bg-muted'
+                          }`}
+                        />
                       </div>
-                      <Progress
-                        value={item.value}
-                        className={`h-2 ${
-                          item.color === 'success' ? 'bg-success/20' :
-                          item.color === 'warning' ? 'bg-warning/20' :
-                          item.color === 'primary' ? 'bg-primary/20' :
-                          'bg-muted'
-                        }`}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div> */}
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
 
         {/* Quick Actions */}

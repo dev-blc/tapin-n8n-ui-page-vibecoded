@@ -1,18 +1,24 @@
-import React, { useState } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { TableSkeleton } from '@/components/loading/LoadingSpinner';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Pagination } from '@/components/ui/pagination';
 import {
   Select,
   SelectContent,
@@ -21,39 +27,33 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
-import { Checkbox } from '@/components/ui/checkbox';
+import { useCharacterMapping, useOnboardingQuestions, useOptionMutation, useQuestionMutation } from '@/hooks/useOnboarding';
 import {
-  MessageSquare,
-  Search,
-  Plus,
   Edit,
   Eye,
-  MoreHorizontal,
-  Users,
-  Target,
   Heart,
-  Send,
-  Trash2,
   Loader2,
+  MoreHorizontal,
   Pause,
-  Play
+  Play,
+  Plus,
+  Search,
+  Send,
+  Target,
+  Trash2,
+  Users
 } from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
-import { useOnboardingQuestions, useQuestionMutation, useOptionMutation, useCharacterMapping } from '@/hooks/useOnboarding';
-import { FullPageLoader, TableSkeleton } from '@/components/loading/LoadingSpinner';
 
 export const OnboardingManagement = () => {
   const [selectedQuestion, setSelectedQuestion] = useState(null);
@@ -63,6 +63,10 @@ export const OnboardingManagement = () => {
   const [isSendAffirmationOpen, setIsSendAffirmationOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 7;
 
   // Track created items for cleanup on cancel
   const [createdQuestionId, setCreatedQuestionId] = useState(null);
@@ -670,6 +674,42 @@ export const OnboardingManagement = () => {
     }
   };
 
+  const filteredQuestions = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+
+    return onboardingQuestions.filter((question) => {
+      // 🔎 SEARCH FILTER
+      const matchesSearch =
+        !query ||
+        (question.text || '').toLowerCase().includes(query) ||
+        question.options?.some(option =>
+          (option.optionText || option.text || '')
+            .toLowerCase()
+            .includes(query)
+        );
+
+      // 📌 STATUS FILTER
+      const matchesStatus =
+        statusFilter === 'all' ||
+        (statusFilter === 'active' && question.isActive) ||
+        (statusFilter === 'paused' && !question.isActive);
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [onboardingQuestions, searchQuery, statusFilter]);
+
+  // Paginated questions for current page
+  const paginatedQuestions = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredQuestions.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredQuestions, currentPage, itemsPerPage]);
+
+  // Reset to first page when filtering
+  React.useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter]);
+  
+
   return (
     <Layout
       title="Onboarding Question Management"
@@ -724,27 +764,36 @@ export const OnboardingManagement = () => {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Search questions..."
                     className="pl-10 w-80"
                   />
                 </div>
 
-                <Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-32">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All</SelectItem>
                     <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
+                   <SelectItem value="paused">Paused</SelectItem>
+
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                 <CardTitle>Onboarding Assessment Questions</CardTitle>
+                <div className="text-sm font-medium text-muted-foreground animate-in fade-in slide-in-from-right-2 duration-300 bg-muted/50 px-3 py-1 rounded-full border border-border/50">
+                  {searchQuery || statusFilter !== 'all'
+                    ? `Showing ${filteredQuestions.length} results` 
+                    : `${filteredQuestions.length} Questions`
+                  }
+                </div>
               </CardHeader>
               <CardContent>
                 {loading ? (
@@ -757,101 +806,114 @@ export const OnboardingManagement = () => {
                     </Button>
                   </div>
                 ) : (
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Question</TableHead>
-                        <TableHead>Display Order</TableHead>
-                        <TableHead>Response Options</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {onboardingQuestions && onboardingQuestions.length > 0 ? onboardingQuestions.map((question) => (
-                        <TableRow key={question.id}>
-                          <TableCell>
-                            <div className="max-w-md">
-                              <p className="font-medium text-sm">{question.text}</p>
-                              <p className="text-xs text-muted-foreground">
-                                ID: {question.id?.substring(0, 8)}...
-                              </p>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">#{question.displayOrder}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              {question.options?.length || 0} options
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm text-muted-foreground">
-                              From API
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={question.isActive ? "success" : "secondary"}>
-                              {question.isActive ? 'Active' : 'Paused'}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => setSelectedQuestion(question)}>
-                                  <Eye className="h-4 w-4 mr-2" />
-                                  View Details
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => openEditModal(question)}>
-                                  <Edit className="h-4 w-4 mr-2" />
-                                  Edit Question
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => toggleQuestionStatus(question)}
-                                >
-                                  {question.isActive ? (
-                                    <>
-                                      <Pause className="h-4 w-4 mr-2" />
-                                      Pause Question
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Play className="h-4 w-4 mr-2" />
-                                      Resume Question
-                                    </>
-                                  )}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    if (window.confirm('Are you sure you want to delete this question?')) {
-                                      deleteQuestion(question.id);
-                                    }
-                                  }}
-                                  className="text-destructive"
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Delete Question
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      )) : (
+                  <>
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
-                            {loading ? 'Loading questions...' : 'No questions found'}
-                          </TableCell>
+                          <TableHead>Question</TableHead>
+                          <TableHead>Display Order</TableHead>
+                          <TableHead>Response Options</TableHead>
+                          <TableHead>Created</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {paginatedQuestions && paginatedQuestions.length > 0 ? (
+                          paginatedQuestions.map((question) => (
+                            <TableRow key={question.id}>
+                              <TableCell>
+                                <div className="max-w-md">
+                                  <p className="font-medium text-sm">{question.text}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    ID: {question.id?.substring(0, 8)}...
+                                  </p>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline">#{question.displayOrder}</Badge>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-sm">
+                                  {question.options?.length || 0} options
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className="text-sm text-muted-foreground">
+                                  From API
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant={question.isActive ? "success" : "secondary"}>
+                                  {question.isActive ? 'Active' : 'Paused'}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon">
+                                      <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => setSelectedQuestion(question)}>
+                                      <Eye className="h-4 w-4 mr-2" />
+                                      View Details
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => openEditModal(question)}>
+                                      <Edit className="h-4 w-4 mr-2" />
+                                      Edit Question
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => toggleQuestionStatus(question)}
+                                    >
+                                      {question.isActive ? (
+                                        <>
+                                          <Pause className="h-4 w-4 mr-2" />
+                                          Pause Question
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Play className="h-4 w-4 mr-2" />
+                                          Resume Question
+                                        </>
+                                      )}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        if (window.confirm('Are you sure you want to delete this question?')) {
+                                          deleteQuestion(question.id);
+                                        }
+                                      }}
+                                      className="text-destructive"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Delete Question
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                              {loading ? 'Loading questions...' : 'No questions found'}
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                    {filteredQuestions.length > itemsPerPage && (
+                      <Pagination
+                        currentPage={currentPage}
+                        totalItems={filteredQuestions.length}
+                        itemsPerPage={itemsPerPage}
+                        onPageChange={setCurrentPage}
+                        className="mt-4"
+                      />
+                    )}
+                  </>
                 )}
               </CardContent>
             </Card>
@@ -1027,8 +1089,11 @@ export const OnboardingManagement = () => {
             </div>
 
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                 <CardTitle>Question Overview</CardTitle>
+                <div className="text-sm font-medium text-muted-foreground animate-in fade-in slide-in-from-right-2 duration-300 bg-muted/50 px-3 py-1 rounded-full border border-border/50">
+                  {onboardingQuestions.length} Questions
+                </div>
               </CardHeader>
               <CardContent>
                 {loading ? (

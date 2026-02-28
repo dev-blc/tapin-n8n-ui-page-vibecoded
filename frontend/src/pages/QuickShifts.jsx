@@ -67,7 +67,7 @@ export const QuickShifts = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const itemsPerPage = 6;
 
   // Reset to first page when filters change
   useEffect(() => {

@@ -51,7 +51,7 @@ export const UserManagement = () => {
   const [tierFilter, setTierFilter] = useState('all');
   const [characterFilter, setCharacterFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const itemsPerPage = 6;
 
   // Reset to first page when filters change
   useEffect(() => {

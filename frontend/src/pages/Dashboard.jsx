@@ -9,15 +9,15 @@ import { Separator } from '@/components/ui/separator';
 import { useContentHealth, useDashboardStats, useRecentActivity } from '@/hooks/useDashboard';
 import { useUsers } from '@/hooks/useUsers';
 import {
-  Activity,
-  AlertCircle,
-  BookOpen,
-  CheckCircle,
-  FileText,
-  Heart,
-  Shuffle,
-  Users,
-  Zap
+    Activity,
+    AlertCircle,
+    BookOpen,
+    CheckCircle,
+    FileText,
+    Heart,
+    Shuffle,
+    Users,
+    Zap
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -176,7 +176,7 @@ export const Dashboard = () => {
       title: 'Add Affirmation Template',
       icon: Heart,
       color: 'bg-success',
-      href: '/affirmations?add=true'
+      href: '/affirmations?tab=affirmations&add=true'
     },
 
 
@@ -184,7 +184,7 @@ export const Dashboard = () => {
       title: 'Add Meditation Template',
       icon: Heart,
       color: 'bg-info',
-      href: '/meditations?add=true'
+      href: '/affirmations?tab=meditations&add=true'
     }
   ];
 

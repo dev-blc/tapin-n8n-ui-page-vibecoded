@@ -1,18 +1,18 @@
-import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Bell, Search, Plus, MessageSquare, Settings, User, LogOut, Zap, Shuffle, Heart } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Heart, MessageSquare, Plus, Search, Shuffle, Wind, Zap } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export const Header = ({ title, subtitle, actions, showQuickActions = true }) => {
+  const navigate = useNavigate();
   const notifications = [
     { id: 1, message: "New user feedback received", time: "2 min ago", type: "info" },
     { id: 2, message: "Content pool needs attention", time: "1 hour ago", type: "warning" },
@@ -66,19 +66,23 @@ export const Header = ({ title, subtitle, actions, showQuickActions = true }) =>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>Create New</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/quick-shifts?add=true')}>
                     <Zap className="h-4 w-4 mr-2" />
                     Quick Shift Variation
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/plot-twists?add=true')}>
                     <Shuffle className="h-4 w-4 mr-2" />
                     Plot Twist Quest
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/affirmations?tab=affirmations&add=true')}>
                     <Heart className="h-4 w-4 mr-2" />
                     Affirmation Template
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/affirmations?tab=meditations&add=true')}>
+                    <Wind className="h-4 w-4 mr-2" />
+                    Meditation Template
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/teaching-moments?add=true')}>
                     <MessageSquare className="h-4 w-4 mr-2" />
                     Teaching Moment
                   </DropdownMenuItem>

@@ -864,7 +864,7 @@ export const PlotTwists = () => {
                              </Badge>
                           </div>
                           <CardTitle className="text-lg font-semibold group-hover:text-primary transition-colors">
-                            {tier.name || 'Unnamed Tier'}
+                            {tier.tier_name || 'Unnamed Tier'}
                           </CardTitle>
                         </div>
                         <div className="h-10 w-10 rounded-full bg-white shadow-sm flex items-center justify-center text-primary border border-border/50 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -887,14 +887,14 @@ export const PlotTwists = () => {
                         <div>
                           <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Tone Tag</div>
                           <Badge variant="secondary" className="font-medium text-[10px]">
-                            {tier.toneTag || 'Empowerment'}
+                            {tier.tone?.tag || 'Empowerment'}
                           </Badge>
                         </div>
 
                         <div>
                           <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Tone Essence</div>
                           <p className="text-xs text-foreground/80 leading-relaxed line-clamp-2 group-hover:line-clamp-none transition-all">
-                            {tier.toneEssence || 'No essence description available.'}
+                            {tier.tone?.essence|| 'No essence description available.'}
                           </p>
                         </div>
 
@@ -904,14 +904,14 @@ export const PlotTwists = () => {
                              Initial Cycle
                            </div>
                            <p className="text-xs italic text-muted-foreground">
-                             {tier.initialCycle || 'Default mapping'}
+                             {tier.initial_cycle || 'Default mapping'}
                            </p>
                         </div>
 
                         <div className="p-3 bg-muted/30 rounded-lg border border-border/30 mt-4">
                           <div className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Voice Anchor</div>
                           <p className="text-xs italic text-muted-foreground/90 font-serif">
-                            "{tier.voiceAnchor || 'The voice of growth and clarity.'}"
+                            "{tier.anchors?.voice_anchors || 'The voice of growth and clarity.'}"
                           </p>
                         </div>
                       </div>

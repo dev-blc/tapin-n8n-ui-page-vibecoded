@@ -56,24 +56,8 @@ import {
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { toast } from 'sonner';
-export const AffirmationMeditation = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [selectedTemplate, setSelectedTemplate] = useState(null);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('affirmations');
-  const [affirmationTemplates, setAffirmationTemplates] = useState([]);
-  const [meditationTemplates, setMeditationTemplates] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [meditationLoading, setMeditationLoading] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [meditationSearchQuery, setMeditationSearchQuery] = useState('');
-  const [energyFilter, setEnergyFilter] = useState('all');
-  const [settingFilter, setSettingFilter] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 7;
 
-  // Mock data fallbacks for meditation templates
+// Mock data fallbacks for meditation templates
   const mockMeditationTemplates = [
     {
       id: 'MD-001',
@@ -112,6 +96,27 @@ export const AffirmationMeditation = () => {
       lastModified: '2024-03-06'
     }
   ];
+
+
+
+export const AffirmationMeditation = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('affirmations');
+  const [affirmationTemplates, setAffirmationTemplates] = useState([]);
+  const [meditationTemplates, setMeditationTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [meditationLoading, setMeditationLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [meditationSearchQuery, setMeditationSearchQuery] = useState('');
+  const [energyFilter, setEnergyFilter] = useState('all');
+  const [settingFilter, setSettingFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  
 
 
   // Reset to first page when filters change
@@ -227,7 +232,7 @@ export const AffirmationMeditation = () => {
     }
 
     return result;
-  }, [meditationTemplates, meditationSearchQuery, settingFilter, mockMeditationTemplates]);
+  }, [meditationTemplates, meditationSearchQuery, settingFilter]);
 
   // Fetch affirmation templates
   useEffect(() => {
@@ -507,8 +512,8 @@ export const AffirmationMeditation = () => {
                     )}
                   </TableBody>
                 </Table>
-                )}gi
-
+                )}
+                
                 {affirmationTemplates.length > 0 && !loading && (
                   <Pagination
                     currentPage={currentPage}

@@ -8,7 +8,6 @@ import adminServiceClient from '@/lib/api/adminServiceClient';
 import { ADMIN_SERVICE_ENDPOINTS } from '@/lib/api/adminServiceConfig';
 import { handleApiError } from '@/utils/apiHelpers';
 import BaseService from './baseService';
-import supabase from '@/lib/supabaseClient';
 class PlotTwistService extends BaseService {
   constructor() {
     // Use admin-service client for basic CRUD operations
@@ -98,8 +97,8 @@ class PlotTwistService extends BaseService {
    */
   async createQuest(data) {
     try {
-      const response = await this.create(data);
-      return response;
+      const response = await adminServiceClient.post(ADMIN_SERVICE_ENDPOINTS.PLOT_TWIST_QUESTS, data);
+      return response.data;
     } catch (error) {
       throw handleApiError(error);
     }
@@ -113,8 +112,8 @@ class PlotTwistService extends BaseService {
    */
   async updateQuest(id, data) {
     try {
-      const response = await this.update(id, data);
-      return response;
+      const response = await adminServiceClient.put(ADMIN_SERVICE_ENDPOINTS.PLOT_TWIST_QUEST_BY_ID(id), data);
+      return response.data;
     } catch (error) {
       throw handleApiError(error);
     }

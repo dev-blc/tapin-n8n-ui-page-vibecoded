@@ -201,24 +201,29 @@ export const PlotTwists = () => {
       day: quest.dayNumber || quest.day,
       // Map isActive to status
       status: quest.isActive === false ? 'Inactive' : (quest.status || 'Active'),
-      // Ensure responseOptions exists (may need to fetch separately or derive from options/responses)
-      responseOptions: quest.responseOptions || quest.responses || []
+      // Prefer responses for display
+      responseOptions: quest.responses || quest.options || []
     }));
   }, [plotTwistQuestsResponse, characterNameMap]);
 
   // Form state for new/edit quest
   const [questForm, setQuestForm] = useState({
-    character: '',
-    day: '',
+    characterId: '',
+    dayNumber: '',
     pillar: '',
     title: '',
+    alternateTitle: '',
     description: '',
+    contentImage: '',
     tier: '',
-      responseOptions: [
-      { emoji: '', text: '', level: 'High' },
-      { emoji: '', text: '', level: 'Medium' },
-      { emoji: '', text: '', level: 'Low' }
-    ]
+    tagIds: [],
+    options: [
+      { optionText: '', engagementLevel: 'high' }
+    ],
+    responses: [
+      { responseEmoji: '', responseText: '', responseDescription: '', engagementLevel: 'high' }
+    ],
+    isActive: true
   });
 
   const alignedPillars = [
@@ -274,16 +279,12 @@ export const PlotTwists = () => {
         toast.error('Quest description is required');
         return;
       }
-      if (!questForm.character) {
+      if (!questForm.characterId) {
         toast.error('Character is required');
         return;
       }
-      if (!questForm.day) {
-        toast.error('Day is required');
-        return;
-      }
-      if (!questForm.pillar) {
-        toast.error('Pillar is required');
+      if (!questForm.dayNumber) {
+        toast.error('Day Number is required');
         return;
       }
       if (!questForm.tier) {
@@ -291,55 +292,44 @@ export const PlotTwists = () => {
         return;
       }
 
-      // Get character UUID from character name
-      const characterId = characterMap[questForm.character];
-      if (!characterId) {
-        toast.error('Invalid character selected');
-        return;
-      }
-
       // Convert day to number
-      const dayNumber = parseInt(questForm.day, 10);
-      if (isNaN(dayNumber) || dayNumber < 1 || dayNumber > 7) {
-        toast.error('Day must be a number between 1 and 7');
+      const dayNumberValue = parseInt(questForm.dayNumber, 10);
+      if (isNaN(dayNumberValue) || dayNumberValue < 1 || dayNumberValue > 7) {
+        toast.error('Day Number must be between 1 and 7');
         return;
       }
 
-      // Transform responseOptions to API format
-      const responseOptionsArray = Array.isArray(questForm.responseOptions) ? questForm.responseOptions : [];
-      const validResponseOptions = responseOptionsArray.filter(opt => opt && opt.emoji && opt.text);
-      
-      // Map responseOptions to responses array (PlotTwistResponseInput)
-      // API requires responses to be an array (can be empty)
-      const responses = validResponseOptions.map((opt, index) => ({
-        tier: questForm.tier,
-        characterId: characterId,
-        engagementLevel: (opt.level || 'High').toLowerCase(), // Convert "High" to "high"
-        responseEmoji: opt.emoji,
-        responseText: opt.text,
-        responseDescription: opt.text, // Use text as description if not provided
-        displayOrder: index + 1
-      }));
+      // Map options and responses to correct format
+      const finalOptions = questForm.options
+        .filter(opt => opt.optionText.trim())
+        .map((opt, index) => ({
+          ...opt,
+          displayOrder: index + 1,
+          tier: questForm.tier,
+          characterId: questForm.characterId
+        }));
 
-      // Create options array (PlotTwistOptionInput) - using response text as option text
-      // API requires options to be an array (can be empty)
-      const options = validResponseOptions.map((opt, index) => ({
-        optionText: opt.text,
-        displayOrder: index + 1,
-        tier: questForm.tier,
-        characterId: characterId,
-        engagementLevel: (opt.level || 'High').toLowerCase()
-      }));
+      const finalResponses = questForm.responses
+        .filter(resp => resp.responseText.trim())
+        .map((resp, index) => ({
+          ...resp,
+          displayOrder: index + 1,
+          tier: questForm.tier,
+          characterId: questForm.characterId
+        }));
 
       const payload = {
-        characterId: characterId,
+        characterId: questForm.characterId,
         tier: questForm.tier,
+        dayNumber: dayNumberValue,
         title: questForm.title.trim(),
+        alternateTitle: questForm.alternateTitle.trim() || "",
         description: questForm.description.trim(),
-        dayNumber: dayNumber,
-        pillar: questForm.pillar, // Add missing pillar field
-        options: options,
-        responses: responses
+        tagIds: questForm.tagIds || [],
+        contentImage: questForm.contentImage.trim() || "",
+        isActive: questForm.isActive,
+        options: finalOptions,
+        responses: finalResponses
       };
 
       await createQuest(payload, { 
@@ -348,23 +338,24 @@ export const PlotTwists = () => {
           refetchQuests();
           setIsCreateModalOpen(false);
           setQuestForm({
-            character: '',
-            day: '',
+            characterId: '',
+            dayNumber: '',
             pillar: '',
             title: '',
+            alternateTitle: '',
             description: '',
+            contentImage: '',
             tier: '',
-            responseOptions: [
-              { emoji: '', text: '', level: 'High' },
-              { emoji: '', text: '', level: 'Medium' },
-              { emoji: '', text: '', level: 'Low' }
-            ]
+            tagIds: [],
+            options: [{ optionText: '', engagementLevel: 'high' }],
+            responses: [{ responseEmoji: '', responseText: '', responseDescription: '', engagementLevel: 'high' }],
+            isActive: true
           });
         }
       });
     } catch (error) {
       console.error('Error creating quest:', error);
-      toast.error(error.message || 'Failed to create quest. Please check your connection and try again.');
+      toast.error(error.message || 'Failed to create quest.');
     } finally {
       setSubmitting(false);
     }
@@ -393,42 +384,23 @@ export const PlotTwists = () => {
   const handleEditQuest = (quest) => {
     setSelectedQuest(quest);
     
-    // Try to get character name from characterId, fallback to character name if available
-    let characterValue = '';
-    if (quest.characterId) {
-      // Find character by ID
-      const char = characters.find(c => c.id === quest.characterId);
-      characterValue = char?.name || quest.characterId;
-    } else if (quest.character) {
-      characterValue = quest.character;
-    }
-
-    // Transform responses/options back to responseOptions format if available
-    let responseOptions = [
-      { emoji: '', text: '', level: 'High' },
-      { emoji: '', text: '', level: 'Medium' },
-      { emoji: '', text: '', level: 'Low' }
-    ];
-    
-    // If quest has responses, use them
-    if (quest.responses && Array.isArray(quest.responses) && quest.responses.length > 0) {
-      responseOptions = quest.responses.map((resp, index) => ({
-        emoji: resp.responseEmoji || '',
-        text: resp.responseText || '',
-        level: resp.engagementLevel ? resp.engagementLevel.charAt(0).toUpperCase() + resp.engagementLevel.slice(1) : 'High'
-      }));
-    } else if (quest.responseOptions && Array.isArray(quest.responseOptions)) {
-      responseOptions = quest.responseOptions;
-    }
-
     setQuestForm({
-      character: characterValue,
-      day: quest.dayNumber?.toString() || quest.day?.toString() || '',
+      characterId: quest.characterId || '',
+      dayNumber: (quest.dayNumber || quest.day)?.toString() || '',
       pillar: quest.pillar || '',
       title: quest.title || '',
+      alternateTitle: quest.alternateTitle || '',
       description: quest.description || '',
+      contentImage: quest.contentImage || '',
       tier: quest.tier || '',
-      responseOptions: responseOptions
+      tagIds: quest.tagIds || [],
+      isActive: quest.isActive !== undefined ? quest.isActive : true,
+      options: quest.options && quest.options.length > 0 
+        ? quest.options 
+        : [{ optionText: '', engagementLevel: 'high' }],
+      responses: quest.responses && quest.responses.length > 0
+        ? quest.responses
+        : [{ responseEmoji: '', responseText: '', responseDescription: '', engagementLevel: 'high' }]
     });
     setIsEditModalOpen(true);
   };
@@ -440,55 +412,54 @@ export const PlotTwists = () => {
     try {
       setSubmitting(true);
 
-      // Get character UUID from character name
-      const characterId = characterMap[questForm.character];
-      if (!characterId) {
-        toast.error('Invalid character selected');
+      if (!questForm.characterId) {
+        toast.error('Character is required');
         return;
       }
 
       // Convert day to number
-      const dayNumber = parseInt(questForm.day, 10);
-      if (isNaN(dayNumber) || dayNumber < 1 || dayNumber > 7) {
+      const dayNumberValue = parseInt(questForm.dayNumber, 10);
+      if (isNaN(dayNumberValue) || dayNumberValue < 1 || dayNumberValue > 7) {
         toast.error('Day must be a number between 1 and 7');
         return;
       }
 
-      // Transform responseOptions to API format
-      const responseOptionsArray = Array.isArray(questForm.responseOptions) ? questForm.responseOptions : [];
-      const validResponseOptions = responseOptionsArray.filter(opt => opt && opt.emoji && opt.text);
-      
-      // Map responseOptions to responses array (PlotTwistResponseInput)
-      // API requires responses to be an array (can be empty)
-      const responses = validResponseOptions.map((opt, index) => ({
-        tier: questForm.tier,
-        characterId: characterId,
-        engagementLevel: (opt.level || 'High').toLowerCase(), // Convert "High" to "high"
-        responseEmoji: opt.emoji,
-        responseText: opt.text,
-        responseDescription: opt.text, // Use text as description if not provided
-        displayOrder: index + 1
-      }));
+      // Map options and responses to correct format, stripping IDs to ensure clean replacement 
+      // some backends for nested collections prefer this on PUT unless they are fine-grained
+      const finalOptions = questForm.options
+        .filter(opt => opt.optionText.trim())
+        .map((opt, index) => ({
+          optionText: opt.optionText,
+          displayOrder: index + 1,
+          tier: questForm.tier,
+          characterId: questForm.characterId,
+          engagementLevel: opt.engagementLevel || 'high'
+        }));
 
-      // Create options array (PlotTwistOptionInput) - using response text as option text
-      // API requires options to be an array (can be empty)
-      const options = validResponseOptions.map((opt, index) => ({
-        optionText: opt.text,
-        displayOrder: index + 1,
-        tier: questForm.tier,
-        characterId: characterId,
-        engagementLevel: (opt.level || 'High').toLowerCase()
-      }));
+      const finalResponses = questForm.responses
+        .filter(resp => resp.responseText.trim())
+        .map((resp, index) => ({
+          responseEmoji: resp.responseEmoji,
+          responseText: resp.responseText,
+          responseDescription: resp.responseDescription,
+          displayOrder: index + 1,
+          tier: questForm.tier,
+          characterId: questForm.characterId,
+          engagementLevel: resp.engagementLevel || 'high'
+        }));
 
       const payload = {
-        characterId: characterId,
+        characterId: questForm.characterId,
         tier: questForm.tier,
+        dayNumber: dayNumberValue,
         title: questForm.title.trim(),
+        alternateTitle: questForm.alternateTitle.trim() || "",
         description: questForm.description.trim(),
-        dayNumber: dayNumber,
-        pillar: questForm.pillar, // Add missing pillar field
-        options: options,
-        responses: responses
+        tagIds: questForm.tagIds || [],
+        contentImage: questForm.contentImage.trim() || "",
+        isActive: questForm.isActive,
+        options: finalOptions,
+        responses: finalResponses
       };
 
       await updateQuest({ id: selectedQuest.id, data: payload }, { 
@@ -498,17 +469,18 @@ export const PlotTwists = () => {
           setIsEditModalOpen(false);
           setSelectedQuest(null);
           setQuestForm({
-            character: '',
-            day: '',
+            characterId: '',
+            dayNumber: '',
             pillar: '',
             title: '',
+            alternateTitle: '',
             description: '',
+            contentImage: '',
             tier: '',
-            responseOptions: [
-              { emoji: '', text: '', level: 'High' },
-              { emoji: '', text: '', level: 'Medium' },
-              { emoji: '', text: '', level: 'Low' }
-            ]
+            tagIds: [],
+            options: [{ optionText: '', engagementLevel: 'high' }],
+            responses: [{ responseEmoji: '', responseText: '', responseDescription: '', engagementLevel: 'high' }],
+            isActive: true
           });
         }
       });
@@ -635,10 +607,10 @@ export const PlotTwists = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Character & Day</TableHead>
-                      <TableHead>Quest Title</TableHead>
+                      <TableHead>Titles</TableHead>
                       <TableHead>Pillar</TableHead>
                       <TableHead>Tier</TableHead>
-                        <TableHead>Response Options</TableHead>
+                      <TableHead>Content</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
@@ -660,7 +632,12 @@ export const PlotTwists = () => {
                         <TableCell>
                           <div className="max-w-md">
                               <p className="font-medium text-sm truncate">{quest.title || 'Untitled'}</p>
-                            <p className="text-xs text-muted-foreground truncate">
+                              {quest.alternateTitle && (
+                                <p className="text-xs text-muted-foreground italic truncate">
+                                  Alt: {quest.alternateTitle}
+                                </p>
+                              )}
+                            <p className="text-xs text-muted-foreground truncate line-clamp-1">
                                 {quest.description || 'No description'}
                             </p>
                           </div>
@@ -674,8 +651,15 @@ export const PlotTwists = () => {
                             <Badge variant="secondary">{quest.tier || 'N/A'}</Badge>
                         </TableCell>
                         <TableCell>
-                            <div className="text-sm">
-                              {quest.responseOptions?.length || 0} options
+                            <div className="text-sm space-y-1">
+                              <div className="flex items-center space-x-1">
+                                <span className="text-xs font-medium">Opt:</span>
+                                <span>{quest.options?.length || 0}</span>
+                              </div>
+                              <div className="flex items-center space-x-1">
+                                <span className="text-xs font-medium">Resp:</span>
+                                <span>{quest.responses?.length || 0}</span>
+                              </div>
                           </div>
                         </TableCell>
                           <TableCell>
@@ -1028,12 +1012,12 @@ export const PlotTwists = () => {
               <DialogTitle>Create New Plot Twist Quest</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="character">Character *</Label>
                   <Select
-                    value={questForm.character}
-                    onValueChange={(value) => setQuestForm({ ...questForm, character: value })}
+                    value={questForm.characterId}
+                    onValueChange={(value) => setQuestForm({ ...questForm, characterId: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select character" />
@@ -1043,7 +1027,7 @@ export const PlotTwists = () => {
                         <SelectItem value="loading" disabled>Loading...</SelectItem>
                       ) : (
                         characters.map((character) => (
-                          <SelectItem key={character.id || character.name} value={character.name || character.id}>
+                          <SelectItem key={character.id} value={character.id}>
                             {character.icon || '👤'} {character.name}
                           </SelectItem>
                         ))
@@ -1053,10 +1037,10 @@ export const PlotTwists = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="day">Day *</Label>
+                  <Label htmlFor="day">Day Number (1-7) *</Label>
                   <Select
-                    value={questForm.day}
-                    onValueChange={(value) => setQuestForm({ ...questForm, day: value })}
+                    value={questForm.dayNumber}
+                    onValueChange={(value) => setQuestForm({ ...questForm, dayNumber: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select day" />
@@ -1070,9 +1054,30 @@ export const PlotTwists = () => {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="tier">Tier *</Label>
+                  <Select
+                    value={questForm.tier}
+                    onValueChange={(value) => setQuestForm({ ...questForm, tier: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select tier" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Tier 1</SelectItem>
+                      <SelectItem value="1A">Tier 1A</SelectItem>
+                      <SelectItem value="2">Tier 2</SelectItem>
+                      <SelectItem value="2A">Tier 2A</SelectItem>
+                      <SelectItem value="3">Tier 3</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="pillar">Aligned Pillar *</Label>
+                  <Label htmlFor="pillar">Aligned Pillar (Optional)</Label>
                   <Select
                     value={questForm.pillar}
                     onValueChange={(value) => setQuestForm({ ...questForm, pillar: value })}
@@ -1090,94 +1095,227 @@ export const PlotTwists = () => {
                   </Select>
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="tier">Tier *</Label>
-                <Select
-                  value={questForm.tier}
-                  onValueChange={(value) => setQuestForm({ ...questForm, tier: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select tier" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Tier 1</SelectItem>
-                    <SelectItem value="1A">Tier 1A</SelectItem>
-                    <SelectItem value="2">Tier 2</SelectItem>
-                    <SelectItem value="2A">Tier 2A</SelectItem>
-                    <SelectItem value="3">Tier 3</SelectItem>
-                  </SelectContent>
-                </Select>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Main Title *</Label>
+                  <Input
+                    placeholder="e.g., Set a low-stakes goal..."
+                    value={questForm.title}
+                    onChange={(e) => setQuestForm({ ...questForm, title: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="alt-title">Alternate Title</Label>
+                  <Input
+                    placeholder="e.g., Catch the urge to overgive..."
+                    value={questForm.alternateTitle}
+                    onChange={(e) => setQuestForm({ ...questForm, alternateTitle: e.target.value })}
+                  />
+                </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="title">Quest Title *</Label>
-                <Input
-                  placeholder="Brief, actionable description of the daily challenge"
-                  value={questForm.title}
-                  onChange={(e) => setQuestForm({ ...questForm, title: e.target.value })}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="description">Quest Description *</Label>
+                <Label htmlFor="description">Description *</Label>
                 <Textarea
-                  placeholder="Detailed explanation of the quest purpose and instructions"
-                  rows={4}
+                  placeholder="Detailed explanation of the quest..."
+                  rows={3}
                   value={questForm.description}
                   onChange={(e) => setQuestForm({ ...questForm, description: e.target.value })}
                 />
               </div>
-              
-              <div className="space-y-4">
-                <Label>Response Options (Optional)</Label>
-                {questForm.responseOptions.map((option, index) => (
-                  <div key={index} className="grid grid-cols-3 gap-2 p-3 border rounded-lg">
-                    <div className="space-y-2">
-                      <Label className="text-xs">Emoji</Label>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="content-image">Content Image URL</Label>
+                  <Input
+                    placeholder="https://..."
+                    value={questForm.contentImage}
+                    onChange={(e) => setQuestForm({ ...questForm, contentImage: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="tag-ids">Tag IDs (Comma separated)</Label>
+                  <Input
+                    placeholder="uuid-tag-1, uuid-tag-2"
+                    value={questForm.tagIds.join(', ')}
+                    onChange={(e) => setQuestForm({ ...questForm, tagIds: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="isActive-create">Active Status</Label>
+                  <Select
+                    value={questForm.isActive ? "true" : "false"}
+                    onValueChange={(val) => setQuestForm({ ...questForm, isActive: val === "true" })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">Active</SelectItem>
+                      <SelectItem value="false">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-4 border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">User Content Options</Label>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setQuestForm({
+                      ...questForm,
+                      options: [...questForm.options, { optionText: '', engagementLevel: 'high' }]
+                    })}
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Add Option
+                  </Button>
+                </div>
+                {questForm.options.map((option, index) => (
+                  <div key={index} className="grid grid-cols-4 gap-2 p-3 bg-muted/30 rounded-lg relative group">
+                    <div className="col-span-3 space-y-1">
+                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">Option Text</Label>
                       <Input
-                        placeholder="😊"
-                        className="text-center"
-                        value={option.emoji}
+                        placeholder="Option text..."
+                        value={option.optionText}
                         onChange={(e) => {
-                          const updated = [...questForm.responseOptions];
-                          updated[index] = { ...updated[index], emoji: e.target.value };
-                          setQuestForm({ ...questForm, responseOptions: updated });
+                          const updated = [...questForm.options];
+                          updated[index] = { ...updated[index], optionText: e.target.value };
+                          setQuestForm({ ...questForm, options: updated });
                         }}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs">Response Text</Label>
-                      <Input
-                        placeholder="Response option text"
-                        value={option.text}
-                        onChange={(e) => {
-                          const updated = [...questForm.responseOptions];
-                          updated[index] = { ...updated[index], text: e.target.value };
-                          setQuestForm({ ...questForm, responseOptions: updated });
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs">Engagement Level</Label>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">Level</Label>
                       <Select
-                        value={option.level}
+                        value={option.engagementLevel}
                         onValueChange={(value) => {
-                          const updated = [...questForm.responseOptions];
-                          updated[index] = { ...updated[index], level: value };
-                          setQuestForm({ ...questForm, responseOptions: updated });
+                          const updated = [...questForm.options];
+                          updated[index] = { ...updated[index], engagementLevel: value };
+                          setQuestForm({ ...questForm, options: updated });
                         }}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Level" />
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="High">High</SelectItem>
-                          <SelectItem value="Medium">Medium</SelectItem>
-                          <SelectItem value="Low">Low</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="low">Low</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+                    {questForm.options.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          const updated = [...questForm.options];
+                          updated.splice(index, 1);
+                          setQuestForm({ ...questForm, options: updated });
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-4 border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">Character Responses</Label>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setQuestForm({
+                      ...questForm,
+                      responses: [...questForm.responses, { responseEmoji: '', responseText: '', responseDescription: '', engagementLevel: 'high' }]
+                    })}
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Add Response
+                  </Button>
+                </div>
+                {questForm.responses.map((resp, index) => (
+                  <div key={index} className="space-y-3 p-3 bg-accent/10 rounded-lg relative group border border-accent/20">
+                    <div className="grid grid-cols-4 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Emoji</Label>
+                        <Input
+                          placeholder="🔥"
+                          className="text-center"
+                          value={resp.responseEmoji}
+                          onChange={(e) => {
+                            const updated = [...questForm.responses];
+                            updated[index] = { ...updated[index], responseEmoji: e.target.value };
+                            setQuestForm({ ...questForm, responses: updated });
+                          }}
+                        />
+                      </div>
+                      <div className="col-span-2 space-y-1">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Response Text</Label>
+                        <Input
+                          placeholder="Mastery is choosing..."
+                          value={resp.responseText}
+                          onChange={(e) => {
+                            const updated = [...questForm.responses];
+                            updated[index] = { ...updated[index], responseText: e.target.value };
+                            setQuestForm({ ...questForm, responses: updated });
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Level</Label>
+                        <Select
+                          value={resp.engagementLevel}
+                          onValueChange={(value) => {
+                            const updated = [...questForm.responses];
+                            updated[index] = { ...updated[index], engagementLevel: value };
+                            setQuestForm({ ...questForm, responses: updated });
+                          }}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="low">Low</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">Detailed Description</Label>
+                      <Textarea
+                        placeholder="Explain the meaning behind the response..."
+                        rows={2}
+                        className="text-xs"
+                        value={resp.responseDescription}
+                        onChange={(e) => {
+                          const updated = [...questForm.responses];
+                          updated[index] = { ...updated[index], responseDescription: e.target.value };
+                          setQuestForm({ ...questForm, responses: updated });
+                        }}
+                      />
+                    </div>
+                    {questForm.responses.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          const updated = [...questForm.responses];
+                          updated.splice(index, 1);
+                          setQuestForm({ ...questForm, responses: updated });
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1192,7 +1330,7 @@ export const PlotTwists = () => {
                 </Button>
                 <Button
                   onClick={handleCreateQuest}
-                  disabled={submitting || !questForm.title || !questForm.description || !questForm.character || !questForm.day || !questForm.pillar || !questForm.tier}
+                  disabled={submitting || !questForm.title || !questForm.description || !questForm.characterId || !questForm.dayNumber || !questForm.tier}
                 >
                   {submitting ? (
                     <>
@@ -1215,19 +1353,19 @@ export const PlotTwists = () => {
               <DialogTitle>Edit Plot Twist Quest</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 max-h-[70vh] overflow-y-auto pr-2 custom-scrollbar">
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="character">Character *</Label>
+                  <Label htmlFor="character-edit">Character *</Label>
                   <Select
-                    value={questForm.character}
-                    onValueChange={(value) => setQuestForm({ ...questForm, character: value })}
+                    value={questForm.characterId}
+                    onValueChange={(value) => setQuestForm({ ...questForm, characterId: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select character" />
                     </SelectTrigger>
                     <SelectContent>
                       {characters.map((character) => (
-                        <SelectItem key={character.id || character.name} value={character.name || character.id}>
+                        <SelectItem key={character.id} value={character.id}>
                           {character.icon || '👤'} {character.name}
                         </SelectItem>
                       ))}
@@ -1236,10 +1374,10 @@ export const PlotTwists = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="day">Day *</Label>
+                  <Label htmlFor="day-edit">Day Number (1-7) *</Label>
                   <Select
-                    value={questForm.day}
-                    onValueChange={(value) => setQuestForm({ ...questForm, day: value })}
+                    value={questForm.dayNumber}
+                    onValueChange={(value) => setQuestForm({ ...questForm, dayNumber: value })}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select day" />
@@ -1253,9 +1391,30 @@ export const PlotTwists = () => {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="tier-edit">Tier *</Label>
+                  <Select
+                    value={questForm.tier}
+                    onValueChange={(value) => setQuestForm({ ...questForm, tier: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select tier" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">Tier 1</SelectItem>
+                      <SelectItem value="1A">Tier 1A</SelectItem>
+                      <SelectItem value="2">Tier 2</SelectItem>
+                      <SelectItem value="2A">Tier 2A</SelectItem>
+                      <SelectItem value="3">Tier 3</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="pillar">Aligned Pillar *</Label>
+                  <Label htmlFor="pillar-edit">Aligned Pillar (Optional)</Label>
                   <Select
                     value={questForm.pillar}
                     onValueChange={(value) => setQuestForm({ ...questForm, pillar: value })}
@@ -1274,93 +1433,228 @@ export const PlotTwists = () => {
                 </div>
               </div>
               
-              <div className="space-y-2">
-                <Label htmlFor="tier">Tier *</Label>
-                <Select
-                  value={questForm.tier}
-                  onValueChange={(value) => setQuestForm({ ...questForm, tier: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select tier" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1">Tier 1</SelectItem>
-                    <SelectItem value="1A">Tier 1A</SelectItem>
-                    <SelectItem value="2">Tier 2</SelectItem>
-                    <SelectItem value="2A">Tier 2A</SelectItem>
-                    <SelectItem value="3">Tier 3</SelectItem>
-                  </SelectContent>
-                </Select>
+
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title-edit">Main Title *</Label>
+                  <Input
+                    placeholder="e.g., Set a low-stakes goal..."
+                    value={questForm.title}
+                    onChange={(e) => setQuestForm({ ...questForm, title: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="alt-title-edit">Alternate Title</Label>
+                  <Input
+                    placeholder="e.g., Catch the urge to overgive..."
+                    value={questForm.alternateTitle}
+                    onChange={(e) => setQuestForm({ ...questForm, alternateTitle: e.target.value })}
+                  />
+                </div>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="title">Quest Title *</Label>
-                <Input
-                  placeholder="Brief, actionable description of the daily challenge"
-                  value={questForm.title}
-                  onChange={(e) => setQuestForm({ ...questForm, title: e.target.value })}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="description">Quest Description *</Label>
+                <Label htmlFor="description-edit">Description *</Label>
                 <Textarea 
-                  placeholder="Detailed explanation of the quest purpose and instructions"
-                  rows={4}
+                  placeholder="Detailed explanation..."
+                  rows={3}
                   value={questForm.description}
                   onChange={(e) => setQuestForm({ ...questForm, description: e.target.value })}
                 />
               </div>
-              
-              <div className="space-y-4">
-                <Label>Response Options (Optional)</Label>
-                {questForm.responseOptions.map((option, index) => (
-                  <div key={index} className="grid grid-cols-3 gap-2 p-3 border rounded-lg">
-                    <div className="space-y-2">
-                      <Label className="text-xs">Emoji</Label>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="content-image-edit">Content Image URL</Label>
+                  <Input
+                    placeholder="https://..."
+                    value={questForm.contentImage}
+                    onChange={(e) => setQuestForm({ ...questForm, contentImage: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="tag-ids-edit">Tag IDs (Comma separated)</Label>
+                  <Input
+                    placeholder="uuid-tag-1, uuid-tag-2"
+                    value={questForm.tagIds.join(', ')}
+                    onChange={(e) => setQuestForm({ ...questForm, tagIds: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="isActive-edit">Active Status</Label>
+                  <Select
+                    value={questForm.isActive ? "true" : "false"}
+                    onValueChange={(val) => setQuestForm({ ...questForm, isActive: val === "true" })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">Active</SelectItem>
+                      <SelectItem value="false">Inactive</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-4 border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">User Content Options</Label>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setQuestForm({
+                      ...questForm,
+                      options: [...questForm.options, { optionText: '', engagementLevel: 'high' }]
+                    })}
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Add Option
+                  </Button>
+                </div>
+                {questForm.options.map((option, index) => (
+                  <div key={index} className="grid grid-cols-4 gap-2 p-3 bg-muted/30 rounded-lg relative group">
+                    <div className="col-span-3 space-y-1">
+                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">Option Text</Label>
                       <Input
-                        placeholder="😊"
-                        className="text-center"
-                        value={option.emoji || ''}
+                        placeholder="Option text..."
+                        value={option.optionText}
                         onChange={(e) => {
-                          const updated = [...questForm.responseOptions];
-                          updated[index] = { ...updated[index], emoji: e.target.value };
-                          setQuestForm({ ...questForm, responseOptions: updated });
+                          const updated = [...questForm.options];
+                          updated[index] = { ...updated[index], optionText: e.target.value };
+                          setQuestForm({ ...questForm, options: updated });
                         }}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs">Response Text</Label>
-                      <Input
-                        placeholder="Response option text"
-                        value={option.text || ''}
-                        onChange={(e) => {
-                          const updated = [...questForm.responseOptions];
-                          updated[index] = { ...updated[index], text: e.target.value };
-                          setQuestForm({ ...questForm, responseOptions: updated });
-                        }}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs">Engagement Level</Label>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">Level</Label>
                       <Select
-                        value={option.level || 'High'}
+                        value={option.engagementLevel}
                         onValueChange={(value) => {
-                          const updated = [...questForm.responseOptions];
-                          updated[index] = { ...updated[index], level: value };
-                          setQuestForm({ ...questForm, responseOptions: updated });
+                          const updated = [...questForm.options];
+                          updated[index] = { ...updated[index], engagementLevel: value };
+                          setQuestForm({ ...questForm, options: updated });
                         }}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Level" />
+                        <SelectTrigger className="h-9">
+                          <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="High">High</SelectItem>
-                          <SelectItem value="Medium">Medium</SelectItem>
-                          <SelectItem value="Low">Low</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="low">Low</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+                    {questForm.options.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          const updated = [...questForm.options];
+                          updated.splice(index, 1);
+                          setQuestForm({ ...questForm, options: updated });
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-4 border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-semibold">Character Responses</Label>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => setQuestForm({
+                      ...questForm,
+                      responses: [...questForm.responses, { responseEmoji: '', responseText: '', responseDescription: '', engagementLevel: 'high' }]
+                    })}
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Add Response
+                  </Button>
+                </div>
+                {questForm.responses.map((resp, index) => (
+                  <div key={index} className="space-y-3 p-3 bg-accent/10 rounded-lg relative group border border-accent/20">
+                    <div className="grid grid-cols-4 gap-2">
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Emoji</Label>
+                        <Input
+                          placeholder="🔥"
+                          className="text-center"
+                          value={resp.responseEmoji || ''}
+                          onChange={(e) => {
+                            const updated = [...questForm.responses];
+                            updated[index] = { ...updated[index], responseEmoji: e.target.value };
+                            setQuestForm({ ...questForm, responses: updated });
+                          }}
+                        />
+                      </div>
+                      <div className="col-span-2 space-y-1">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Response Text</Label>
+                        <Input
+                          placeholder="Mastery is choosing..."
+                          value={resp.responseText || ''}
+                          onChange={(e) => {
+                            const updated = [...questForm.responses];
+                            updated[index] = { ...updated[index], responseText: e.target.value };
+                            setQuestForm({ ...questForm, responses: updated });
+                          }}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase font-bold text-muted-foreground">Level</Label>
+                        <Select
+                          value={resp.engagementLevel || 'high'}
+                          onValueChange={(value) => {
+                            const updated = [...questForm.responses];
+                            updated[index] = { ...updated[index], engagementLevel: value };
+                            setQuestForm({ ...questForm, responses: updated });
+                          }}
+                        >
+                          <SelectTrigger className="h-9">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="medium">Medium</SelectItem>
+                            <SelectItem value="low">Low</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[10px] uppercase font-bold text-muted-foreground">Detailed Description</Label>
+                      <Textarea
+                        placeholder="Explain the meaning behind the response..."
+                        rows={2}
+                        className="text-xs"
+                        value={resp.responseDescription || ''}
+                        onChange={(e) => {
+                          const updated = [...questForm.responses];
+                          updated[index] = { ...updated[index], responseDescription: e.target.value };
+                          setQuestForm({ ...questForm, responses: updated });
+                        }}
+                      />
+                    </div>
+                    {questForm.responses.length > 1 && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          const updated = [...questForm.responses];
+                          updated.splice(index, 1);
+                          setQuestForm({ ...questForm, responses: updated });
+                        }}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 ))}
               </div>
@@ -1378,7 +1672,7 @@ export const PlotTwists = () => {
                 </Button>
                 <Button
                   onClick={handleUpdateQuest}
-                  disabled={submitting || !questForm.title || !questForm.description || !questForm.character || !questForm.day || !questForm.pillar || !questForm.tier}
+                  disabled={submitting || !questForm.title || !questForm.description || !questForm.characterId || !questForm.dayNumber || !questForm.tier}
                 >
                   {submitting ? (
                     <>
@@ -1460,34 +1754,81 @@ export const PlotTwists = () => {
                     <CardTitle className="text-lg">Quest Content</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div>
-                      <h4 className="font-medium mb-2">Title:</h4>
-                      <p className="text-sm">{selectedQuest.title || 'No title'}</p>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <h4 className="font-medium mb-1">Title:</h4>
+                        <p className="text-sm">{selectedQuest.title || 'No title'}</p>
+                      </div>
+                      {selectedQuest.alternateTitle && (
+                        <div>
+                          <h4 className="font-medium mb-1">Alternate Title:</h4>
+                          <p className="text-sm italic">{selectedQuest.alternateTitle}</p>
+                        </div>
+                      )}
                     </div>
                     
+                    {selectedQuest.contentImage && (
+                      <div>
+                        <h4 className="font-medium mb-2">Content Image:</h4>
+                        <div className="rounded-lg overflow-hidden border max-w-sm">
+                          <img src={selectedQuest.contentImage} alt="Quest content" className="w-full h-auto object-cover" />
+                        </div>
+                      </div>
+                    )}
+
                     <div>
                       <h4 className="font-medium mb-2">Description:</h4>
                       <p className="text-sm text-muted-foreground">{selectedQuest.description || 'No description'}</p>
                     </div>
-                    
-                    {selectedQuest.responseOptions && selectedQuest.responseOptions.length > 0 && (
-                    <div>
-                      <h4 className="font-medium mb-3">Response Options:</h4>
-                      <div className="space-y-2">
-                        {selectedQuest.responseOptions.map((option, index) => (
-                          <div key={index} className="flex items-center space-x-3 p-2 bg-muted/50 rounded-lg">
-                              {option.emoji && <span className="text-xl">{option.emoji}</span>}
-                              <span className="flex-1 text-sm">{option.text || 'No text'}</span>
-                              {option.level && (
-                            <Badge variant="outline" className="text-xs">
-                              {option.level}
-                            </Badge>
-                              )}
-                          </div>
-                        ))}
+
+                    {selectedQuest.tagIds && selectedQuest.tagIds.length > 0 && (
+                      <div>
+                        <h4 className="font-medium mb-2">Tag IDs:</h4>
+                        <div className="flex flex-wrap gap-1">
+                          {selectedQuest.tagIds.map(tag => (
+                            <Badge key={tag} variant="outline" className="text-[10px] font-mono">{tag}</Badge>
+                          ))}
+                        </div>
                       </div>
-                    </div>
                     )}
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                       {selectedQuest.options && selectedQuest.options.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground">User Options:</h4>
+                          {selectedQuest.options.map((option, index) => (
+                            <div key={index} className="flex items-center space-x-2 p-2 bg-muted/30 rounded border text-xs">
+                              <Badge variant="secondary" className="scale-75 origin-left">
+                                {option.engagementLevel}
+                              </Badge>
+                              <span>{option.optionText}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {selectedQuest.responses && selectedQuest.responses.length > 0 && (
+                        <div className="space-y-2">
+                          <h4 className="font-bold text-sm uppercase tracking-wider text-muted-foreground">Character Responses:</h4>
+                          {selectedQuest.responses.map((resp, index) => (
+                            <div key={index} className="space-y-1 p-2 bg-accent/5 rounded border border-accent/10 text-xs">
+                              <div className="flex items-center space-x-2">
+                                <span className="text-base">{resp.responseEmoji}</span>
+                                <Badge variant="outline" className="scale-75 origin-left text-[8px]">
+                                  {resp.engagementLevel}
+                                </Badge>
+                                <span className="font-medium">{resp.responseText}</span>
+                              </div>
+                              {resp.responseDescription && (
+                                <p className="text-[10px] text-muted-foreground italic pl-6">
+                                  {resp.responseDescription}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
 

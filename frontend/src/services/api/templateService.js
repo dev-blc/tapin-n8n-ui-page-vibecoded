@@ -134,28 +134,9 @@ class TemplateService extends BaseService {
    */
   async createAffirmationTemplate(data) {
     try {
-      const payload = {
-        template_name: data.templateName,
-        energy_type: data.energyType,
-        imagery_theme: data.imageryTheme,
-        opening_phrase: data.openingPhrase,
-        template_structure: data.templateStructure,
-        sample_output: data.sampleOutput,
-        character_id: data.characterId,
-        admin_context: data.adminContext,
-        is_active: data.isActive !== undefined ? data.isActive : true
-      };
-      
-      const { data: result, error } = await supabase
-        .from('affirmation_templates')
-        .insert([payload])
-        .select()
-        .single();
-        
-      if (error) throw error;
-      return result;
+      const response = await adminServiceClient.post(ADMIN_SERVICE_ENDPOINTS.AFFIRMATION_TEMPLATES, data);
+      return response.data;
     } catch (error) {
-      console.error('[createAffirmationTemplate] Supabase insert failed:', error);
       throw handleApiError(error);
     }
   }
@@ -168,26 +149,8 @@ class TemplateService extends BaseService {
    */
   async updateAffirmationTemplate(id, data) {
     try {
-      const payload = {};
-      if (data.templateName) payload.template_name = data.templateName;
-      if (data.energyType) payload.energy_type = data.energyType;
-      if (data.imageryTheme) payload.imagery_theme = data.imageryTheme;
-      if (data.openingPhrase) payload.opening_phrase = data.openingPhrase;
-      if (data.templateStructure) payload.template_structure = data.templateStructure;
-      if (data.sampleOutput) payload.sample_output = data.sampleOutput;
-      if (data.characterId) payload.character_id = data.characterId;
-      if (data.adminContext) payload.admin_context = data.adminContext;
-      if (data.isActive !== undefined) payload.is_active = data.isActive;
-
-      const { data: result, error } = await supabase
-        .from('affirmation_templates')
-        .update(payload)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return result;
+      const response = await adminServiceClient.put(ADMIN_SERVICE_ENDPOINTS.AFFIRMATION_TEMPLATE_BY_ID(id), data);
+      return response.data;
     } catch (error) {
       throw handleApiError(error);
     }
@@ -238,15 +201,20 @@ class TemplateService extends BaseService {
       if (data && data.length > 0) {
         return data.map(item => ({
           id: item.id,
-          name: item.name,
-          feeling: item.feeling,
-          setting: item.setting,
-          elements: item.elements || [],
-          duration: item.duration,
-          sampleScript: item.sample_script,
+          templateName: item.template_name || item.name,
+          energyType: item.energy_type || item.feeling,
+          imageryTheme: item.imagery_theme || item.setting,
+          openingPhrase: item.opening_phrase,
+          templateStructure: item.template_structure,
+          sampleOutput: item.sample_output || item.sample_script,
+          meditationContext: item.meditation_context,
+          instructions: item.instructions,
+          characterId: item.character_id,
+          coachInstruction: item.coach_instruction || {},
+          isActive: item.is_active ?? true,
           usageCount: item.usage_count || 0,
-          status: item.is_active === false ? 'Inactive' : 'Active',
-          lastModified: item.updated_at || item.created_at
+          createdAt: item.created_at,
+          updatedAt: item.updated_at
         }));
       }
 
@@ -283,15 +251,20 @@ class TemplateService extends BaseService {
       
       return {
         id: data.id,
-        name: data.name,
-        feeling: data.feeling,
-        setting: data.setting,
-        elements: data.elements || [],
-        duration: data.duration,
-        sampleScript: data.sample_script,
+        templateName: data.template_name || data.name,
+        energyType: data.energy_type || data.feeling,
+        imageryTheme: data.imagery_theme || data.setting,
+        openingPhrase: data.opening_phrase,
+        templateStructure: data.template_structure,
+        sampleOutput: data.sample_output || data.sample_script,
+        meditationContext: data.meditation_context,
+        instructions: data.instructions,
+        characterId: data.character_id,
+        coachInstruction: data.coach_instruction || {},
+        isActive: data.is_active ?? true,
         usageCount: data.usage_count || 0,
-        status: data.is_active === false ? 'Inactive' : 'Active',
-        lastModified: data.updated_at || data.created_at
+        createdAt: data.created_at,
+        updatedAt: data.updated_at
       };
     } catch (error) {
       console.warn('[getMeditationTemplateById] Supabase fetch failed, falling back to API:', error);
@@ -311,24 +284,8 @@ class TemplateService extends BaseService {
    */
   async createMeditationTemplate(data) {
     try {
-      const payload = {
-        name: data.name,
-        feeling: data.feeling,
-        setting: data.setting,
-        elements: data.elements || [],
-        duration: data.duration,
-        sample_script: data.sampleScript,
-        is_active: data.isActive !== undefined ? data.isActive : true
-      };
-      
-      const { data: result, error } = await supabase
-        .from('meditation_templates')
-        .insert([payload])
-        .select()
-        .single();
-        
-      if (error) throw error;
-      return result;
+      const response = await adminServiceClient.post(ADMIN_SERVICE_ENDPOINTS.MEDITATION_TEMPLATES, data);
+      return response.data;
     } catch (error) {
       throw handleApiError(error);
     }
@@ -342,24 +299,8 @@ class TemplateService extends BaseService {
    */
   async updateMeditationTemplate(id, data) {
     try {
-      const payload = {};
-      if (data.name) payload.name = data.name;
-      if (data.feeling) payload.feeling = data.feeling;
-      if (data.setting) payload.setting = data.setting;
-      if (data.elements) payload.elements = data.elements;
-      if (data.duration) payload.duration = data.duration;
-      if (data.sampleScript) payload.sample_script = data.sampleScript;
-      if (data.isActive !== undefined) payload.is_active = data.isActive;
-
-      const { data: result, error } = await supabase
-        .from('meditation_templates')
-        .update(payload)
-        .eq('id', id)
-        .select()
-        .single();
-
-      if (error) throw error;
-      return result;
+      const response = await adminServiceClient.put(ADMIN_SERVICE_ENDPOINTS.MEDITATION_TEMPLATE_BY_ID(id), data);
+      return response.data;
     } catch (error) {
       throw handleApiError(error);
     }

@@ -1,35 +1,51 @@
-import templateService from '@/services/api/templateService';
-import { generateTemplateInsights } from '@/utils/analyticsEngine';
+import analyticsService from '@/services/api/analyticsService';
 import { useCallback, useEffect, useState } from 'react';
 
 /**
- * Hook to fetch and process template-centric analytics
+ * Hook to fetch and process comprehensive analytics using Railway edge function
  */
-export const useTemplateAnalytics = () => {
-  const [data, setData] = useState(null);
+export const useAnalyticsOverview = () => {
+  const [data, setData] = useState({
+    summary: {},
+    charts: {},
+    intelligence: {
+      topPerformers: [],
+      underperforming: [],
+      aiInsights: []
+    },
+    onboarding: {
+      tierDistribution: [],
+      personaDistribution: [],
+      funnel: []
+    },
+    plotTwists: {
+      questEngagement: []
+    },
+    emotionalPulse: {
+      triggers: []
+    }
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchAnalytics = useCallback(async () => {
     try {
       setLoading(true);
+      const response = await analyticsService.getOverview();
       
-      // Fetch both types of templates
-      const [affirmationsResult, meditationsResult] = await Promise.all([
-        templateService.getAffirmationTemplates({ limit: 1000 }),
-        templateService.getMeditationTemplates({ limit: 1000 })
-      ]);
-
-      const affirmations = affirmationsResult.data || affirmationsResult || [];
-      const meditations = meditationsResult.data || meditationsResult || [];
-
-      // Process through engine
-      const insights = generateTemplateInsights(affirmations, meditations);
-      
-      setData(insights);
+      // Ensure we have all expected structures even if backend is still being updated
+      setData({
+        ...response,
+        summary: response.summary || {},
+        charts: response.charts || {},
+        intelligence: response.intelligence || { topPerformers: [], underperforming: [], aiInsights: [] },
+        onboarding: response.onboarding || { tierDistribution: [], personaDistribution: [], funnel: [] },
+        plotTwists: response.plotTwists || { questEngagement: [] },
+        emotionalPulse: response.emotionalPulse || { triggers: [] }
+      });
       setError(null);
     } catch (err) {
-      console.error('Error fetching template analytics:', err);
+      console.error('Error fetching analytics overview:', err);
       setError('Failed to load analytics data');
     } finally {
       setLoading(false);
@@ -48,4 +64,5 @@ export const useTemplateAnalytics = () => {
   };
 };
 
-export default useTemplateAnalytics;
+export default useAnalyticsOverview;
+export const useTemplateAnalytics = useAnalyticsOverview; // Legacy export for compatibility

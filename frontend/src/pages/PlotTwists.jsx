@@ -395,12 +395,17 @@ export const PlotTwists = () => {
       tier: quest.tier || '',
       tagIds: quest.tagIds || [],
       isActive: quest.isActive !== undefined ? quest.isActive : true,
-      options: quest.options && quest.options.length > 0 
-        ? quest.options 
-        : [{ optionText: '', engagementLevel: 'high' }],
-      responses: quest.responses && quest.responses.length > 0
-        ? quest.responses
-        : [{ responseEmoji: '', responseText: '', responseDescription: '', engagementLevel: 'high' }]
+      options: (quest.options?.length > 0 ? quest.options : null) || 
+         [{ optionText: '', engagementLevel: 'high' }],
+      responses: (quest.responses?.length > 0 ? quest.responses : null) || 
+           (quest.responseOptions?.length > 0 ? quest.responseOptions : null) ||
+           [{ responseEmoji: '', responseText: '', responseDescription: '', engagementLevel: 'high' }]
+      // options: quest.options && quest.options.length > 0 
+      //   ? quest.options 
+      //   : [{ optionText: '', engagementLevel: 'high' }],
+      // responses: quest.responses && quest.responses.length > 0
+      //   ? quest.responses
+      //   : [{ responseEmoji: '', responseText: '', responseDescription: '', engagementLevel: 'high' }]
     });
     setIsEditModalOpen(true);
   };
@@ -458,9 +463,9 @@ export const PlotTwists = () => {
         tagIds: questForm.tagIds || [],
         contentImage: questForm.contentImage.trim() || "",
         isActive: questForm.isActive,
-        options: finalOptions,
-        responses: finalResponses
-      };
+         ...(finalOptions.length > 0 && { options: finalOptions }),
+  ...(finalResponses.length > 0 && { responses: finalResponses }),
+};
 
       await updateQuest({ id: selectedQuest.id, data: payload }, { 
         showSuccessToast: true,

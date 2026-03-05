@@ -1,75 +1,39 @@
-import { StatsCard } from '@/components/dashboard/StatsCard';
 import { Layout } from '@/components/layout/Layout';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from '@/components/ui/table';
-import { useDashboardStats } from '@/hooks/useDashboard';
 import { useTemplateAnalytics } from '@/hooks/useTemplateAnalytics';
-import { useUsers } from '@/hooks/useUsers';
 import {
-  Activity,
-  ArrowUpRight,
-  BarChart3,
-  Calendar,
-  Check,
-  Download,
-  Info,
-  Layers,
-  Lightbulb,
-  Loader2,
-  TrendingDown,
-  TrendingUp,
-  Users,
-  Zap
+    ArrowUpRight,
+    Calendar,
+    Check,
+    Download,
+    HeartPulse,
+    Info,
+    Layers,
+    Lightbulb,
+    Loader2,
+    TrendingDown,
+    TrendingUp,
+    Zap
 } from 'lucide-react';
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis
-} from 'recharts';
 
-// Dummy data for charts
-const userGrowthData = [
-  { name: 'Jan', users: 400 },
-  { name: 'Feb', users: 600 },
-  { name: 'Mar', users: 800 },
-  { name: 'Apr', users: 1200 },
-  { name: 'May', users: 1500 },
-  { name: 'Jun', users: 2100 },
-  { name: 'Jul', users: 2800 },
-];
+import { Bar, BarChart, CartesianGrid, Cell, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
-const engagementData = [
-  { name: 'Mon', active: 120, shifts: 450 },
-  { name: 'Tue', active: 150, shifts: 520 },
-  { name: 'Wed', active: 200, shifts: 610 },
-  { name: 'Thu', active: 180, shifts: 590 },
-  { name: 'Fri', active: 250, shifts: 720 },
-  { name: 'Sat', active: 300, shifts: 850 },
-  { name: 'Sun', active: 280, shifts: 800 },
-];
 
-const contentPerformance = [
-  { name: 'Affirmations', completions: 4500, color: '#3b82f6' },
-  { name: 'Quick Shifts', completions: 7200, color: '#f59e0b' },
-  { name: 'Plot Twists', completions: 3100, color: '#10b981' },
-  { name: 'Meditations', completions: 2800, color: '#ef4444' },
-];
+import { ChartsSection } from '@/components/analytics/ChartsSection';
+import { OnboardingSection } from '@/components/analytics/OnboardingSection';
+import { SummarySection } from '@/components/analytics/SummarySection';
+
+const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6'];
 
 const recentReports = [
   { id: 'REP-001', name: 'Monthly User Engagement', date: '2024-03-01', type: 'PDF', status: 'Completed', size: '2.4 MB' },
@@ -80,41 +44,8 @@ const recentReports = [
 ];
 
 export const Analytics = () => {
-    // Fetch dynamic data
-    const { data: dashboardData, loading: dashboardLoading } = useDashboardStats();
-    const { data: usersResponse, loading: usersLoading } = useUsers({ limit: 1 });
-    const { data: templateInsights, loading: templateLoading } = useTemplateAnalytics();
-
-    const summaryStats = [
-      {
-        title: 'Total Users',
-        value: usersResponse?.total?.toLocaleString() || '0',
-        change: dashboardData?.activeUsersChange || '+0%',
-        changeType: 'positive',
-        icon: Users,
-      },
-      {
-        title: 'Active Content',
-        value: templateInsights?.kpis?.activeTemplates?.toLocaleString() || '0',
-        change: `${templateInsights?.kpis?.totalTemplates || 0} Total`,
-        changeType: 'neutral',
-        icon: Activity,
-      },
-      {
-        title: 'Total Generations',
-        value: templateInsights?.kpis?.totalGenerations?.toLocaleString() || '0',
-        change: `Avg: ${templateInsights?.kpis?.averageGenerationsPerTemplate || 0}/tmp`,
-        changeType: 'positive',
-        icon: Zap,
-      },
-      {
-        title: 'Active Ratio',
-        value: `${Math.round((templateInsights?.kpis?.activeTemplates / templateInsights?.kpis?.totalTemplates) * 100 || 0)}%`,
-        change: `${templateInsights?.kpis?.inactiveTemplates || 0} Inactive`,
-        changeType: 'neutral',
-        icon: BarChart3,
-      },
-    ];
+    // Fetch dynamic data from the Railway edge function
+    const { data: templateInsights, loading: templateLoading, error } = useTemplateAnalytics();
 
     const getStatusBadge = (status) => {
       switch (status) {
@@ -125,11 +56,22 @@ export const Analytics = () => {
       }
     };
 
-    if (dashboardLoading || usersLoading || templateLoading) {
+    if (templateLoading) {
         return (
             <Layout title="Analytics & Reports" subtitle="Loading analytics data...">
                 <div className="flex items-center justify-center min-h-[400px]">
                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+            </Layout>
+        );
+    }
+
+    if (error) {
+        return (
+            <Layout title="Analytics & Reports" subtitle="Failed to load data">
+                <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
+                    <p className="text-destructive font-medium">{error}</p>
+                    <Button variant="outline" onClick={() => window.location.reload()}>Retry</Button>
                 </div>
             </Layout>
         );
@@ -153,114 +95,51 @@ export const Analytics = () => {
         }
       >
         <div className="space-y-6">
-          {/* Summary Statistics */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {summaryStats.map((stat, index) => (
-              <StatsCard
-                key={index}
-                title={stat.title}
-                value={stat.value}
-                change={stat.change}
-                changeType={stat.changeType}
-                icon={stat.icon}
-              />
-            ))}
-          </div>
+          <SummarySection summary={templateInsights?.summary} />
+          
+          <OnboardingSection onboarding={templateInsights?.onboarding} />
 
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* User Growth Chart */}
-          <Card className="hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">User Growth</CardTitle>
-                <p className="text-sm text-muted-foreground">Monthly total registered users</p>
-              </div>
-              <div className="p-2 bg-primary/10 rounded-full">
-                <TrendingUp className="h-5 w-5 text-primary" />
-              </div>
+          <ChartsSection charts={templateInsights?.charts} />
+        
+        {/* Emotional Pulse */}
+        <div className="grid grid-cols-1 space-y-6">
+          <Card className="hover:shadow-md transition-shadow border-primary/10">
+            <CardHeader className="bg-primary/5 pb-4">
+               <div>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <HeartPulse className="h-5 w-5 text-primary" />
+                    Emotional Pulse
+                  </CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">Real-time Quick Shift triggers and emotional states of your users.</p>
+               </div>
             </CardHeader>
-            <CardContent>
-              <div className="h-64 mt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={userGrowthData}>
-                    <defs>
-                      <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8}/>
-                        <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis 
-                      dataKey="name" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{fill: '#64748b', fontSize: 12}}
-                    />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{fill: '#64748b', fontSize: 12}}
-                    />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                    />
-                    <Area type="monotone" dataKey="users" stroke="#3b82f6" fillOpacity={1} fill="url(#colorUsers)" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Engagement Chart */}
-          <Card className="hover:shadow-md transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">Activity Engagement</CardTitle>
-                <p className="text-sm text-muted-foreground">Weekly active users vs shifts completed</p>
-              </div>
-              <div className="p-2 bg-amber-500/10 rounded-full">
-                <BarChart3 className="h-5 w-5 text-amber-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64 mt-4">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={engagementData}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                    <XAxis 
-                      dataKey="name" 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{fill: '#64748b', fontSize: 12}}
-                    />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tick={{fill: '#64748b', fontSize: 12}}
-                    />
-                    <Tooltip 
-                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
-                    />
-                    <Bar dataKey="active" fill="#3b82f6" radius={[4, 4, 0, 0]} name="Active Users" />
-                    <Bar dataKey="shifts" fill="#f59e0b" radius={[4, 4, 0, 0]} name="Quick Shifts" />
-                  </BarChart>
-                </ResponsiveContainer>
+            <CardContent className="pt-6">
+              <div className="flex flex-wrap items-center gap-3">
+                 {(templateInsights?.emotionalPulse?.triggers || []).map((pulse, i) => (
+                    <Badge 
+                      key={i} 
+                      variant={pulse.variant || 'secondary'} 
+                      className={`px-3 py-1.5 text-sm ${pulse.count > 100 ? 'scale-110 shadow-sm mx-1' : ''}`}
+                      style={{ opacity: pulse.count > 100 ? 1 : 0.8 }}
+                    >
+                      {pulse.text} <span className="ml-2 font-mono text-xs opacity-75">{pulse.count}</span>
+                    </Badge>
+                 ))}
               </div>
             </CardContent>
           </Card>
         </div>
 
-        {/* Third Row: Content Performance & Key Insights */}
+        {/* Content Performance & Key Insights */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <Card className="lg:col-span-2">
             <CardHeader>
-              <CardTitle className="text-lg">Content Completion Trends</CardTitle>
+              <CardTitle className="text-lg">Template Usage Volume</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={contentPerformance} layout="vertical">
+                  <BarChart data={templateInsights?.intelligence?.topPerformers || []} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                     <XAxis type="number" hide />
                     <YAxis 
@@ -269,15 +148,15 @@ export const Analytics = () => {
                       axisLine={false} 
                       tickLine={false} 
                       tick={{fill: '#64748b', fontSize: 12}}
-                      width={100}
+                      width={120}
                     />
                     <Tooltip 
                       cursor={{fill: 'transparent'}}
                       contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
                     />
-                    <Bar dataKey="completions" radius={[0, 4, 4, 0]} barSize={32}>
-                      {contentPerformance.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Bar dataKey="usage" radius={[0, 4, 4, 0]} barSize={24}>
+                      {(templateInsights?.intelligence?.topPerformers || []).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -356,13 +235,13 @@ export const Analytics = () => {
                     <Check className="h-4 w-4 mr-2" /> Top Performing Templates
                   </h4>
                   <div className="space-y-4">
-                    {templateInsights?.topPerformers?.length > 0 ? templateInsights.topPerformers.map((t, i) => (
+                    {templateInsights?.intelligence?.topPerformers?.length > 0 ? templateInsights.intelligence.topPerformers.map((t, i) => (
                       <div key={i} className="flex items-center justify-between group">
                         <div className="space-y-1">
-                          <p className="text-sm font-medium group-hover:text-primary transition-colors">{t.templateName}</p>
+                          <p className="text-sm font-medium group-hover:text-primary transition-colors">{t.name}</p>
                           <div className="flex items-center gap-2">
                             <div className="w-24 bg-slate-100 rounded-full h-1.5">
-                              <div className="bg-success h-full rounded-full" style={{ width: `${t.performanceScore}%` }}></div>
+                              <div className="bg-success h-full rounded-full" style={{ width: `${t.score}%` }}></div>
                             </div>
                             <span className="text-[10px] text-muted-foreground">{t.usage} used</span>
                           </div>
@@ -381,10 +260,10 @@ export const Analytics = () => {
                     <TrendingDown className="h-4 w-4 mr-2" /> Underperforming (Needs Review)
                   </h4>
                   <div className="space-y-4">
-                    {templateInsights?.underperformingTemplates?.length > 0 ? templateInsights.underperformingTemplates.map((t, i) => (
+                    {templateInsights?.intelligence?.underperforming?.length > 0 ? templateInsights.intelligence.underperforming.map((t, i) => (
                       <div key={i} className="space-y-1">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium">{t.templateName}</p>
+                          <p className="text-sm font-medium">{t.name}</p>
                           <span className="text-[10px] font-bold text-amber-600">{t.usage} uses</span>
                         </div>
                         <p className="text-[11px] text-muted-foreground leading-relaxed bg-amber-50/50 p-2 rounded border border-amber-100/50">
@@ -413,16 +292,16 @@ export const Analytics = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {templateInsights?.energyDistribution?.slice(0, 4).map((e, i) => (
+                  {(templateInsights?.charts?.energyDistribution || []).slice(0, 4).map((e, i) => (
                     <div key={i} className="space-y-1">
                       <div className="flex justify-between text-xs">
-                        <span className="font-medium">{e.energyType}</span>
-                        <span className="text-muted-foreground">{e.percentage}%</span>
+                        <span className="font-medium">{e.type}</span>
+                        <span className="text-muted-foreground">{e.percent}%</span>
                       </div>
                       <div className="w-full bg-slate-100 rounded-full h-1.5">
                         <div 
                           className={`h-full rounded-full ${i === 0 ? 'bg-primary' : i === 1 ? 'bg-indigo-400' : 'bg-slate-400'}`} 
-                          style={{ width: `${e.percentage}%` }}
+                          style={{ width: `${e.percent}%` }}
                         ></div>
                       </div>
                     </div>
@@ -440,7 +319,7 @@ export const Analytics = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                {templateInsights?.insights?.map((insight, i) => (
+                {(templateInsights?.intelligence?.aiInsights || []).map((insight, i) => (
                   <div key={i} className="flex gap-3 items-start group">
                     <div className="mt-1 h-1.5 w-1.5 rounded-full bg-primary shrink-0 group-hover:scale-125 transition-transform" />
                     <p className="text-xs text-foreground/80 leading-relaxed font-medium">

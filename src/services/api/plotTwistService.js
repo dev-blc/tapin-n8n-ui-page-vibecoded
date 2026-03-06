@@ -4,12 +4,10 @@
  * Uses admin-service for basic CRUD, local backend for extended features
  */
 
-import BaseService from './baseService';
-import { ADMIN_SERVICE_ENDPOINTS } from '@/lib/api/adminServiceConfig';
 import adminServiceClient from '@/lib/api/adminServiceClient';
+import { ADMIN_SERVICE_ENDPOINTS } from '@/lib/api/adminServiceConfig';
 import { handleApiError } from '@/utils/apiHelpers';
-import { buildFilterParams } from '@/utils/queryBuilder';
-
+import BaseService from './baseService';
 class PlotTwistService extends BaseService {
   constructor() {
     // Use admin-service client for basic CRUD operations
@@ -99,8 +97,8 @@ class PlotTwistService extends BaseService {
    */
   async createQuest(data) {
     try {
-      const response = await this.create(data);
-      return response;
+      const response = await adminServiceClient.post(ADMIN_SERVICE_ENDPOINTS.PLOT_TWIST_QUESTS, data);
+      return response.data;
     } catch (error) {
       throw handleApiError(error);
     }
@@ -114,8 +112,8 @@ class PlotTwistService extends BaseService {
    */
   async updateQuest(id, data) {
     try {
-      const response = await this.update(id, data);
-      return response;
+      const response = await adminServiceClient.put(ADMIN_SERVICE_ENDPOINTS.PLOT_TWIST_QUEST_BY_ID(id), data);
+      return response.data;
     } catch (error) {
       throw handleApiError(error);
     }
@@ -147,6 +145,48 @@ class PlotTwistService extends BaseService {
       throw handleApiError(error);
     }
   }
+
+//   /**
+//    * Get all awareness tiers
+//    * @returns {Promise<any[]>}
+//    */
+//   async getTiers() {
+//     try {
+//       // 1. Try fetching from Supabase directly (preferred)
+//       const { data: rows, error: supabaseError } = await supabase
+//         .from('tiers')
+//         .select('*')
+//         .order('score_min', { ascending: true });
+
+// if (supabaseError) throw new Error(supabaseError.message);
+
+//     if (rows && rows.length > 0) {
+//       return rows.map(row => ({
+//         ...row,
+//         // Map actual Supabase columns → UI field names
+//         code:         row.tier,
+//         name:         row.tire_name,           // note: typo in your DB column
+//         tierUser:     row.tier_user,
+//         toneTag:      row.tone?.tag || row.tone,        // ← handles both object and string
+//   toneEssence:  row.tone?.essence || row.context,
+//         voiceAnchor:  row.voice,
+//         initialCycle: row.intial_cycle,        // note: typo in your DB column
+//         minScore:     row.score_min,
+//         maxScore:     row.score_max,
+//         scoreRange:   `${row.score_min} - ${row.score_max}`,
+//       }));
+//     }
+
+//     return [];
+//   } catch (error) {
+//     console.warn('[getTiers] Supabase fetch failed, using fallback:', error);
+//     return [ /* your existing fallback array stays here unchanged */ ];
+//   }
+// }
+
+
+
+
 
   /**
    * Update a single plot twist option

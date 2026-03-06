@@ -6,6 +6,7 @@
 
 // Get API base URL from environment variable or use default
 const ADMIN_SERVICE_BASE_URL = process.env.REACT_APP_ADMIN_SERVICE_URL || 'https://admin-service-production-9d00.up.railway.app';
+const ANALYTICS_SERVICE_BASE_URL = 'https://analytics-pt-development.up.railway.app';
 
 // Log the API base URL in development for debugging
 if (process.env.NODE_ENV === 'development') {
@@ -73,6 +74,18 @@ export const ADMIN_SERVICE_ENDPOINTS = {
 
   // Health check
   HEALTH: '/health',
+
+  // Analytics endpoints
+  ANALYTICS_OVERVIEW: '/api/analytics/overview',
+};
+
+export const ANALYTICS_SERVICE_CONFIG = {
+  baseURL: ANALYTICS_SERVICE_BASE_URL,
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
 };
 
 /**

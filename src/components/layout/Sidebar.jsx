@@ -163,8 +163,12 @@ export const Sidebar = ({ collapsed = false, onToggle }) => {
         </nav>
       </ScrollArea>
 
+      
+      {/* Not needed at the moment */}
+
       {/* User Profile */}
-      <div className="p-4 border-t border-border">
+
+      {/* <div className="p-4 border-t border-border">
         <div className="flex items-center space-x-3">
           <div className="w-8 h-8 bg-gradient-secondary rounded-full flex items-center justify-center">
             <span className="text-secondary-foreground font-medium text-sm">A</span>
@@ -176,7 +180,8 @@ export const Sidebar = ({ collapsed = false, onToggle }) => {
             </div>
           )}
         </div>
-      </div>
+      </div> */}
+
     </div>
   );
 };

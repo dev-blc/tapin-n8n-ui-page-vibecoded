@@ -3,9 +3,8 @@
  * React hooks for user-related API operations
  */
 
-import { useState, useCallback } from 'react';
-import { useApi, useMutation } from './useApi';
 import userService from '@/services/api/userService';
+import { useApi, useMutation } from './useApi';
 
 /**
  * Hook to fetch users with filters

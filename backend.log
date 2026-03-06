@@ -1,0 +1,12 @@
+INFO:     Will watch for changes in these directories: ['/Volumes/Builds/0xf5_labs/Charan/TapIn/tapin-n8n-ui-page-vibecoded/backend']
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     Started reloader process [37485] using StatReload
+2026-02-25 23:52:34,752 - server - INFO - Admin Service URL: https://admin-service-production-9d00.up.railway.app
+INFO:     Started server process [37588]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Shutting down
+INFO:     Waiting for application shutdown.
+INFO:     Application shutdown complete.
+INFO:     Finished server process [37588]
+INFO:     Stopping reloader process [37485]

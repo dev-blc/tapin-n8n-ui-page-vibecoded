@@ -1,34 +1,61 @@
-import React from 'react';
-import { Layout } from '@/components/layout/Layout';
+import { QuickActionCard } from '@/components/dashboard/QuickActionCard';
 import { StatsCard } from '@/components/dashboard/StatsCard';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Layout } from '@/components/layout/Layout';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
-import { FullPageLoader, TableSkeleton } from '@/components/loading/LoadingSpinner';
-import { useDashboardStats, useRecentActivity, useContentHealth } from '@/hooks/useDashboard';
+import { useContentHealth, useDashboardStats, useRecentActivity } from '@/hooks/useDashboard';
+import { useUsers } from '@/hooks/useUsers';
 import {
-  Users,
-  FileText,
-  Activity,
-  CheckCircle,
-  Zap,
-  Shuffle,
-  Heart,
-  BookOpen,
-  Plus,
-  ExternalLink,
-  Clock,
-  AlertCircle
+    Activity,
+    AlertCircle,
+    BookOpen,
+    CheckCircle,
+    FileText,
+    Heart,
+    Shuffle,
+    Users,
+    Zap
 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+
+const DashboardSkeleton = () => (
+  <div className="space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {[1, 2, 3, 4].map((i) => (
+        <Card key={i} className="h-32 animate-pulse bg-muted/20" />
+      ))}
+    </div>
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <Card className="lg:col-span-2 h-[400px] animate-pulse bg-muted/20" />
+      <Card className="h-[400px] animate-pulse bg-muted/20" />
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
+      {[1, 2, 3, 4, 5].map((i) => (
+        <Card key={i} className="h-24 animate-pulse bg-muted/20" />
+      ))}
+    </div>
+  </div>
+);
 
 export const Dashboard = () => {
+  const navigate = useNavigate();
   // Fetch data from API
   const { data: statsData, loading: statsLoading, error: statsError } = useDashboardStats({ showErrorToast: false });
   const { data: activityData, loading: activityLoading, error: activityError } = useRecentActivity({ limit: 10 }, { showErrorToast: false });
   const { data: healthData, loading: healthLoading, error: healthError } = useContentHealth({ showErrorToast: false });
+  
+  // Set this to true to show the Content Health Status card next to Recent Activity
+  const showHealthStatus = false;
 
+  // Get users data - optimized to just get the total count
+  const { data: usersResponse, loading: usersLoading, error: usersError } = useUsers({ limit: 1 });
+
+  // Get total users from usersResponse (Admin Edge Function)
+  const totalUsers = usersResponse?.total || 0;
+  
   // Transform stats data
   const stats = statsData ? {
     activeUsers: { 
@@ -58,6 +85,8 @@ export const Dashboard = () => {
     contentHealth: { value: '0%', change: '', changeType: 'neutral' }
   };
 
+
+
   // Use activity data from API or empty array
   const recentActivity = activityData || [];
 
@@ -69,22 +98,22 @@ export const Dashboard = () => {
     { name: 'Templates (Affirmations/Meditations)', value: 0, color: 'muted' }
   ];
 
-  // Show loading state
-  if (statsLoading || activityLoading || healthLoading) {
+  // Show loading state - wait for all data including user count
+  if (statsLoading || activityLoading || healthLoading || usersLoading) {
     return (
       <Layout
         title="Dashboard Overview"
         subtitle="Track engagement, content health, and user activity across TAP IN"
         hideHeaderQuickActions
       >
-        <FullPageLoader message="Loading dashboard data..." />
+        <DashboardSkeleton />
       </Layout>
     );
   }
 
   // Show error state if all requests failed
-  const hasErrors = statsError || activityError || healthError;
-  if (hasErrors && !statsData && !activityData && !healthData) {
+  const hasErrors = statsError || activityError || healthError || usersError;
+  if (hasErrors && !statsData && !activityData && !healthData && !usersResponse) {
     return (
       <Layout
         title="Dashboard Overview"
@@ -129,31 +158,33 @@ export const Dashboard = () => {
       title: 'Add Quick Shift Variation',
       icon: Zap,
       color: 'bg-primary',
-      href: '/quick-shifts/new'
+      href: '/quick-shifts?add=true'
     },
     { 
       title: 'Add Plot Twist Quest',
       icon: Shuffle,
       color: 'bg-accent',
-      href: '/plot-twists/new'
+      href: '/plot-twists?add=true'
     },
     { 
       title: 'Add Teaching Moment',
       icon: BookOpen,
       color: 'bg-secondary',
-      href: '/teaching-moments/new'
+      href: '/teaching-moments?add=true'
     },
     { 
       title: 'Add Affirmation Template',
       icon: Heart,
       color: 'bg-success',
-      href: '/affirmations/new'
+      href: '/affirmations?tab=affirmations&add=true'
     },
-    { 
+
+
+   { 
       title: 'Add Meditation Template',
       icon: Heart,
       color: 'bg-info',
-      href: '/meditations/new'
+      href: '/affirmations?tab=meditations&add=true'
     }
   ];
 
@@ -168,7 +199,9 @@ export const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatsCard
             title="Active Users"
-            value={stats.activeUsers.value}
+            // value={stats.activeUsers.value}
+
+            value={(usersResponse?.total || usersResponse?.data?.length || 0).toLocaleString()}
             change={stats.activeUsers.change}
             changeType={stats.activeUsers.changeType}
             icon={Users}
@@ -202,7 +235,7 @@ export const Dashboard = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Activity */}
-          <div className="lg:col-span-2">
+          <div className={showHealthStatus ? "lg:col-span-2" : "lg:col-span-3"}>
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Recent Activity</CardTitle>
@@ -258,37 +291,39 @@ export const Dashboard = () => {
           </div>
 
           {/* Content Health Status */}
-          <div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Content Health Status</CardTitle>
-                <p className="text-sm text-muted-foreground">
-                  Monitor variation freshness and rotation balance.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  {contentHealth.map((item, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium">{item.name}</span>
-                        <span className="text-muted-foreground">{item.value}%</span>
+          {showHealthStatus && (
+            <div>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Content Health Status</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Monitor variation freshness and rotation balance.
+                  </p>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-6">
+                    {contentHealth.map((item, index) => (
+                      <div key={index} className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium">{item.name}</span>
+                          <span className="text-muted-foreground">{item.value}%</span>
+                        </div>
+                        <Progress
+                          value={item.value}
+                          className={`h-2 ${
+                            item.color === 'success' ? 'bg-success/20' :
+                            item.color === 'warning' ? 'bg-warning/20' :
+                            item.color === 'primary' ? 'bg-primary/20' :
+                            'bg-muted'
+                          }`}
+                        />
                       </div>
-                      <Progress
-                        value={item.value}
-                        className={`h-2 ${
-                          item.color === 'success' ? 'bg-success/20' :
-                          item.color === 'warning' ? 'bg-warning/20' :
-                          item.color === 'primary' ? 'bg-primary/20' :
-                          'bg-muted'
-                        }`}
-                      />
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
 
         {/* Quick Actions */}
@@ -302,19 +337,13 @@ export const Dashboard = () => {
           <CardContent>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
               {quickActions.map((action, index) => (
-                <Button
+                <QuickActionCard
                   key={index}
-                  variant="outline"
-                  className="h-auto p-6 flex flex-col items-center space-y-3 group hover:shadow-lg transition-all duration-200"
-                  onClick={() => window.location.href = action.href}
-                >
-                  <div className={`w-12 h-12 rounded-lg ${action.color} flex items-center justify-center group-hover:scale-110 transition-transform duration-200`}>
-                    <action.icon className="h-6 w-6 text-white" />
-                  </div>
-                  <span className="text-sm font-medium text-center">
-                    {action.title}
-                  </span>
-                </Button>
+                  title={action.title}
+                  icon={action.icon}
+                  color={action.color}
+                  onClick={() => navigate(action.href)}
+                />
               ))}
             </div>
           </CardContent>

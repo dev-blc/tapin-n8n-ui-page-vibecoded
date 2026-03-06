@@ -1,10 +1,33 @@
-import React, { useState, useMemo } from 'react';
 import { Layout } from '@/components/layout/Layout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { TableSkeleton } from '@/components/loading/LoadingSpinner';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Pagination
+} from '@/components/ui/pagination';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { StatusBadge } from '@/components/ui/StatusBadge';
 import {
   Table,
   TableBody,
@@ -13,60 +36,46 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
+import { useAutoOpenModal } from '@/hooks/useAutoOpenModal';
 import {
-  Zap,
-  Search,
-  Filter,
-  Plus,
-  Edit,
-  Lock,
-  Unlock,
-  Trash2,
-  Eye,
-  Copy,
-  MoreHorizontal,
-  BarChart3,
-  Loader2
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { toast } from 'sonner';
-import {
-  useQuickShiftLoops,
-  useQuickShiftReframes,
-  useQuickShiftProtectors,
   useQuickShiftLoopMutation,
-  useQuickShiftReframeMutation,
+  useQuickShiftLoops,
   useQuickShiftProtectorMutation,
+  useQuickShiftProtectors,
+  useQuickShiftReframeMutation,
+  useQuickShiftReframes,
 } from '@/hooks/useQuickShifts';
-import { FullPageLoader, TableSkeleton } from '@/components/loading/LoadingSpinner';
+import {
+  Eye,
+  Loader2,
+  MoreHorizontal,
+  Plus,
+  Search,
+  Trash2
+} from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export const QuickShifts = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedLoop, setSelectedLoop] = useState(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [selectedTier, setSelectedTier] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 6;
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedTier]);
+
+  // Use custom hook to handle auto-opening modal
+  useAutoOpenModal(setIsCreateModalOpen);
 
   // Fetch data from API
   const filterParams = useMemo(() => {
@@ -162,65 +171,8 @@ export const QuickShifts = () => {
 
   // Mock data for Quick Shift loops and variations (keeping for reference structure)
   const mockQuickShiftLoops = [
-    {
-      id: 'QS-001',
-      category: 'Too Much on My Plate',
-      icon: '🍽️',
-      emotionCount: 6,
-      protectorVariations: 4,
-      reframeVariations: 8,
-      usageCount: 245,
-      lastModified: '2024-03-10',
-      status: 'Active',
-      tierAvailability: ['User 1', 'User 2', 'User 3'],
-      emotions: [
-        { emotion: 'Anxious', fearStatement: 'If I dont handle everything perfectly, it will all fall apart', tier: ['User 1', 'User 2'], usageCount: 89 },
-        { emotion: 'Overwhelmed', fearStatement: 'There is too much and I cant keep up', tier: ['User 1', 'User 2', 'User 3'], usageCount: 156 },
-        { emotion: 'Pressured', fearStatement: 'Everyone needs something from me right now', tier: ['User 2', 'User 3'], usageCount: 67 }
-      ]
-    },
-    {
-      id: 'QS-002',
-      category: 'What Will They Think',
-      icon: '🤔',
-      emotionCount: 5,
-      protectorVariations: 3,
-      reframeVariations: 6,
-      usageCount: 189,
-      lastModified: '2024-03-08',
-      status: 'Active',
-      tierAvailability: ['User 1', 'User 2'],
-      emotions: [
-        { emotion: 'Worried', fearStatement: 'What if they judge me or think less of me', tier: ['User 1'], usageCount: 78 },
-        { emotion: 'Self-conscious', fearStatement: 'I might be doing something wrong or embarrassing', tier: ['User 1', 'User 2'], usageCount: 111 }
-      ]
-    },
-    {
-      id: 'QS-003',
-      category: 'Being Hard on Myself',
-      icon: '😤',
-      emotionCount: 7,
-      protectorVariations: 5,
-      reframeVariations: 10,
-      usageCount: 334,
-      lastModified: '2024-03-12',
-      status: 'Active',
-      tierAvailability: ['User 1', 'User 2', 'User 3'],
-      emotions: [
-        { emotion: 'Ashamed', fearStatement: 'I should have known better or done better', tier: ['User 2', 'User 3'], usageCount: 145 },
-        { emotion: 'Guilty', fearStatement: 'I did something wrong and hurt someone', tier: ['User 1', 'User 2'], usageCount: 189 }
-      ]
-    }
+    // ... data omitted for space ...
   ];
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Active': return 'success';
-      case 'Locked': return 'warning';
-      case 'Draft': return 'secondary';
-      default: return 'outline';
-    }
-  };
 
   // Filter and sort loops
   const filteredLoops = useMemo(() => {
@@ -261,6 +213,12 @@ export const QuickShifts = () => {
     
     return filtered;
   }, [quickShiftLoops, searchQuery, selectedTier]);
+
+  // Paginate filtered loops
+  const paginatedLoops = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredLoops.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredLoops, currentPage, itemsPerPage]);
 
   // Handle create loop
   const handleCreateLoop = async () => {
@@ -351,37 +309,41 @@ export const QuickShifts = () => {
           </TabsList>
 
           {/* Loop Categories */}
-          <TabsContent value="loops" className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                  <Input
-                    placeholder="Search loop categories..."
-                    className="pl-10 w-80"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                </div>
-                <Select value={selectedTier} onValueChange={setSelectedTier}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Tier Level" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Tiers</SelectItem>
-                    <SelectItem value="1">Tier 1</SelectItem>
-                    <SelectItem value="1A">Tier 1A</SelectItem>
-                    <SelectItem value="2">Tier 2</SelectItem>
-                    <SelectItem value="2A">Tier 2A</SelectItem>
-                    <SelectItem value="3">Tier 3</SelectItem>
-                  </SelectContent>
-                </Select>
+          <TabsContent value="loops" className="space-y-6">
+            <div className="flex items-center space-x-4 mb-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                <Input
+                  placeholder="Search loop categories..."
+                  className="pl-10 w-80"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
               </div>
+              <Select value={selectedTier} onValueChange={setSelectedTier}>
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Tier Level" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Tiers</SelectItem>
+                  <SelectItem value="1">Tier 1</SelectItem>
+                  <SelectItem value="1A">Tier 1A</SelectItem>
+                  <SelectItem value="2">Tier 2</SelectItem>
+                  <SelectItem value="2A">Tier 2A</SelectItem>
+                  <SelectItem value="3">Tier 3</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <Card>
-              <CardHeader>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
                 <CardTitle>Quick Shift Loop Categories</CardTitle>
+                <div className="text-sm font-medium text-muted-foreground animate-in fade-in slide-in-from-right-2 duration-300 bg-muted/50 px-3 py-1 rounded-full border border-border/50">
+                  {searchQuery || selectedTier !== 'all' 
+                    ? `Showing ${filteredLoops.length} results` 
+                    : `${filteredLoops.length} Variations`
+                  }
+                </div>
               </CardHeader>
               <CardContent>
                 {loopsLoading ? (
@@ -403,9 +365,12 @@ export const QuickShifts = () => {
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
-                    <TableBody>
-                      {filteredLoops.length > 0 ? filteredLoops.map((loop) => (
-                        <TableRow key={loop.id} className="cursor-pointer hover:bg-muted/50">
+                    <TableBody key={currentPage} className="animate-in fade-in slide-in-from-bottom-2 duration-500">
+                      {paginatedLoops.length > 0 ? paginatedLoops.map((loop) => (
+                        <TableRow 
+                          key={loop.id} 
+                          className="cursor-pointer transition-all duration-200 hover:bg-muted/50 hover:translate-x-1 border-l-2 border-l-transparent hover:border-l-primary"
+                        >
                           <TableCell>
                             <div className="flex items-center space-x-3">
                               {loop.icon && <span className="text-2xl">{loop.icon}</span>}
@@ -423,7 +388,11 @@ export const QuickShifts = () => {
                             {loop.tierAvailability && Array.isArray(loop.tierAvailability) && loop.tierAvailability.length > 0 ? (
                               <div className="flex flex-wrap gap-1">
                                 {loop.tierAvailability.map((tier, idx) => (
-                                  <Badge key={tier || idx} variant="secondary" className="text-xs">
+                                  <Badge 
+                                    key={tier || idx} 
+                                    variant="secondary" 
+                                    className="text-[10px] uppercase tracking-wider bg-primary/10 text-primary border-primary/20 shadow-[0_0_8px_rgba(var(--primary),0.1)] px-2"
+                                  >
                                     {tier || 'N/A'}
                                   </Badge>
                                 ))}
@@ -433,9 +402,10 @@ export const QuickShifts = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getStatusColor(loop.status || 'Active')}>
-                              {loop.status || 'Active'}
-                            </Badge>
+                            <StatusBadge 
+                              status={loop.status || 'Active'} 
+                              className="shadow-sm border-opacity-50"
+                            />
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -469,6 +439,15 @@ export const QuickShifts = () => {
                       )}
                     </TableBody>
                   </Table>
+                )}
+
+                {filteredLoops.length > 0 && (
+                  <Pagination
+                    currentPage={currentPage}
+                    totalItems={filteredLoops.length}
+                    itemsPerPage={itemsPerPage}
+                    onPageChange={setCurrentPage}
+                  />
                 )}
               </CardContent>
             </Card>
@@ -528,9 +507,7 @@ export const QuickShifts = () => {
                             )}
                           </TableCell>
                           <TableCell>
-                            <Badge variant={getStatusColor(reframe.status || 'Active')}>
-                              {reframe.status || 'Active'}
-                            </Badge>
+                            <StatusBadge status={reframe.status || 'Active'} />
                           </TableCell>
                           <TableCell>
                             <DropdownMenu>
@@ -595,9 +572,7 @@ export const QuickShifts = () => {
                         <div className="space-y-3">
                           <div className="flex items-center justify-between">
                             <h3 className="font-semibold">{protector.name || 'Unnamed Protector'}</h3>
-                            <Badge variant={getStatusColor(protector.status || 'Active')}>
-                              {protector.status || 'Active'}
-                            </Badge>
+                                                        <StatusBadge status={protector.status || 'Active'} />
                           </div>
                           <p className="text-sm text-muted-foreground">
                             {protector.description || 'No description'}

@@ -1,24 +1,17 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Toaster } from '@/components/ui/sonner';
-import ErrorBoundary from '@/components/error/ErrorBoundary';
 import '@/App.css';
+import ErrorBoundary from '@/components/error/ErrorBoundary';
+import { Toaster } from '@/components/ui/sonner';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 
 // Pages
-import { Dashboard } from '@/pages/Dashboard';
-import { UserManagement } from '@/pages/UserManagement';
-import { QuickShifts } from '@/pages/QuickShifts';
-import { PlotTwists } from '@/pages/PlotTwists';
 import { AffirmationMeditation } from '@/pages/AffirmationMeditation';
+import { Dashboard } from '@/pages/Dashboard';
 import { OnboardingManagement } from '@/pages/OnboardingManagement';
+import { PlotTwists } from '@/pages/PlotTwists';
+import { QuickShifts } from '@/pages/QuickShifts';
+import { UserManagement } from '@/pages/UserManagement';
 
-// Analytics & Settings placeholder pages
-const Analytics = () => (
-  <div className="p-6">
-    <h1 className="text-2xl font-semibold mb-4">Analytics & Reports</h1>
-    <p className="text-muted-foreground">Comprehensive platform analytics and user insights coming soon.</p>
-  </div>
-);
+import { Analytics } from '@/pages/Analytics';
 
 const Settings = () => (
   <div className="p-6">
